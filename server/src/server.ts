@@ -27,9 +27,21 @@ dotenv.config();
 
 const app = express();
 const server = createServer(app);
+
+const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '';
+const allowedOrigins = Array.from(
+  new Set(
+    [
+      'http://localhost:3000',
+      'https://hawurwanda.onrender.com',
+      ...allowedOriginsEnv.split(',').map(origin => origin.trim()).filter(Boolean),
+    ]
+  )
+);
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -45,7 +57,13 @@ const limiter = rateLimit({
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
