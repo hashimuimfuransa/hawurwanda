@@ -1,489 +1,141 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Supported languages
 export type Language = 'rw' | 'en';
 
 interface TranslationState {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
+  t: (key: string, variables?: Record<string, any>) => string;
+  plural: (key: string, count: number) => string;
+  formatSentence: (key: string, values: Record<string, string | number>) => string;
 }
 
+// Zustand store with persistence
 export const useTranslationStore = create<TranslationState>()(
   persist(
     (set, get) => ({
-      language: 'rw', // Default to Kinyarwanda
-      setLanguage: (lang: Language) => {
-        set({ language: lang });
-      },
+      language: 'rw',
+      setLanguage: (lang: Language) => set({ language: lang }),
       toggleLanguage: () => {
         const currentLang = get().language;
         set({ language: currentLang === 'rw' ? 'en' : 'rw' });
       },
+
+      // Basic translation getter
+      t: (key, variables = {}) => {
+        const lang = get().language;
+        const text = translations[lang][key] || key;
+        return text.replace(/\{(\w+)\}/g, (_, v) => variables[v] ?? '');
+      },
+
+      // Automatic pluralization
+      plural: (key, count) => {
+        const lang = get().language;
+        const singular = translations[lang][`${key}_one`] || translations[lang][key] || key;
+        const plural = translations[lang][`${key}_other`] || translations[lang][key] || key;
+
+        if (lang === 'en') {
+          return count === 1 ? singular.replace('{count}', String(count)) : plural.replace('{count}', String(count));
+        } else if (lang === 'rw') {
+          // Simple Kinyarwanda rule
+          return count === 1
+            ? singular.replace('{count}', String(count))
+            : plural.replace('{count}', String(count));
+        }
+        return key;
+      },
+
+      // Sentence formatter for placeholders like "{name} joined {year}"
+      formatSentence: (key, values) => {
+        const lang = get().language;
+        const text = translations[lang][key] || key;
+        return text.replace(/\{(\w+)\}/g, (_, v) => values[v] ?? '');
+      },
     }),
-    {
-      name: 'language-storage',
-    }
+    { name: 'language-storage' }
   )
 );
 
-// Translation data
-export const translations = {
+// Translations
+export const translations: Record<Language, Record<string, string>> = {
   rw: {
     // Navigation
-    home: 'Utangira',
-    about: 'Twebwe',
-    salons: 'Amasalon',
+    home: 'Ahabanza',
+    about: 'Ibyacu',
+    salons: 'Amasaluni',
     programs: 'Porogaramu',
-    events: 'Amahinduka',
+    events: 'Ibikorwa',
     news: 'Amakuru',
     publications: 'Ibitangazamakuru',
     contact: 'Twandikire',
     login: 'Injira',
-    register: 'Kwiyandikisha',
-    dashboard: 'Ikiganiro',
-    
-    // Home page
-    heroTitle: 'Umuryango w\'Abakora Imisatsi n\'Abandi Bakora',
-    heroSubtitle: 'Twebwe turi umuryango w\'abakora imisatsi n\'abandi bakora mu Rwanda. Dufite intego yo gufasha abanyamuryango bacu gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    joinUs: 'Wiyandikishe',
-    learnMore: 'Menya byinshi',
-    
+    register: 'Iyandikishe',
+    dashboard: 'Ikibaho',
+
+    // Home Page
+    heroTitle: "Umuryango w’Abakora Imisatsi n’Abandi Bakora mu Rwanda",
+    heroSubtitle:
+      "HAWU ni umuryango uhuriza hamwe abakora imisatsi n’abandi bakora mu Rwanda, ugamije kubafasha kwiteza imbere no kurengera uburenganzira bwabo.",
+    joinUs: 'Injira mu Muryango',
+    learnMore: 'Menya Birenzeho',
+
     // Statistics
-    statsTitle: 'Impinduka Mu Mibare',
-    statsSubtitle: 'Gushyiraho umuryango ukomeye ukoresha serivisi z\'ubwoba n\'ukura ubukene',
-    activeMembers: 'Abanyamuryango',
-    districtsCovered: 'Uturere Twakuye',
-    yearsOfService: 'Imyaka Y\'Ubukoresha',
-    trainingPrograms: 'Porogaramu Z\'Amahugurwa',
-    
-    // Sections
-    whoWeAre: 'Twebwe Turi Bande',
-    whoWeAreDesc: 'Umuryango w\'Abakora Imisatsi n\'Abandi Bakora mu Rwanda (HAWU) ni umuryango w\'abakora imisatsi n\'abandi bakora mu Rwanda.',
-    comprehensivePrograms: 'Porogaramu Z\'Ubwoba',
-    testimonials: 'Ibyavuzwe',
-    features: 'Ibiranga',
-    strategicPartnerships: 'Ubufatanye Bw\'Ubwoba',
-    latestUpdates: 'Amakuru Mashya',
-    newsletter: 'Kwiyandikisha mu Makuru',
-    readyToJoin: 'Witeguye Kwinjira mu HAWU?',
-    readyToJoinDesc: 'Kuba umwe mu bantu benshi bakora imisatsi n\'abandi bakora mu Rwanda. Kubona ubwoba bw\'amahugurwa, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba.',
-    becomeMember: 'Kuba Umwe',
-    contactUs: 'Twandikire',
-    
-    // Footer
-    empoweringHairdressers: 'Dufite ubwoba bwo gufasha abakora imisatsi n\'abandi bakora mu Rwanda gukuraho ubukene, gufasha ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    quickLinks: 'Amashami Yihuse',
-    programsTitle: 'Porogaramu',
-    support: 'Ubwoba',
-    followUs: 'Dukurikire',
-    allRightsReserved: 'Uburenganzira bwose burabitswe.',
-    
-    // About page
-    aboutTitle: 'Twebwe Turi Bande',
-    vision: 'Icyerekezo',
-    mission: 'Intego',
-    coreValues: 'Agaciro K\'Ubwoba',
-    achievements: 'Ibyagezweho',
-    leadershipTeam: 'Icyiciro Cy\'Ubwoba',
-    
-    // Contact page
-    contactTitle: 'Twandikire',
-    getInTouch: 'Twandikire',
-    name: 'Amazina',
+    statsTitle: 'Imibare y’Iterambere',
+    statsSubtitle: "Turi kubaka umuryango ukomeye kandi wiyubashye.",
+    activeMembers: 'Abanyamuryango Bakora',
+    districtsCovered: 'Uturere Duhagarariwe',
+    yearsOfService: 'Imyaka y’Ubukorikori',
+    trainingPrograms: 'Porogaramu z’Amahugurwa',
+
+    members_one: 'Umunyamuryango {count} ukora',
+    members_other: 'Abanyamuryango {count} bakora',
+
+    // About
+    whoWeAre: 'Turi Bande',
+    missionText:
+      'Guteza imbere abakora imisatsi n’abandi bakora, kubaha amahirwe yo kwiyungura ubumenyi no guharanira uburenganzira bwabo.',
+    ourVision: 'Icyerekezo cyacu',
+    visionText:
+      'Kubaka umuryango w’abanyamwuga ushoboye kandi ushishikajwe n’ubuvumbuzi.',
+    ourValues: 'Indangagaciro zacu',
+    valueProfessionalism: 'Ubunyamwuga',
+    valueIntegrity: 'Ubunyangamugayo',
+    valueUnity: 'Ubumwe n’Ubufatanye',
+    valueInnovation: 'Ubuvumbuzi',
+
+    // Programs
+    programsTitle: 'Porogaramu zacu',
+    training: 'Amahugurwa n’Iterambere',
+    financialSupport: 'Ubufasha bw’Imari',
+    healthInsurance: 'Ubwishingizi bw’Ubuzima',
+    legalSupport: 'Ubuvugizi n’Amategeko',
+    partnerships: 'Ubufatanye',
+    innovation: 'Ikoranabuhanga n’Ubuvumbuzi',
+
+    // Call to Action
+    readyToJoin: 'Witeguye Kwinjira muri HAWU?',
+    readyToJoinDesc:
+      'Ba umwe mu banyamuryango kugira ngo ubone amahugurwa n’amahirwe.',
+    becomeMember: 'Ba Umunyamuryango',
+
+    // Contact
+    address: 'Aderesi',
+    phone: 'Telefoni',
     email: 'Imeli',
-    phone: 'Telefone',
-    subject: 'Icyitabwaho',
     message: 'Ubutumwa',
-    send: 'Ohereza',
-    
-    // Login page
-    loginTitle: 'Injira mu HAWU',
-    loginSubtitle: 'Injira mu konti yawe',
-    phoneOrEmail: 'Telefone cyangwa Imeli',
-    emailPlaceholder: 'Shyiramo telefone cyangwa imeli yawe',
-    passwordPlaceholder: 'Shyiramo ijambo ry\'ibanga',
-    loginButton: 'Injira',
-    noAccount: 'Nta konti ufite?',
-    signUp: 'Kwiyandikisha',
-    
-    // Register page
-    registerTitle: 'Wiyandikishe mu HAWU',
-    registerSubtitle: 'Kora konti yawe wongere uhindure ubuzima bwawe',
-    fullName: 'Amazina Yose',
-    phoneNumber: 'Numero ya Telefone',
-    accountType: 'Ubwoko bw\'Ikonte',
-    selectAccountType: 'Hitamo ubwoko bw\'Ikonte',
-    client: 'Umukiriya',
-    barber: 'Umukora Imisatsi',
-    salonOwner: 'Umwenyekazi w\'Isalon',
-    password: 'Ijambo ry\'Ibanga',
-    confirmPassword: 'Emeza Ijambo ry\'Ibanga',
-    createAccount: 'Kora Ikonte',
-    hasAccount: 'Ufite konti?',
-    signIn: 'Injira hano',
-    
-    // Events page
-    eventsTitle: 'Amahinduka',
-    upcomingEvents: 'Amahinduka Ageze',
-    eventDetails: 'Ibyerekeye Amahinduka',
-    
-    // Publications page
-    publicationsTitle: 'Ibitangazamakuru',
-    latestPublications: 'Ibitangazamakuru Bishya',
-    download: 'Kuramo',
-    view: 'Reba',
-    
-    // Booking page
-    bookingTitle: 'Kwiyandikisha',
-    selectSalon: 'Hitamo Isalon',
-    bookAppointment: 'Kwiyandikisha',
-    availableSlots: 'Amahitamo',
-    selectTime: 'Hitamo Igihe',
-    confirmBooking: 'Emeza Kwiyandikisha',
-    
-    // Additional keys
-    search: 'Shakisha',
-    filter: 'Shiraho',
-    all: 'Byose',
-    verified: 'Byemejwe',
-    district: 'Akarere',
-    selectDistrict: 'Hitamo Akarere',
-    loading: 'Birakuraho...',
-    noResults: 'Nta bintu byabonetse',
-    viewDetails: 'Reba Ibindi',
-    bookNow: 'Kwiyandikisha Nonaha',
-    
-    // About page
-    aboutHawu: 'Twebwe Turi Bande HAWU',
-    aboutHawuDesc: 'Gufasha abakora imisatsi n\'abandi bakora mu Rwanda gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    ourMission: 'Intego Yacu',
-    ourMissionDesc: 'Gushyiraho umuryango ukomeye ukoresha serivisi z\'ubwoba n\'ukura ubukene, gufasha abanyamuryango bacu gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    ourVision: 'Icyerekezo Cyacu',
-    ourVisionDesc: 'HAWU ifite intego yo gushyiraho umuryango ukomeye ukoresha serivisi z\'ubwoba n\'ukura ubukene, gufasha abanyamuryango bacu gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    
-    // Events page
-    eventsActivities: 'Amahinduka n\'Amakuru',
-    eventsActivitiesDesc: 'Menya amakuru mashya y\'amahinduka, amahugurwa, n\'amakuru y\'umuryango',
-    searchEvents: 'Shakisha amahinduka...',
-    allEvents: 'Amahinduka Yose',
-    upcoming: 'Bizaza',
-    pastEvents: 'Amahinduka Yashize',
-    meetings: 'Imitwe',
-    workshops: 'Amahugurwa',
-    training: 'Amahugurwa',
-    
-    // Contact page
-    contactUsDesc: 'Twandikire HAWU. Turi hano gufasha no gusubiza ibibazo byose.',
-    sendMessage: 'Tutumere Ubutumwa',
-    messageSentSuccess: 'Ubutumwa Bwoherejwe!',
-    messageSentDesc: 'Urakoze kutwandikira. Tuzagaruka muri amasaha 24.',
-    sendAnotherMessage: 'Tumere Undi Butumwa',
-    
-    // Publications page
-    publicationsDesc: 'Menya ibitangazamakuru byacu, amahugurwa, n\'ibindi bikoresho',
-    searchPublications: 'Shakisha ibitangazamakuru...',
-    allPublications: 'Ibitangazamakuru Byose',
-    annualReports: 'Raporo Z\'Umwaka',
-    trainingMaterials: 'Ibikoresho By\'Amahugurwa',
-    guides: 'Ubuyobozi',
-    standards: 'Imiterere',
-    business: 'Ubucuruzi',
-    safety: 'Umutekano',
-    
-    // BookingSelection page
-    bookAppointmentDesc: 'Hitamo mu masalon yacu yemejwe no kwiyandikisha mu gihe cyawe',
-    loadingSalons: 'Birakuraho amasalon...',
-    salonsAvailable: 'Amasalon Ariho',
-    searchSalons: 'Shakisha amasalon ku izina, aho...',
-    allDistricts: 'Uturere Twose',
-    
-    // Home page additional sections
-    lightMode: 'Ubusanzwe',
-    darkMode: 'Umunsi',
-    trustedUnion: 'Umuryango Wizewe',
-    graduationCeremony: 'Icyiciro Cy\'Amahugurwa',
-    hawumembersAchievement: 'Ibyagezweho By\'Abanyamuryango ba HAWU',
-    ourVisionHome: 'Icyerekezo Cyacu',
-    ourVisionDescHome: 'HAWU ifite intego yo gushyiraho umuryango ukomeye ukoresha serivisi z\'ubwoba n\'ukura ubukene, gufasha abanyamuryango bacu gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    ourMissionHome: 'Intego Yacu',
-    ourMissionDescHome: 'Gushyiraho umuryango ukomeye ukoresha serivisi z\'ubwoba n\'ukura ubukene, gufasha abanyamuryango bacu gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo.',
-    trainingGraduation: 'Amahugurwa Y\'Amahugurwa',
-    professionalDevelopment: 'Ubwoba Bw\'Ubwoba',
-    stayConnected: 'Komeza Ufite Ubufatanye',
-    joinOurCommunity: 'Wiyandikishe mu Muryango Wacu',
-    joinOurCommunityDesc: 'Menya amakuru mashya, amahugurwa, n\'amakuru y\'umuryango',
-    enterEmailAddress: 'Shyiramo imeli yawe',
-    subscribe: 'Kwiyandikisha',
-    privacyNotice: 'Turabwoba ubwoba bwawe. Kwiyandikisha igihe icyo ari cyo cyose.',
-    newsEvents: 'Amakuru n\'Amahinduka',
-    resources: 'Ibikoresho',
-    guidelines: 'Amabwiriza',
-    forms: 'Amashusho',
-    connect: 'Twandikire',
-    loadingHawu: 'Birakuraho HAWU...',
-    
-    // Comprehensive Programs section
-    ourPrograms: 'Porogaramu Zacu',
-    comprehensiveProgramsDesc: 'Porogaramu z\'ubwoba zishyizweho gufasha abanyamuryango gukura ubukene, kwiyubaka ubwoba bwabo, no kubaha uburenganzira bwabo',
-    
-    // Program titles
-    skillsDevelopment: 'Ubwoba Bw\'Ubwoba',
-    skillsDevelopmentDesc: 'Amahugurwa y\'ubwoba bw\'ubwoba bw\'ubwoba, ubucuruzi, n\'ubwoba bw\'abakiriya',
-    advocacyRepresentation: 'Ubwoba n\'Ubwoba',
-    advocacyRepresentationDesc: 'Ubwoba bw\'ubwoba mu makuru y\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    collectiveBargaining: 'Ubwoba Bw\'Ubwoba',
-    collectiveBargainingDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    memberWelfare: 'Ubwoba Bw\'Abanyamuryango',
-    memberWelfareDesc: 'Ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    businessSupport: 'Ubwoba Bw\'Ubucuruzi',
-    businessSupportDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    genderEquality: 'Ubwoba Bw\'Ubwoba',
-    genderEqualityDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    
-    // Program features
-    modernTechniques: 'Ubwoba Bw\'Ubwoba',
-    businessManagement: 'Ubwoba Bw\'Ubucuruzi',
-    customerService: 'Ubwoba Bw\'Abakiriya',
-    policyMaking: 'Ubwoba Bw\'Ubwoba',
-    governmentRelations: 'Ubwoba Bw\'Ubwoba',
-    industryNegotiations: 'Ubwoba Bw\'Ubwoba',
-    fairWages: 'Ubwoba Bw\'Ubwoba',
-    betterConditions: 'Ubwoba Bw\'Ubwoba',
-    memberBenefits: 'Ubwoba Bw\'Abanyamuryango',
-    healthInsurance: 'Ubwoba Bw\'Ubwoba',
-    emergencySupport: 'Ubwoba Bw\'Ubwoba',
-    socialWelfare: 'Ubwoba Bw\'Ubwoba',
-    salonManagement: 'Ubwoba Bw\'Ubwoba',
-    licensingHelp: 'Ubwoba Bw\'Ubwoba',
-    businessDevelopment: 'Ubwoba Bw\'Ubucuruzi',
-    equalOpportunities: 'Ubwoba Bw\'Ubwoba',
-    antiDiscrimination: 'Ubwoba Bw\'Ubwoba',
-    workplaceRights: 'Ubwoba Bw\'Ubwoba',
-    
-    // Testimonials section
-    professionalBarber: 'Umukora Imisatsi',
-    beautyTherapist: 'Umukora Ubwoba',
-    
-    // Features section
-    digitalPlatform: 'Ubwoba Bw\'Ubwoba',
-    digitalPlatformDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    mobileApp: 'Ubwoba Bw\'Ubwoba',
-    mobileAppDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    support247: 'Ubwoba Bw\'Ubwoba',
-    support247Desc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    trainingHub: 'Ubwoba Bw\'Ubwoba',
-    trainingHubDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    
-    // Updates section
-    annualGeneralMeeting: 'Ubwoba Bw\'Ubwoba',
-    annualGeneralMeetingDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    trainingGraduationParty: 'Ubwoba Bw\'Ubwoba',
-    trainingGraduationPartyDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    certificationProgramLaunch: 'Ubwoba Bw\'Ubwoba',
-    certificationProgramLaunchDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba, ubwoba bw\'ubwoba, n\'ubwoba bw\'ubwoba',
-    
-    // Why Choose Us section
-    modernFeatures: 'Ibiranga By\'Ubwoba',
-    whyChooseHawu: 'Ni Ikihe Gituma Twihitamo HAWU?',
-    whyChooseHawuDesc: 'Menya ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba',
-    memberStories: 'Amakuru Y\'Abanyamuryango',
-    whatOurMembersSay: 'Abanyamuryango Bavuga Iki?',
-    whatOurMembersSayDesc: 'Amakuru y\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba',
-    
-    // Admin Panel
-    adminPanel: 'Ikiganiro Cy\'Ubwoba',
-    users: 'Abakoresha',
-    reports: 'Raporo',
-    pendingApprovals: 'Ubwoba Bw\'Ubwoba',
-    totalUsers: 'Abakoresha Bose',
-    totalSalons: 'Amasalon Yose',
-    verifiedSalons: 'Amasalon Yemejwe',
-    pendingSalons: 'Amasalon Bitegereje',
-    totalBookings: 'Kwiyandikisha Byose',
-    approve: 'Emeza',
-    reject: 'Wanga',
-    viewDetails: 'Reba Ibindi',
-    searchUsers: 'Shakisha abakoresha...',
-    filterByRole: 'Shiraho ku bwoko',
-    allRoles: 'Ubwoko Bwose',
-    admin: 'Ubwoba',
-    superadmin: 'Ubwoba',
-    owner: 'Nyir\'Isalon',
-    barber: 'Umukora Imisatsi',
-    client: 'Umunyamuryango',
-    salonVerification: 'Ubwoba Bw\'Isalon',
-    userManagement: 'Ubwoba Bw\'Abakoresha',
-    notifications: 'Ubwoba',
-    
-    // Dashboard Barber
-    barberDashboard: 'Ikiganiro Cy\'Umukora Imisatsi',
-    myBookings: 'Kwiyandikisha Zanjye',
-    todayBookings: 'Kwiyandikisha Ry\'Uyu Munsi',
-    upcomingBookings: 'Kwiyandikisha Bizaza',
-    completedBookings: 'Kwiyandikisha Byarangiye',
-    selectDate: 'Hitamo Itariki',
-    noBookingsToday: 'Nta Kwiyandikisha Ry\'Uyu Munsi',
-    noUpcomingBookings: 'Nta Kwiyandikisha Bizaza',
-    bookingTime: 'Igihe',
-    clientName: 'Izina Ry\'Umunyamuryango',
-    service: 'Serivisi',
-    status: 'Imiterere',
-    completed: 'Byarangiye',
-    pending: 'Bitegereje',
-    cancelled: 'Byahagaritswe',
-    accessDenied: 'Ubwoba Bw\'Ubwoba',
-    barbersOnly: 'Ubwoba Bw\'Ubwoba',
-    welcomeBack: 'Ubwoba Bw\'Ubwoba',
-    totalEarnings: 'Ubwoba Bw\'Ubwoba',
-    todayEarnings: 'Ubwoba Bw\'Ubwoba',
-    availability: 'Ubwoba',
-    blockSlot: 'Ubwoba',
-    unblockSlot: 'Ubwoba',
-    upcoming: 'Ubwoba',
-    
-    // Dashboard Owner
-    ownerDashboard: 'Ikiganiro Cy\'Nyir\'Isalon',
-    salonOverview: 'Ubwoba Bw\'Isalon',
-    totalBookings: 'Kwiyandikisha Byose',
-    monthlyRevenue: 'Ubwoba Bw\'Ukwezi',
-    averageRating: 'Ubwoba Bw\'Ubwoba',
-    recentBookings: 'Kwiyandikisha Ry\'Ubwoba',
-    barbers: 'Abakora Imisatsi',
-    addBarber: 'Ongeraho Umukora Imisatsi',
-    barberName: 'Izina Ry\'Umukora Imisatsi',
-    barberEmail: 'Imeli Y\'Umukora Imisatsi',
-    barberPhone: 'Telefone Y\'Umukora Imisatsi',
-    barberSpecialty: 'Ubwoba Bw\'Umukora Imisatsi',
-    overview: 'Ubwoba',
-    bookings: 'Kwiyandikisha',
-    barbers: 'Abakora Imisatsi',
-    services: 'Serivisi',
-    settings: 'Ubwoba',
-    
-    // Booking Form
-    bookingForm: 'Isusho Y\'Kwiyandikisha',
-    selectBarber: 'Hitamo Umukora Imisatsi',
-    selectService: 'Hitamo Serivisi',
-    selectDate: 'Hitamo Itariki',
-    selectTime: 'Hitamo Igihe',
-    specialRequests: 'Ubwoba Bw\'Ubwoba',
-    specialRequestsPlaceholder: 'Shyiramo ubwoba bw\'ubwoba...',
-    bookAppointment: 'Kwiyandikisha',
-    bookingSuccess: 'Kwiyandikisha Byarangiye!',
-    bookingSuccessDesc: 'Kwiyandikisha ryawe ryemejwe. Tuzagaruka muri amasaha 24.',
-    duration: 'Ubwoba',
-    minutes: 'Ubwoba',
-    selectTimeSlot: 'Hitamo Igihe',
-    paymentOption: 'Ubwoba Bw\'Ubwoba',
-    fullPayment: 'Ubwoba Bw\'Ubwoba',
-    depositPayment: 'Ubwoba Bw\'Ubwoba',
-    cashPayment: 'Ubwoba Bw\'Ubwoba',
-    depositAmount: 'Ubwoba Bw\'Ubwoba',
-    notes: 'Ubwoba',
-    notesPlaceholder: 'Shyiramo ubwoba bw\'ubwoba...',
-    bookingNumber: 'Ubwoba',
-    confirmed: 'Ubwoba',
-    partial: 'Ubwoba',
-    none: 'Ubwoba',
-    
-    // Salon Page
-    salonPage: 'Urupapuro Rw\'Isalon',
-    salonDetails: 'Ubwoba Bw\'Isalon',
-    salonServices: 'Serivisi Z\'Isalon',
-    salonBarbers: 'Abakora Imisatsi B\'Isalon',
-    bookNow: 'Kwiyandikisha Nonaha',
-    rating: 'Ubwoba',
-    reviews: 'Ubwoba',
-    location: 'Aho',
-    hours: 'Amasaha',
-    contact: 'Twandikire',
-    
-    // Booking Card
-    bookingCard: 'Ikadiri Y\'Kwiyandikisha',
-    bookingId: 'Ubwoba Bw\'Kwiyandikisha',
-    bookingDate: 'Itariki Y\'Kwiyandikisha',
-    bookingTime: 'Igihe Cy\'Kwiyandikisha',
-    bookingStatus: 'Imiterere Y\'Kwiyandikisha',
-    paymentStatus: 'Imiterere Y\'Ubwoba',
-    paid: 'Ubwoba',
-    unpaid: 'Ubwoba',
-    processing: 'Ubwoba',
-    
+    sendMessage: 'Ohereza Ubutumwa',
+
     // Footer
-    footer: 'Ubwoba',
-    aboutHawu: 'Twebwe Turi Bande HAWU',
-    aboutHawuDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba',
-    hawurwanda20: 'HAWU Rwanda 2.0',
-    footerDescription: 'Ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba',
-    facebook: 'Ubwoba',
-    twitter: 'Ubwoba',
-    instagram: 'Ubwoba',
-    salonNotFound: 'Ubwoba Bw\'Ubwoba',
-    salonNotFoundDesc: 'Ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba bw\'ubwoba',
-    backToSalons: 'Ubwoba Bw\'Ubwoba',
-    noImagesAvailable: 'Ubwoba Bw\'Ubwoba',
-    verified: 'Ubwoba',
-    selected: 'Ubwoba',
-    expert: 'Ubwoba',
-    selectBarberAndService: 'Ubwoba bw\'ubwoba bw\'ubwoba',
-    workingHours: 'Ubwoba Bw\'Ubwoba',
-    closed: 'Ubwoba',
-    findSalons: 'Shakisha Amasalon',
-    discoverBestSalons: 'Menya amasalon meza yose mu Rwanda kandi wandikishe igihe cyawe',
-    searchSalons: 'Shakisha amasalon...',
-    allDistricts: 'Uturere Twose',
-    verifiedOnly: 'Ayemejwe Gusa',
-    search: 'Shakisha',
-    loadingSalons: 'Birakurura amasalon...',
-    errorLoadingSalons: 'Ikosa mu Kurura Amasalon',
-    errorLoadingSalonsDesc: 'Habaye ikosa mu kurura amasalon. Nyamuneka mukuze mugerageze nanone.',
-    retry: 'Gerageza Nanone',
-    noSalonsFound: 'Nta masalon Aboneka',
-    noSalonsFoundDesc: 'Nta masalon aboneka bujije n\'ibisabwa byawe.',
-    clearFilters: 'Siba Akayunguruzo',
-    showingResults: 'Kwerekana',
-    of: 'kuri',
-    salons: 'amasalon',
-    previous: 'Ibanziriza',
-    next: 'Ikurikira',
-    page: 'Urupapuro',
-    
-    // Profile page translations (Kinyarwanda)
-    welcomeBack: 'Turakwakira',
-    beautyJourneyContinues: 'Urugendo rwawe rw\'ubwoba rurakomeza hano',
-    upcomingBookings: 'Kwiyandikisha Bizaza',
-    completedSessions: 'Amahugurwa Yarangiye',
-    totalSpent: 'Igiciro Cyose Wakoresheje',
-    account: 'Konti',
-    personalInformation: 'Amakuru Bwite',
-    edit: 'Hindura',
-    fullName: 'Amazina Yose',
-    nameRequired: 'Amazina Arakenewe',
-    emailRequired: 'Imeli Irakenewe',
-    emailInvalid: 'Shyiramo imeli nyayo',
-    phoneRequired: 'Telefone Irakenewe',
-    phoneInvalid: 'Shyiramo telefone nyayo y\'u Rwanda',
-    saving: 'Birabika...',
-    saveChanges: 'Bika Impinduka',
-    cancel: 'Bireke',
-    salonMember: 'Umunyamuryango w\'Isalon',
-    signOut: 'Sohoka',
-    myBookings: 'Kwiyandikisha Zanjye',
-    trackAppointments: 'Gukurikirana amasaha yawe',
-    total: 'Igiciro',
-    readyForFreshLook: 'Witeguye isura nshya?',
-    bookNextAppointment: 'Kwiyandikisha isaha yawe ikurikira mu salon utanga',
-    loadingBookings: 'Birakuraho kwiyandikisha zawe...',
-    pleaseWaitAppointments: 'Tegereza gato tuzana amasaha yawe',
-    noBookingsYet: 'Ntawuzi kwiyandikisha',
-    startBeautyJourney: 'Tangira urugendo rwawe rw\'ubwoba mukwiyandikisha kwambere!',
-    findSalonsNearYou: 'Shaka Amasalon Ahafi Yawe',
-    upcoming: 'Bizaza',
-    completed: 'Byarangiye',
-    pleaseLoginToViewProfile: 'Nyamuneka injira kugira ngo urebe umurongo wawe.',
-    
+    empoweringHairdressers:
+      'Dufasha abakora imisatsi n’abandi bakora mu Rwanda kwiyubaka no guhanga udushya.',
+    rightsReserved: 'Uburenganzira bwose burabitswe © 2025 HAWU.',
+    followUs: 'Dukurikire',
+    quickLinks: 'Amahuzanyo y’ihuse',
   },
+
   en: {
     // Navigation
     home: 'Home',
@@ -491,467 +143,70 @@ export const translations = {
     salons: 'Salons',
     programs: 'Programs',
     events: 'Events',
-    news: 'News & Events',
+    news: 'News',
     publications: 'Publications',
-    contact: 'Contact Us',
+    contact: 'Contact',
     login: 'Login',
     register: 'Register',
     dashboard: 'Dashboard',
-    
-    // Home page
-    heroTitle: 'Hairdressers and Allied Workers Union',
-    heroSubtitle: 'We are committed to helping hairdressers and allied workers in Rwanda overcome poverty, improve their skills, and protect their rights.',
+
+    // Home Page
+    heroTitle: 'Association of Hairdressers and Other Workers in Rwanda',
+    heroSubtitle:
+      'HAWU empowers and unites professionals across Rwanda through advocacy, skills training, and innovation.',
     joinUs: 'Join Us',
     learnMore: 'Learn More',
-    
+
     // Statistics
-    statsTitle: 'Our Impact in Numbers',
-    statsSubtitle: 'Building a stronger community through dedicated service and continuous growth',
+    statsTitle: 'Progress in Numbers',
+    statsSubtitle: 'We are growing stronger together.',
     activeMembers: 'Active Members',
     districtsCovered: 'Districts Covered',
     yearsOfService: 'Years of Service',
     trainingPrograms: 'Training Programs',
-    
-    // Sections
-    whoWeAre: 'Who We Are',
-    whoWeAreDesc: 'The Hairdressers and Allied Workers Union of Rwanda (HAWU) is a union for hairdressers and allied workers in Rwanda.',
-    comprehensivePrograms: 'Comprehensive Programs',
-    testimonials: 'Testimonials',
-    features: 'Features',
-    strategicPartnerships: 'Strategic Partnerships',
-    latestUpdates: 'Latest Updates',
-    newsletter: 'Newsletter Signup',
-    readyToJoin: 'Ready to Join HAWU?',
-    readyToJoinDesc: 'Become part of Rwanda\'s largest community of hairdressers and allied workers. Get access to training, advocacy, and professional support.',
-    becomeMember: 'Become a Member',
-    contactUs: 'Contact Us',
-    
-    // Footer
-    empoweringHairdressers: 'Empowering hairdressers and allied workers across Rwanda through advocacy, training, and collective representation.',
-    quickLinks: 'Quick Links',
-    programsTitle: 'Programs',
-    support: 'Support',
-    followUs: 'Follow Us',
-    allRightsReserved: 'All rights reserved.',
-    
-    // About page
-    aboutTitle: 'About Us',
-    vision: 'Vision',
-    mission: 'Mission',
-    coreValues: 'Core Values',
-    achievements: 'Achievements',
-    leadershipTeam: 'Leadership Team',
-    
-    // Contact page
-    contactTitle: 'Contact Us',
-    getInTouch: 'Get In Touch',
-    name: 'Name',
-    email: 'Email',
-    phone: 'Phone',
-    subject: 'Subject',
-    message: 'Message',
-    send: 'Send',
-    
-    // Login page
-    loginTitle: 'Login to HAWU',
-    loginSubtitle: 'Sign in to your account',
-    phoneOrEmail: 'Phone or Email',
-    emailPlaceholder: 'Enter your phone or email',
-    passwordPlaceholder: 'Enter your password',
-    loginButton: 'Sign In',
-    noAccount: 'Don\'t have an account?',
-    signUp: 'Sign up here',
-    
-    // Register page
-    registerTitle: 'Join HAWU Today',
-    registerSubtitle: 'Create your account and start your journey with us',
-    fullName: 'Full Name',
-    phoneNumber: 'Phone Number',
-    accountType: 'Account Type',
-    selectAccountType: 'Select account type',
-    client: 'Client',
-    barber: 'Barber',
-    salonOwner: 'Salon Owner',
-    password: 'Password',
-    confirmPassword: 'Confirm Password',
-    createAccount: 'Create Account',
-    hasAccount: 'Already have an account?',
-    signIn: 'Sign in here',
-    
-    // Events page
-    eventsTitle: 'Events',
-    upcomingEvents: 'Upcoming Events',
-    eventDetails: 'Event Details',
-    
-    // Publications page
-    publicationsTitle: 'Publications',
-    latestPublications: 'Latest Publications',
-    download: 'Download',
-    view: 'View',
-    
-    // Booking page
-    bookingTitle: 'Booking',
-    selectSalon: 'Select Salon',
-    bookAppointment: 'Book Appointment',
-    availableSlots: 'Available Slots',
-    selectTime: 'Select Time',
-    confirmBooking: 'Confirm Booking',
-    
-    // Additional keys
-    search: 'Search',
-    filter: 'Filter',
-    all: 'All',
-    verified: 'Verified',
-    district: 'District',
-    selectDistrict: 'Select District',
-    loading: 'Loading...',
-    noResults: 'No results found',
-    viewDetails: 'View Details',
-    bookNow: 'Book Now',
-    
-    // About page
-    aboutHawu: 'About HAWU',
-    aboutHawuDesc: 'Empowering hair dressers and allied workers across Rwanda through unity, advocacy, and professional development',
-    ourMission: 'Our Mission',
-    ourMissionDesc: 'To represent members, participate in legislation, protect member interests, provide training, and promote the welfare of all hairdressers and allied workers in Rwanda through collective action and professional development.',
-    ourVision: 'Our Vision',
-    ourVisionDesc: 'HAWU aims at establishing a sustainable system of advocacy and capacity building for its members, creating a stronger, more unified voice for hairdressers and allied workers across Rwanda.',
-    
-    // Events page
-    eventsActivities: 'Events & Activities',
-    eventsActivitiesDesc: 'Stay updated with our latest events, training sessions, and community activities',
-    searchEvents: 'Search events...',
-    allEvents: 'All Events',
-    upcoming: 'Upcoming',
-    pastEvents: 'Past Events',
-    meetings: 'Meetings',
-    workshops: 'Workshops',
-    training: 'Training',
-    
-    // Contact page
-    contactUsDesc: 'Get in touch with HAWU. We\'re here to help and answer any questions you may have.',
-    sendMessage: 'Send us a Message',
-    messageSentSuccess: 'Message Sent Successfully!',
-    messageSentDesc: 'Thank you for contacting us. We\'ll get back to you within 24 hours.',
-    sendAnotherMessage: 'Send Another Message',
-    
-    // Publications page
-    publicationsDesc: 'Access our comprehensive collection of reports, guides, and training materials',
-    searchPublications: 'Search publications...',
-    allPublications: 'All Publications',
-    annualReports: 'Annual Reports',
-    trainingMaterials: 'Training Materials',
-    guides: 'Guides',
-    standards: 'Standards',
-    business: 'Business',
-    safety: 'Safety',
-    
-    // BookingSelection page
-    bookAppointmentDesc: 'Choose from our verified salons and book your preferred time slot',
-    loadingSalons: 'Loading salons...',
-    salonsAvailable: 'Salons Available',
-    searchSalons: 'Search salons by name, location...',
-    allDistricts: 'All Districts',
-    
-    // Home page additional sections
-    lightMode: 'Light Mode',
-    darkMode: 'Dark Mode',
-    trustedUnion: 'Trusted Union',
-    graduationCeremony: 'Graduation Ceremony',
-    hawumembersAchievement: 'HAWU Members Achievement',
-    ourVisionHome: 'Our Vision',
-    ourVisionDescHome: 'HAWU aims at establishing a sustainable system of advocacy and capacity building for its members, creating a stronger, more unified voice for hairdressers and allied workers across Rwanda.',
-    ourMissionHome: 'Our Mission',
-    ourMissionDescHome: 'To represent members, participate in legislation, protect member interests, provide training, and promote the welfare of all hairdressers and allied workers in Rwanda.',
-    trainingGraduation: 'Training Graduation',
-    professionalDevelopment: 'Professional Development',
-    stayConnected: 'Stay Connected',
-    joinOurCommunity: 'Join Our Community',
-    joinOurCommunityDesc: 'Get the latest updates, training opportunities, and industry news delivered to your inbox',
-    enterEmailAddress: 'Enter your email address',
-    subscribe: 'Subscribe',
-    privacyNotice: 'We respect your privacy. Unsubscribe at any time.',
-    newsEvents: 'News & Events',
-    resources: 'Resources',
-    guidelines: 'Guidelines',
-    forms: 'Forms',
-    connect: 'Connect',
-    loadingHawu: 'Loading HAWU...',
-    
-    // Comprehensive Programs section
-    ourPrograms: 'Our Programs',
-    comprehensiveProgramsDesc: 'Comprehensive programs designed to enhance skills, protect rights, and promote professional growth',
-    
-    // Program titles
-    skillsDevelopment: 'Skills Development',
-    skillsDevelopmentDesc: 'Advanced training programs in modern hair dressing techniques, business management, and customer service.',
-    advocacyRepresentation: 'Advocacy & Representation',
-    advocacyRepresentationDesc: 'Strong representation in government discussions, policy making, and industry negotiations.',
-    collectiveBargaining: 'Collective Bargaining',
-    collectiveBargainingDesc: 'Negotiating better working conditions, fair wages, and benefits for all union members.',
-    memberWelfare: 'Member Welfare',
-    memberWelfareDesc: 'Health insurance, emergency support, and social welfare programs for members and families.',
-    businessSupport: 'Business Support',
-    businessSupportDesc: 'Guidance on salon management, licensing, and business development opportunities.',
-    genderEquality: 'Gender Equality',
-    genderEqualityDesc: 'Promoting equal opportunities and fighting discrimination in all work sectors.',
-    
-    // Program features
-    modernTechniques: 'Modern Techniques',
-    businessManagement: 'Business Management',
-    customerService: 'Customer Service',
-    policyMaking: 'Policy Making',
-    governmentRelations: 'Government Relations',
-    industryNegotiations: 'Industry Negotiations',
-    fairWages: 'Fair Wages',
-    betterConditions: 'Better Conditions',
-    memberBenefits: 'Member Benefits',
-    healthInsurance: 'Health Insurance',
-    emergencySupport: 'Emergency Support',
-    socialWelfare: 'Social Welfare',
-    salonManagement: 'Salon Management',
-    licensingHelp: 'Licensing Help',
-    businessDevelopment: 'Business Development',
-    equalOpportunities: 'Equal Opportunities',
-    antiDiscrimination: 'Anti-Discrimination',
-    workplaceRights: 'Workplace Rights',
-    
-    // Testimonials section
-    professionalBarber: 'Professional Barber',
-    beautyTherapist: 'Beauty Therapist',
-    
-    // Features section
-    digitalPlatform: 'Digital Platform',
-    digitalPlatformDesc: 'Modern online platform for member management, bookings, and communication',
-    mobileApp: 'Mobile App',
-    mobileAppDesc: 'Convenient mobile application for on-the-go access to union services',
-    support247: '24/7 Support',
-    support247Desc: 'Round-the-clock support for all member needs and emergencies',
-    trainingHub: 'Training Hub',
-    trainingHubDesc: 'Comprehensive online and offline training resources for skill development',
-    
-    // Updates section
-    annualGeneralMeeting: 'Annual General Meeting 2024',
-    annualGeneralMeetingDesc: 'Join us for our annual general meeting to discuss achievements and future plans.',
-    trainingGraduationParty: 'Training Graduation Party',
-    trainingGraduationPartyDesc: 'Join us for the training graduation party to celebrate our members\' achievements.',
-    certificationProgramLaunch: 'Certification Program Launch',
-    certificationProgramLaunchDesc: 'HAWU partners with leading beauty schools to provide certified training programs.',
-    
-    // Why Choose Us section
-    modernFeatures: 'Modern Features',
-    whyChooseHawu: 'Why Choose HAWU?',
-    whyChooseHawuDesc: 'Experience the future of union membership with our cutting-edge platform and services',
-    memberStories: 'Member Stories',
-    whatOurMembersSay: 'What Our Members Say',
-    whatOurMembersSayDesc: 'Real stories from real people whose lives have been transformed through HAWU membership',
-    
-    // Admin Panel
-    adminPanel: 'Admin Panel',
-    users: 'Users',
-    reports: 'Reports',
-    pendingApprovals: 'Pending Approvals',
-    totalUsers: 'Total Users',
-    totalSalons: 'Total Salons',
-    verifiedSalons: 'Verified Salons',
-    pendingSalons: 'Pending Salons',
-    totalBookings: 'Total Bookings',
-    approve: 'Approve',
-    reject: 'Reject',
-    viewDetails: 'View Details',
-    searchUsers: 'Search users...',
-    filterByRole: 'Filter by role',
-    allRoles: 'All Roles',
-    admin: 'Admin',
-    superadmin: 'Super Admin',
-    owner: 'Salon Owner',
-    barber: 'Barber',
-    client: 'Client',
-    salonVerification: 'Salon Verification',
-    userManagement: 'User Management',
-    notifications: 'Notifications',
-    
-    // Dashboard Barber
-    barberDashboard: 'Barber Dashboard',
-    myBookings: 'My Bookings',
-    todayBookings: 'Today\'s Bookings',
-    upcomingBookings: 'Upcoming Bookings',
-    completedBookings: 'Completed Bookings',
-    selectDate: 'Select Date',
-    noBookingsToday: 'No bookings today',
-    noUpcomingBookings: 'No upcoming bookings',
-    bookingTime: 'Time',
-    clientName: 'Client Name',
-    service: 'Service',
-    status: 'Status',
-    completed: 'Completed',
-    pending: 'Pending',
-    cancelled: 'Cancelled',
-    accessDenied: 'Access Denied',
-    barbersOnly: 'This page is for barbers only',
-    welcomeBack: 'Welcome back',
-    totalEarnings: 'Total Earnings',
-    todayEarnings: 'Today\'s Earnings',
-    availability: 'Availability',
-    blockSlot: 'Block Slot',
-    unblockSlot: 'Unblock Slot',
-    upcoming: 'Upcoming',
-    
-    // Dashboard Owner
-    ownerDashboard: 'Owner Dashboard',
-    salonOverview: 'Salon Overview',
-    totalBookings: 'Total Bookings',
-    monthlyRevenue: 'Monthly Revenue',
-    averageRating: 'Average Rating',
-    recentBookings: 'Recent Bookings',
-    barbers: 'Barbers',
-    addBarber: 'Add Barber',
-    barberName: 'Barber Name',
-    barberEmail: 'Barber Email',
-    barberPhone: 'Barber Phone',
-    barberSpecialty: 'Barber Specialty',
-    overview: 'Overview',
-    bookings: 'Bookings',
-    barbers: 'Barbers',
-    services: 'Services',
-    settings: 'Settings',
-    
-    // Booking Form
-    bookingForm: 'Booking Form',
-    selectBarber: 'Select Barber',
-    selectService: 'Select Service',
-    selectDate: 'Select Date',
-    selectTime: 'Select Time',
-    specialRequests: 'Special Requests',
-    specialRequestsPlaceholder: 'Enter any special requests...',
-    bookAppointment: 'Book Appointment',
-    bookingSuccess: 'Booking Successful!',
-    bookingSuccessDesc: 'Your booking has been confirmed. We\'ll contact you within 24 hours.',
-    duration: 'Duration',
-    minutes: 'minutes',
-    selectTimeSlot: 'Select Time Slot',
-    paymentOption: 'Payment Option',
-    fullPayment: 'Full Payment',
-    depositPayment: 'Deposit Payment',
-    cashPayment: 'Cash Payment',
-    depositAmount: 'Deposit Amount',
-    notes: 'Notes',
-    notesPlaceholder: 'Enter any special notes...',
-    bookingNumber: 'Booking',
-    confirmed: 'Confirmed',
-    partial: 'Partial',
-    none: 'None',
-    
-    // Salon Page
-    salonPage: 'Salon Page',
-    salonDetails: 'Salon Details',
-    salonServices: 'Salon Services',
-    salonBarbers: 'Salon Barbers',
-    bookNow: 'Book Now',
-    rating: 'Rating',
-    reviews: 'Reviews',
-    location: 'Location',
-    hours: 'Hours',
-    contact: 'Contact',
-    
-    // Booking Card
-    bookingCard: 'Booking Card',
-    bookingId: 'Booking ID',
-    bookingDate: 'Booking Date',
-    bookingTime: 'Booking Time',
-    bookingStatus: 'Booking Status',
-    paymentStatus: 'Payment Status',
-    paid: 'Paid',
-    unpaid: 'Unpaid',
-    processing: 'Processing',
-    
-    // Footer
-    footer: 'Footer',
-    aboutHawu: 'About HAWU',
-    aboutHawuDesc: 'Empowering hair dressers and allied workers across Rwanda through unity, advocacy, and professional development',
-    hawurwanda20: 'HAWU Rwanda 2.0',
-    footerDescription: 'Connecting clients with the best salon and barber services in Rwanda. Book appointments, make payments, and manage your beauty needs all in one place.',
-    facebook: 'Facebook',
-    twitter: 'Twitter',
-    instagram: 'Instagram',
-    salonNotFound: 'Salon Not Found',
-    salonNotFoundDesc: 'The salon you are looking for could not be found or may have been removed.',
-    backToSalons: 'Back to Salons',
-    noImagesAvailable: 'No Images Available',
-    verified: 'Verified',
-    selected: 'Selected',
-    expert: 'Expert',
-    selectBarberAndService: 'Please select a barber and service to continue',
-    workingHours: 'Working Hours',
-    closed: 'Closed',
-    findSalons: 'Find Salons',
-    discoverBestSalons: 'Discover the best salons and barbers in Rwanda',
-    searchSalons: 'Search salons...',
-    allDistricts: 'All Districts',
-    verifiedOnly: 'Verified Only',
-    search: 'Search',
-    loadingSalons: 'Loading salons...',
-    errorLoadingSalons: 'Error Loading Salons',
-    errorLoadingSalonsDesc: 'Failed to load salons. Please try again.',
-    retry: 'Retry',
-    noSalonsFound: 'No Salons Found',
-    noSalonsFoundDesc: 'No salons found matching your criteria.',
-    clearFilters: 'Clear Filters',
-    showingResults: 'Showing',
-    of: 'of',
-    salons: 'salons',
-    previous: 'Previous',
-    next: 'Next',
-    page: 'Page',
-    
-    // Profile page translations
-    welcomeBack: 'Welcome back',
-    beautyJourneyContinues: 'Your beauty journey continues here',
-    upcomingBookings: 'Upcoming Bookings',
-    completedSessions: 'Completed Sessions',
-    totalSpent: 'Total Spent',
-    account: 'Account',
-    personalInformation: 'Personal Information',
-    edit: 'Edit',
-    fullName: 'Full Name',
-    nameRequired: 'Name is required',
-    emailRequired: 'Email is required',
-    emailInvalid: 'Please enter a valid email',
-    phoneRequired: 'Phone is required',
-    phoneInvalid: 'Please enter a valid Rwandan phone number',
-    saving: 'Saving...',
-    saveChanges: 'Save Changes',
-    cancel: 'Cancel',
-    salonMember: 'Salon Member',
-    signOut: 'Sign Out',
-    myBookings: 'My Bookings',
-    trackAppointments: 'Track your salon appointments',
-    total: 'Total',
-    readyForFreshLook: 'Ready for a fresh look?',
-    bookNextAppointment: 'Book your next appointment with your favorite salon',
-    loadingBookings: 'Loading your bookings...',
-    pleaseWaitAppointments: 'Please wait while we fetch your appointments',
-    noBookingsYet: 'No bookings yet',
-    startBeautyJourney: 'Start your beauty journey by booking your first appointment!',
-    findSalonsNearYou: 'Find Salons Near You',
-    upcoming: 'Upcoming',
-    completed: 'Completed',
-    pleaseLoginToViewProfile: 'Please log in to view your profile.',
-  }
-};
 
-// Helper function to get translation
-export const t = (key: string, language: Language = 'rw'): string => {
-  const keys = key.split('.');
-  let value: any = translations[language];
-  
-  for (const k of keys) {
-    if (value && typeof value === 'object' && k in value) {
-      value = value[k];
-    } else {
-      return key; // Return key if translation not found
-    }
-  }
-  
-  return typeof value === 'string' ? value : key;
+    members_one: '{count} active member',
+    members_other: '{count} active members',
+
+    // About
+    whoWeAre: 'Who We Are',
+    missionText:
+      'To promote the growth, education, and empowerment of hairdressers and other workers.',
+    ourVision: 'Our Vision',
+    visionText: 'To build a skilled, innovative, and professional community.',
+    ourValues: 'Our Values',
+    valueProfessionalism: 'Professionalism',
+    valueIntegrity: 'Integrity',
+    valueUnity: 'Unity and Collaboration',
+    valueInnovation: 'Innovation',
+
+    // Programs
+    programsTitle: 'Our Programs',
+    training: 'Training and Development',
+    financialSupport: 'Financial Support',
+    healthInsurance: 'Health Insurance',
+    legalSupport: 'Legal Support and Advocacy',
+    partnerships: 'Partnerships',
+    innovation: 'Innovation and Technology',
+
+    // Call to Action
+    readyToJoin: 'Ready to Join HAWU?',
+    readyToJoinDesc:
+      'Become a member and access development opportunities.',
+    becomeMember: 'Become a Member',
+
+    // Contact
+    address: 'Address',
+    phone: 'Phone',
+    email: 'Email',
+    message: 'Message',
+    sendMessage: 'Send Message',
+
+    // Footer
+    empoweringHairdressers:
+      'Empowering hairdressers and other workers across Rwanda.',
+    rightsReserved: 'All rights reserved © 2025 HAWU.',
+    followUs: 'Follow Us',
+    quickLinks: 'Quick Links',
+  },
 };
