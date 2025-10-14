@@ -1,0 +1,7 @@
+<svg width="152" height="152" viewBox="0 0 152 152" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="152" height="152" rx="33" fill="#002D8D"/>
+  <g transform="translate(25, 25)">
+    <circle cx="51" cy="51" r="48" fill="white"/>
+    <text x="51" y="63" text-anchor="middle" fill="#002D8D" font-family="Arial, sans-serif" font-size="34" font-weight="bold">H</text>
+  </g>
+</svg>
