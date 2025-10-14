@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { bookingService, availabilityService } from '../services/api';
 import BookingCard from '../components/BookingCard';
 import { 
@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 
 const DashboardBarber: React.FC = () => {
   const { user } = useAuthStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -32,7 +32,7 @@ const DashboardBarber: React.FC = () => {
   });
 
   // Get availability
-  const { data: availability } = useQuery({
+  useQuery({
     queryKey: ['barber-availability', user?._id],
     queryFn: () => availabilityService.getAvailability(user!._id),
     enabled: !!user,

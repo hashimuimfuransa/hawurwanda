@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { User, Mail, Phone, Lock, Eye, EyeOff, Scissors, Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Navbar from '../components/Navbar';
@@ -20,7 +20,7 @@ interface RegisterForm {
 const Register: React.FC = () => {
   const { register: registerUser } = useAuthStore();
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

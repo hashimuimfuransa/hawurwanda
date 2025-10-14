@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Calendar, Clock, CreditCard, User } from 'lucide-react';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import toast from 'react-hot-toast';
 
 interface BookingFormProps {
@@ -43,7 +43,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   salon,
   onSubmit,
 }) => {
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);

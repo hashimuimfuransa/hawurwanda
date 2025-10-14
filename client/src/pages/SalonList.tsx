@@ -4,14 +4,14 @@ import { Search, MapPin, Filter, Star, Sparkles, Users, Award } from 'lucide-rea
 import { salonService } from '../services/api';
 import SalonCard from '../components/SalonCard';
 import { useNavigate } from 'react-router-dom';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { useThemeStore } from '../stores/themeStore';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
 const SalonList: React.FC = () => {
   const navigate = useNavigate();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const { isDarkMode } = useThemeStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [district, setDistrict] = useState('');

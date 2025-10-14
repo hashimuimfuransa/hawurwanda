@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { 
   GraduationCap, 
   Megaphone, 
@@ -41,7 +41,7 @@ import {
 const Home: React.FC = () => {
   const { user } = useAuthStore();
   const { isDarkMode, toggleTheme } = useThemeStore();
-  const { language, toggleLanguage } = useTranslationStore();
+  const { language, toggleLanguage, t } = useTranslationStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 

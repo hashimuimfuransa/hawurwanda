@@ -14,7 +14,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import Navbar from '../components/Navbar';
 import { api } from '../services/api';
 

@@ -5,7 +5,7 @@ import { Star, MapPin, Clock, Phone, Mail, Calendar, User, CheckCircle, ArrowLef
 import { salonService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import Navbar from '../components/Navbar';
 
 const SalonPage: React.FC = () => {
@@ -13,7 +13,7 @@ const SalonPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const [selectedBarber, setSelectedBarber] = useState<string>('');
   const [selectedService, setSelectedService] = useState<string>('');
 

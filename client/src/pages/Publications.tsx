@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Download, Calendar, FileText, Search, Filter, Eye } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import Navbar from '../components/Navbar';
 
 const Publications: React.FC = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
 
   const publications = [
     {

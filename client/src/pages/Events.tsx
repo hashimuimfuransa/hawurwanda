@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, Users, ArrowRight, Filter, Search } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import Navbar from '../components/Navbar';
 
 const Events: React.FC = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
 
   const events = [
     {

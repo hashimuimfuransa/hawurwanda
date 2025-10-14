@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { 
   Scissors, 
   Sun, 
@@ -15,7 +15,7 @@ import {
 const Navbar: React.FC = () => {
   const { user } = useAuthStore();
   const { isDarkMode, toggleTheme } = useThemeStore();
-  const { language, toggleLanguage } = useTranslationStore();
+  const { language, toggleLanguage, t } = useTranslationStore();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -206,3 +206,4 @@ const Navbar: React.FC = () => {
 };
 
 export default Navbar;
+

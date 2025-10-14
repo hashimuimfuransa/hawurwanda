@@ -1,12 +1,12 @@
 import React from 'react';
 import { Users, Target, Heart, Award, CheckCircle, Globe, Shield, Zap } from 'lucide-react';
 import { useThemeStore } from '../stores/themeStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import Navbar from '../components/Navbar';
 
 const About: React.FC = () => {
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const stats = [
     { number: '8000+', label: t('activeMembers', language), icon: Users, color: 'text-blue-600' },
     { number: '30', label: t('districtsCovered', language), icon: Globe, color: 'text-green-600' },

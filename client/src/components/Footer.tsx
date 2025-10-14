@@ -1,8 +1,8 @@
 import React from 'react';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 
 const Footer: React.FC = () => {
-  const { language } = useTranslationStore();
+  const { t, language } = useTranslationStore();
   
   return (
     <footer className="bg-gray-800 text-white">

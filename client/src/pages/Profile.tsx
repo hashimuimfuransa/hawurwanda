@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { bookingService, authService } from '../services/api';
 import BookingCard from '../components/BookingCard';
 import Navbar from '../components/Navbar';
@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);

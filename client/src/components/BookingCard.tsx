@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar, Clock, User, CreditCard, MapPin } from 'lucide-react';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 
 interface BookingCardProps {
   booking: {
@@ -45,7 +45,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
   onPaymentRecord, 
   userRole 
 }) => {
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {

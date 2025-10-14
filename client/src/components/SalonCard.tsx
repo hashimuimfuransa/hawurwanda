@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, MapPin, Clock, Users, CheckCircle } from 'lucide-react';
-import { useTranslationStore, t } from '../stores/translationStore';
+import { useTranslationStore } from '../stores/translationStore';
 
 interface SalonCardProps {
   salon: {
