@@ -49,11 +49,14 @@ export const useTranslationStore = create<TranslationState>()(
       },
 
       // Sentence formatter for placeholders like "{name} joined {year}"
-      formatSentence: (key, values) => {
+      formatSentence: (key: string, values: Record<string, string | number>) => {
         const lang = get().language;
         const text = translations[lang][key] || key;
-        return text.replace(/\{(\w+)\}/g, (_, v) => values[v] ?? '');
+        return text.replace(/\{(\w+)\}/g, (_, v) => 
+          values[v] !== undefined ? String(values[v]) : ''
+        );
       },
+      
     }),
     { name: 'language-storage' }
   )
