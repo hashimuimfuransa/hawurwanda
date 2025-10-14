@@ -30,7 +30,7 @@ describe('App Component', () => {
       </TestWrapper>
     );
     
-    expect(screen.getByText('HAWU Rwanda 2.0')).toBeInTheDocument();
+    expect(screen.getByText('HAWU Salon Network')).toBeInTheDocument();
   });
 
   it('renders navigation links', () => {

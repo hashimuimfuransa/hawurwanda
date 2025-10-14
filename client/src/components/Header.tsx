@@ -42,7 +42,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <h1 className="text-2xl font-bold text-blue-600">HAWU Rwanda 2.0</h1>
+            <h1 className="text-2xl font-bold text-blue-600">HAWU Salon Network</h1>
           </Link>
 
           {/* Navigation */}

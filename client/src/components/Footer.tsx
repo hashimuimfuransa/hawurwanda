@@ -79,7 +79,7 @@ const Footer: React.FC = () => {
 
         <div className="border-t border-gray-700 mt-8 pt-8 text-center">
           <p className="text-gray-300 text-sm">
-            © 2024 HAWU Rwanda 2.0. All rights reserved.
+            © 2024 HAWU Salon Network. All rights reserved.
           </p>
         </div>
       </div>

@@ -66,7 +66,7 @@ const Navbar: React.FC = () => {
               <Scissors className="h-6 w-6 text-white hidden" />
             </div>
             <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-              HAWU
+              HAWU Salon Network
             </span>
           </Link>
 
