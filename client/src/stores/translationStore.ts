@@ -27,8 +27,21 @@ export const useTranslationStore = create<TranslationState>()(
       // Basic translation getter
       t: (key, variables = {}) => {
         const lang = get().language;
-        const text = translations[lang][key] || key;
-        return text.replace(/\{(\w+)\}/g, (_, v) => variables[v] ?? '');
+
+        if (translations[lang][key]) {
+          return translations[lang][key].replace(/\{(\w+)\}/g, (_, v) => variables[v] ?? '');
+        }
+// Define the fallback order for translations
+      const fallbackOrder: Language[] = ['en', 'rw'];
+
+        for (const fallbackLang of fallbackOrder) {
+          if (translations[fallbackLang][key]) {
+            return translations[fallbackLang][key].replace(/\{(\w+)\}/g, (_, v) => variables[v] ?? '');
+          }
+        }
+
+        // Return the key if no translation is found in any language
+        return key;
       },
 
       // Automatic pluralization
