@@ -7,6 +7,7 @@ import About from './pages/About';
 import Events from './pages/Events';
 import Contact from './pages/Contact';
 import Publications from './pages/Publications';
+import Programs from './pages/Programs';
 import SalonList from './pages/SalonList';
 import SalonPage from './pages/SalonPage';
 import BookingSelection from './pages/BookingSelection';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/events" element={<Events />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/publications" element={<Publications />} />
+          <Route path="/programs" element={<Programs />} />
           <Route path="/salons" element={<SalonList />} />
           <Route path="/salons/:id" element={<SalonPage />} />
           <Route path="/booking" element={<BookingSelection />} />

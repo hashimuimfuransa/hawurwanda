@@ -34,7 +34,7 @@ const Navbar: React.FC = () => {
     { to: '/', label: t('home', language) },
     { to: '/about', label: t('about', language) },
     { to: '/salons', label: t('salons', language) },
-    { to: '/events', label: t('events', language) },
+    { to: '/programs', label: t('programs', language) },
     { to: '/publications', label: t('publications', language) },
     { to: '/contact', label: t('contact', language) }
   ];

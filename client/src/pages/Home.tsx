@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useTranslationStore } from '../stores/translationStore';
+import ProgramCards from '../components/ProgramCards';
+import ProgramSupportHighlights from '../components/ProgramSupportHighlights';
 import { 
   GraduationCap, 
   Megaphone, 
@@ -119,50 +121,7 @@ const Home: React.FC = () => {
     { number: '7+', label: t('yearsOfService', language), icon: Award, color: 'text-purple-600' }
   ];
 
-  const programs = [
-    {
-      title: t('skillsDevelopment', language),
-      description: t('skillsDevelopmentDesc', language),
-      icon: GraduationCap,
-      color: 'from-emerald-500 to-teal-600',
-      features: [t('modernTechniques', language), t('businessManagement', language), t('customerService', language)]
-    },
-    {
-      title: t('advocacyRepresentation', language),
-      description: t('advocacyRepresentationDesc', language),
-      icon: Megaphone,
-      color: 'from-blue-500 to-indigo-600',
-      features: [t('policyMaking', language), t('governmentRelations', language), t('industryNegotiations', language)]
-    },
-    {
-      title: t('collectiveBargaining', language),
-      description: t('collectiveBargainingDesc', language),
-      icon: Handshake,
-      color: 'from-purple-500 to-pink-600',
-      features: [t('fairWages', language), t('betterConditions', language), t('memberBenefits', language)]
-    },
-    {
-      title: t('memberWelfare', language),
-      description: t('memberWelfareDesc', language),
-      icon: Heart,
-      color: 'from-red-500 to-rose-600',
-      features: [t('healthInsurance', language), t('emergencySupport', language), t('socialWelfare', language)]
-    },
-    {
-      title: t('businessSupport', language),
-      description: t('businessSupportDesc', language),
-      icon: Briefcase,
-      color: 'from-orange-500 to-amber-600',
-      features: [t('salonManagement', language), t('licensingHelp', language), t('businessDevelopment', language)]
-    },
-    {
-      title: t('genderEquality', language),
-      description: t('genderEqualityDesc', language),
-      icon: Scale,
-      color: 'from-cyan-500 to-blue-600',
-      features: [t('equalOpportunities', language), t('antiDiscrimination', language), t('workplaceRights', language)]
-    }
-  ];
+
 
   const testimonials = [
     {
@@ -249,7 +208,6 @@ const Home: React.FC = () => {
                 { to: '/about', label: t('about', language) },
                 { to: '/salons', label: t('salons', language) },
                 { to: '/programs', label: t('programs', language) },
-                { to: '/news', label: t('news', language) },
                 { to: '/publications', label: t('publications', language) },
                 { to: '/contact', label: t('contact', language) }
               ].map((item) => (
@@ -636,40 +594,23 @@ const Home: React.FC = () => {
           <div className="text-center mb-16">
             <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-100 to-blue-100 dark:from-emerald-900 dark:to-blue-900 text-emerald-800 dark:text-emerald-200 rounded-full text-sm font-semibold mb-6 shadow-lg">
               <Zap className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400" />
-{t('ourPrograms', language)}
+              {t('programsTitle', language)}
             </div>
             <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-              {t('comprehensivePrograms', language)}
+              {t('programsSupportTitle', language)}
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto">
-              {t('comprehensiveProgramsDesc', language)}
+              {t('programsIntro', language)}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {programs.map((program, index) => (
-              <div key={index} className="group bg-white dark:bg-gray-800/80 backdrop-blur-sm rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 p-8 border border-white/20 dark:border-gray-700/20 transform hover:scale-105 hover:-translate-y-2">
-                <div className={`w-16 h-16 bg-gradient-to-r ${program.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                  <program.icon className="h-8 w-8 text-white" />
-              </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 group-hover:text-emerald-600 transition-colors">
-                  {program.title}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
-                  {program.description}
-                </p>
-                
-                {/* Features */}
-                <div className="space-y-2">
-                  {program.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                      <CheckCircle className="h-4 w-4 text-emerald-500 mr-2 flex-shrink-0" />
-                      {feature}
-              </div>
-                  ))}
-            </div>
-              </div>
-            ))}
+          <ProgramCards />
+
+          <div className="mt-16 text-center">
+            <h3 className="text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              {t('programsSupportSubtitle', language)}
+            </h3>
+            <ProgramSupportHighlights className="mt-12" />
           </div>
         </div>
       </section>
