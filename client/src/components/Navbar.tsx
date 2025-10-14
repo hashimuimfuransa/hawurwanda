@@ -50,24 +50,14 @@ const Navbar: React.FC = () => {
         : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3 group">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 via-blue-500 to-purple-600 rounded-full flex items-center justify-center transform group-hover:scale-110 transition-all duration-300 shadow-lg overflow-hidden">
-              <img 
-                src="/images/logo.png" 
-                alt="HAWU Logo" 
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling!.style.display = 'flex';
-                }}
-              />
-              <Scissors className="h-6 w-6 text-white hidden" />
-            </div>
-            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-              HAWU Salon Network
-            </span>
+          <Link to="/" className="flex items-center">
+            <img
+              src="/images/logo.png"
+              alt="HAWU Logo"
+              className="h-20 sm:h-24 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

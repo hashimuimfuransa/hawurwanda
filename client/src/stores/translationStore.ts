@@ -122,6 +122,14 @@ export const translations: Record<Language, Record<string, string>> = {
     valueUnity: 'Ubumwe n’Ubufatanye',
     valueInnovation: 'Ubuvumbuzi',
 
+    ourVisionHome: 'Icyerekezo cyacu',
+    ourVisionDescHome: 'Intego yacu ni uguteza imbere no gufasha abari mu mwuga wo gutunganya ubwiza mu Rwanda.',
+    ourMissionHome: 'Ubutumwa bwacu',
+    ourMissionDescHome: 'Dutanga porogaramu zituma abanyamuryango bagira ubumenyi n’imibereho myiza irambye.',
+    trainingGraduation: 'Umuhango w’itangira cyangwa isoza amahugurwa',
+    professionalDevelopment: 'Iterambere ry’Ubumenyi' ,
+
+
     // Programs
     programsTitle: 'Porogaramu zacu',
     training: 'Amahugurwa n’Iterambere',
@@ -195,6 +203,14 @@ export const translations: Record<Language, Record<string, string>> = {
     valueIntegrity: 'Integrity',
     valueUnity: 'Unity and Collaboration',
     valueInnovation: 'Innovation',
+
+    ourVisionHome: 'Our Vision',
+    ourVisionDescHome: 'We aim to empower and uplift the hair and beauty community across Rwanda.',
+    ourMissionHome: 'Our Mission',
+    ourMissionDescHome: 'We deliver programs that promote professional growth and sustainable livelihoods.',
+    trainingGraduation: 'Training Graduation',
+    professionalDevelopment: 'Professional Development',
+
 
     // Programs
     programsTitle: 'Our Programs',
