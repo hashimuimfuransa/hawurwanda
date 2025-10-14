@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "HAWU Rwanda 2.0 API",
+    "description": "API collection for HAWU Rwanda 2.0 salon booking platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"+250788123456\",\n  \"password\": \"password123\",\n  \"role\": \"client\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneOrEmail\": \"admin@hawu.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Salons",
+      "item": [
+        {
+          "name": "Get All Salons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/salons",
+              "host": ["{{baseUrl}}"],
+              "path": ["salons"]
+            }
+          }
+        },
+        {
+          "name": "Get Salon by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/salons/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["salons", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "salon_id_here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Salon",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Salon\",\n  \"address\": \"KG 456 St, Kacyiru\",\n  \"district\": \"Kigali\",\n  \"latitude\": -1.9441,\n  \"longitude\": 30.0619,\n  \"description\": \"A new salon in Kigali\",\n  \"phone\": \"+250788123456\",\n  \"email\": \"info@newsalon.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/salons",
+              "host": ["{{baseUrl}}"],
+              "path": ["salons"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salonId\": \"salon_id_here\",\n  \"barberId\": \"barber_id_here\",\n  \"serviceId\": \"service_id_here\",\n  \"timeSlot\": \"2024-01-15T10:00:00Z\",\n  \"paymentOption\": \"deposit\",\n  \"depositAmount\": 2500\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            }
+          }
+        },
+        {
+          "name": "Get Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Confirm Airtel Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactionId\": \"TXN123456789\",\n  \"status\": \"completed\",\n  \"airtelTransactionCode\": \"AIR123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/airtel/confirm",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "airtel", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "Record Manual Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"booking_id_here\",\n  \"amount\": 5000,\n  \"method\": \"cash\",\n  \"note\": \"Cash payment received\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transactions/manual",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions", "manual"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Pending Salons",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/salons/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "salons", "pending"]
+            }
+          }
+        },
+        {
+          "name": "Verify Salon",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"verified\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/salons/:id/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "salons", ":id", "verify"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "salon_id_here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Reports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports?from=2024-01-01&to=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["admin", "reports"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

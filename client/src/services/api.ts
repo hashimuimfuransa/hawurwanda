@@ -1,0 +1,257 @@
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// API service functions
+export const authService = {
+  login: (phoneOrEmail: string, password: string) =>
+    api.post('/auth/login', { phoneOrEmail, password }),
+  
+  register: (userData: any) =>
+    api.post('/auth/register', userData),
+  
+  getProfile: () =>
+    api.get('/auth/me'),
+  
+  updateProfile: (userData: any) =>
+    api.patch('/auth/me', userData),
+};
+
+export const userService = {
+  getUsers: (params?: any) =>
+    api.get('/users', { params }),
+  
+  getUser: (id: string) =>
+    api.get(`/users/${id}`),
+  
+  updateUser: (id: string, userData: any) =>
+    api.patch(`/users/${id}`, userData),
+  
+  deleteUser: (id: string) =>
+    api.delete(`/users/${id}`),
+};
+
+export const salonService = {
+  getSalons: (params?: any) =>
+    api.get('/salons', { params }),
+  
+  getSalon: (id: string) =>
+    api.get(`/salons/${id}`),
+  
+  createSalon: (salonData: any) => {
+    const isFormData = salonData instanceof FormData;
+    return api.post('/salons', salonData, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
+  },
+  
+  updateSalon: (id: string, salonData: any) =>
+    api.patch(`/salons/${id}`, salonData),
+  
+  uploadGallery: (id: string, images: FileList) => {
+    const formData = new FormData();
+    Array.from(images).forEach((image) => {
+      formData.append('images', image);
+    });
+    return api.post(`/salons/${id}/gallery`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  
+  addService: (id: string, serviceData: any) =>
+    api.post(`/salons/${id}/services`, serviceData),
+  
+  addBarber: (id: string, barberData: any) =>
+    api.post(`/salons/${id}/barbers`, barberData),
+  
+  getServices: (id: string) =>
+    api.get(`/salons/${id}/services`),
+  
+  getBarbers: (id: string) =>
+    api.get(`/salons/${id}/barbers`),
+};
+
+export const bookingService = {
+  createBooking: (bookingData: any) =>
+    api.post('/bookings', bookingData),
+  
+  getBookings: (params?: any) =>
+    api.get('/bookings', { params }),
+  
+  getBooking: (id: string) =>
+    api.get(`/bookings/${id}`),
+  
+  updateBookingStatus: (id: string, status: string, notes?: string) =>
+    api.patch(`/bookings/${id}/status`, { status, notes }),
+  
+  cancelBooking: (id: string) =>
+    api.patch(`/bookings/${id}/cancel`),
+  
+  getAvailableSlots: (barberId: string, date: string) =>
+    api.get(`/bookings/availability/${barberId}`, { params: { date } }),
+};
+
+export const transactionService = {
+  confirmAirtelPayment: (data: any) =>
+    api.post('/transactions/airtel/confirm', data),
+  
+  recordManualPayment: (data: any) =>
+    api.post('/transactions/manual', data),
+  
+  getTransactions: (params?: any) =>
+    api.get('/transactions', { params }),
+  
+  getTransaction: (id: string) =>
+    api.get(`/transactions/${id}`),
+  
+  getPaymentSummary: (bookingId: string) =>
+    api.get(`/transactions/booking/${bookingId}/summary`),
+};
+
+export const availabilityService = {
+  getAvailability: (barberId: string) =>
+    api.get(`/availability/${barberId}`),
+  
+  updateAvailability: (barberId: string, availabilityData: any) =>
+    api.put(`/availability/${barberId}`, availabilityData),
+  
+  blockSlots: (barberId: string, slots: string[]) =>
+    api.post(`/availability/${barberId}/block`, { slots }),
+  
+  unblockSlots: (barberId: string, slots: string[]) =>
+    api.post(`/availability/${barberId}/unblock`, { slots }),
+};
+
+export const notificationService = {
+  getNotifications: (params?: any) =>
+    api.get('/notifications', { params }),
+  
+  markAsRead: (id: string) =>
+    api.patch(`/notifications/${id}/read`),
+  
+  markAllAsRead: () =>
+    api.patch('/notifications/read-all'),
+  
+  deleteNotification: (id: string) =>
+    api.delete(`/notifications/${id}`),
+  
+  getNotificationCount: () =>
+    api.get('/notifications/count'),
+};
+
+export const adminService = {
+  getPendingSalons: (params?: any) =>
+    api.get('/admin/salons/pending', { params }),
+  
+  getSalonDetails: (id: string) =>
+    api.get(`/admin/salons/${id}/details`),
+  
+  verifySalon: (id: string, verified: boolean) =>
+    api.patch(`/admin/salons/${id}/verify`, { verified }),
+  
+  getReports: (params?: any) =>
+    api.get('/admin/reports', { params }),
+  
+  getUsers: (params?: any) =>
+    api.get('/admin/users', { params }),
+  
+  getAllUsers: (params?: any) =>
+    api.get('/admin/users', { params }),
+  
+  createAdmin: (userData: any) =>
+    api.post('/admin/users', userData),
+  
+  createUser: (userData: any) =>
+    api.post('/admin/users/create', userData),
+  
+  updateUser: (id: string, userData: any) =>
+    api.patch(`/admin/users/${id}`, userData),
+  
+  deleteUser: (id: string) =>
+    api.delete(`/admin/users/${id}`),
+  
+  getComprehensiveStats: () =>
+    api.get('/admin/stats/comprehensive'),
+  
+  getActivities: (params?: any) =>
+    api.get('/admin/activities', { params }),
+  
+  getNotifications: (params?: any) =>
+    api.get('/admin/notifications', { params }),
+
+  getAllBookings: (params?: any) =>
+    api.get('/admin/bookings', { params }),
+};
+
+export const superAdminService = {
+  // Super Admin specific methods
+  getSuperAdminStats: () =>
+    api.get('/admin/superadmin/stats'),
+  
+  getAllUsers: (params?: any) =>
+    api.get('/admin/superadmin/users', { params }),
+  
+  getUserDetails: (id: string) =>
+    api.get(`/admin/superadmin/users/${id}`),
+  
+  createUser: (userData: any) =>
+    api.post('/admin/superadmin/users', userData),
+  
+  updateUserById: (id: string, userData: any) =>
+    api.patch(`/admin/superadmin/users/${id}`, userData),
+  
+  deleteUserById: (id: string) =>
+    api.delete(`/admin/superadmin/users/${id}`),
+  
+  bulkUpdateUsers: (userIds: string[], updates: any) =>
+    api.patch('/admin/superadmin/users/bulk', { userIds, updates }),
+  
+  getSystemActivities: (params?: any) =>
+    api.get('/admin/superadmin/activities', { params }),
+  
+  getAllSalons: (params?: any) =>
+    api.get('/admin/superadmin/salons', { params }),
+  
+  deleteSalon: (id: string) =>
+    api.delete(`/admin/superadmin/salons/${id}`),
+  
+  updateSalon: (id: string, salonData: any) =>
+    api.patch(`/admin/superadmin/salons/${id}`, salonData),
+  
+  createAdmin: (adminData: any) =>
+    api.post('/admin/superadmin/create-admin', adminData),
+};
