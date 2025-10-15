@@ -1455,7 +1455,7 @@ const AdminPanel: React.FC = () => {
             setShowSalonDetailsModal(false);
             setSelectedSalonId(null);
           }}
-          salonDetails={salonDetails}
+          salonDetails={salonDetails?.data?.salon || salonDetails?.salon || salonDetails}
           salonDetailsLoading={salonDetailsLoading}
         />
       </div>

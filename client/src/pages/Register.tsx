@@ -41,7 +41,17 @@ const Register: React.FC = () => {
       const { confirmPassword, ...userData } = data;
       await registerUser(userData);
       toast.success('Registration successful!');
-      navigate('/');
+      
+      // Redirect based on user role after registration
+      if (data.role === 'owner') {
+        navigate('/dashboard/owner');
+      } else if (data.role === 'barber') {
+        navigate('/dashboard/barber');
+      } else if (data.role === 'client') {
+        navigate('/salons');
+      } else {
+        navigate('/');
+      }
     } catch (error: any) {
       toast.error(error.message);
     } finally {

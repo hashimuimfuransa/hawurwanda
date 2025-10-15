@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { Building2, MapPin, Phone, Mail, FileText, Image, Upload, Video, Users, IdCard, Briefcase } from 'lucide-react';
+import { Building2, MapPin, Phone, Mail, FileText, Image, Upload, Video, Users, IdCard, Briefcase, Loader2 } from 'lucide-react';
 import { salonService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import MapLocationPicker from '../components/MapLocationPicker';
@@ -750,16 +750,31 @@ const CreateSalon: React.FC = () => {
             <button
               type="button"
               onClick={handleCancel}
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition-colors"
+              disabled={createSalonMutation.isPending}
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={createSalonMutation.isPending}
-              className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-md hover:shadow-lg transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
+              className={`inline-flex items-center justify-center px-6 py-2.5 rounded-xl font-semibold shadow-md transition-all duration-200 min-w-[140px] ${
+                createSalonMutation.isPending
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg hover:-translate-y-0.5'
+              } text-white disabled:opacity-70`}
             >
-              {createSalonMutation.isPending ? 'Creating...' : 'Create salon'}
+              {createSalonMutation.isPending ? (
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Creating salon...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-4 w-4" />
+                  <span>Create salon</span>
+                </div>
+              )}
             </button>
           </div>
         </form>
