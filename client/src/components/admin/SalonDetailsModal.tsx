@@ -88,14 +88,33 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
             </div>
           ) : salonDetails ? (
             <div className="space-y-6">
-              {/* Logo and Cover Images */}
-              {(salonDetails.logo || (salonDetails.coverImages && salonDetails.coverImages.length > 0)) && (
+              {/* Logo, Cover Images, and Promotional Video */}
+              {(salonDetails.logo || (salonDetails.coverImages && salonDetails.coverImages.length > 0) || salonDetails.promotionalVideo) && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50/50 rounded-2xl p-6 border border-indigo-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Camera className="h-5 w-5 mr-2 text-indigo-600" />
-                    Branding & Cover Images
+                    Branding & Media
                   </h3>
                   <div className="space-y-4">
+                    {/* Promotional Video */}
+                    {salonDetails.promotionalVideo && (
+                      <div>
+                        <p className="text-sm text-slate-600 font-medium mb-2">Promotional Video</p>
+                        <div className="aspect-video rounded-xl overflow-hidden border-2 border-indigo-200 bg-slate-900">
+                          <video
+                            controls
+                            className="w-full h-full object-cover"
+                            poster={salonDetails.coverImages?.[0] || salonDetails.logo || undefined}
+                          >
+                            <source src={salonDetails.promotionalVideo} type="video/mp4" />
+                            <source src={salonDetails.promotionalVideo} type="video/webm" />
+                            <source src={salonDetails.promotionalVideo} type="video/mov" />
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      </div>
+                    )}
+                    
                     {salonDetails.logo && (
                       <div>
                         <p className="text-sm text-slate-600 font-medium mb-2">Salon Logo</p>

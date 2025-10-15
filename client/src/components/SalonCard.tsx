@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, MapPin, Clock, Users, CheckCircle } from 'lucide-react';
+import { Star, MapPin, Clock, Users, CheckCircle, Play } from 'lucide-react';
 import { useTranslationStore } from '../stores/translationStore';
 
 interface SalonCardProps {
@@ -10,6 +10,7 @@ interface SalonCardProps {
     district: string;
     verified: boolean;
     gallery: string[];
+    promotionalVideo?: string;
     services: Array<{
       _id: string;
       title: string;
@@ -53,6 +54,13 @@ const SalonCard: React.FC<SalonCardProps> = ({ salon, onClick }) => {
         {salon.verified && (
           <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
             <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+          </div>
+        )}
+        
+        {salon.promotionalVideo && (
+          <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded-full flex items-center">
+            <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+            <span className="text-xs font-medium">Video</span>
           </div>
         )}
       </div>

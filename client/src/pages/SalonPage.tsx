@@ -100,8 +100,28 @@ const SalonPage: React.FC = () => {
           {/* Salon Header */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-2xl shadow-xl mb-8 overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-8">
-              {/* Salon Images */}
-              <div className="lg:col-span-2">
+              {/* Salon Images and Video */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Promotional Video */}
+                {salon.promotionalVideo && (
+                  <div className="relative overflow-hidden rounded-xl shadow-lg">
+                    <video
+                      controls
+                      className="w-full h-64 object-cover rounded-xl"
+                      poster={salon.gallery[0] || undefined}
+                    >
+                      <source src={salon.promotionalVideo} type="video/mp4" />
+                      <source src={salon.promotionalVideo} type="video/webm" />
+                      <source src={salon.promotionalVideo} type="video/mov" />
+                      Your browser does not support the video tag.
+                    </video>
+                    <div className="absolute top-4 left-4 bg-gradient-to-r from-emerald-500 to-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Promotional Video
+                    </div>
+                  </div>
+                )}
+
+                {/* Salon Images */}
                 {salon.gallery.length > 0 ? (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
@@ -125,7 +145,7 @@ const SalonPage: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : !salon.promotionalVideo && (
                   <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl flex items-center justify-center">
                     <div className="text-center">
                       <Sparkles className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />

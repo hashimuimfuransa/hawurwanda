@@ -71,6 +71,8 @@ const AdminPanel: React.FC = () => {
   const [bookingSearchTerm, setBookingSearchTerm] = useState('');
   const [bookingStatusFilter, setBookingStatusFilter] = useState('');
   const [salonStatusFilter, setSalonStatusFilter] = useState('');
+  const [salonSearchQuery, setSalonSearchQuery] = useState('');
+  const [salonSortBy, setSalonSortBy] = useState('newest');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -189,6 +191,8 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-salons'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
+      queryClient.invalidateQueries({ queryKey: ['salons'] });
       toast.success('Salon verified successfully');
       setShowSalonDetailsModal(false);
       setSelectedSalonId(null);
@@ -203,6 +207,8 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-salons'] });
+      queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
+      queryClient.invalidateQueries({ queryKey: ['salons'] });
       toast.success('Salon rejected');
       setShowSalonDetailsModal(false);
       setSelectedSalonId(null);
@@ -259,6 +265,85 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-notifications'] }),
   });
 
+  // Helper function for salon status badge styling
+  const getSalonStatusBadgeColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'verified':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'pending':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'rejected':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getSalonStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'verified':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'pending':
+        return <Clock className="h-4 w-4" />;
+      case 'rejected':
+        return <XCircle className="h-4 w-4" />;
+      default:
+        return <AlertTriangle className="h-4 w-4" />;
+    }
+  };
+
+  // Helper function to get salon status based on verified field
+  const getSalonStatus = (salon: any) => {
+    if (salon.verified === true) return 'verified';
+    if (salon.verified === false) return 'pending';
+    return 'unknown';
+  };
+
+  // Enhanced salon filtering and sorting
+  const getFilteredAndSortedSalons = () => {
+    let filtered = salons.filter((salon: any) => {
+      // Status filter using the verified boolean field
+      const salonStatus = getSalonStatus(salon);
+      const statusMatch = !salonStatusFilter || salonStatus === salonStatusFilter.toLowerCase();
+      
+      // Search filter - search across multiple fields
+      const searchMatch = !salonSearchQuery || 
+        salon.name?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
+        salon.address?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
+        salon.email?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
+        salon.phone?.includes(salonSearchQuery);
+        
+      return statusMatch && searchMatch;
+    });
+
+    // Sort salons based on selected criteria
+    filtered.sort((a: any, b: any) => {
+      switch (salonSortBy) {
+        case 'name-asc':
+          return (a.name || '').localeCompare(b.name || '');
+        case 'name-desc':
+          return (b.name || '').localeCompare(a.name || '');
+        case 'newest':
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case 'oldest':
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case 'most-bookings':
+          const aBookings = bookings.filter((b: any) => b.salon?._id === a._id).length;
+          const bBookings = bookings.filter((b: any) => b.salon?._id === b._id).length;
+          return bBookings - aBookings;
+        case 'status':
+          const statusOrder = { verified: 0, pending: 1, rejected: 2 };
+          const aStatus = statusOrder[getSalonStatus(a) as keyof typeof statusOrder] ?? 3;
+          const bStatus = statusOrder[getSalonStatus(b) as keyof typeof statusOrder] ?? 3;
+          return aStatus - bStatus;
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  };
+
   // Filter functions
   const filteredUsers = users.filter((u: any) => {
     const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -267,11 +352,7 @@ const AdminPanel: React.FC = () => {
     return matchesSearch && matchesRole;
   });
 
-  const filteredSalons = salons.filter((s: any) => {
-    const matchesSearch = s.name?.toLowerCase().includes(ownerSearchTerm.toLowerCase());
-    const matchesStatus = !salonStatusFilter || (s.verificationStatus || s.status) === salonStatusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredSalons = getFilteredAndSortedSalons();
 
   const filteredBookings = bookings.filter((b: any) => {
     const matchesSearch = b.salon?.name?.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
@@ -285,8 +366,8 @@ const AdminPanel: React.FC = () => {
     totalUsers: users.length,
     totalSalons: salons.length,
     totalBookings: bookings.length,
-    pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verificationStatus === 'pending').length,
-    verifiedSalons: salons.filter((s: any) => s.verificationStatus === 'verified').length,
+    pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verified === false).length,
+    verifiedSalons: salons.filter((s: any) => s.verified === true).length,
     activeBookings: bookings.filter((b: any) => b.status === 'confirmed').length,
     completedBookings: bookings.filter((b: any) => b.status === 'completed').length,
     revenue: bookings
@@ -679,118 +760,287 @@ const AdminPanel: React.FC = () => {
 
       case 'salons':
         return (
-          <div className="space-y-6">
-            {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Salon Management</h2>
-              <p className="text-gray-600 mt-1">Verify and manage salon registrations</p>
-            </div>
-
-            {/* Search & Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search salons..."
-                    value={ownerSearchTerm}
-                    onChange={(e) => setOwnerSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+          <div className="space-y-8">
+            {/* Enhanced Header */}
+            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
+                <div>
+                  <h2 className="text-3xl font-bold mb-2 flex items-center">
+                    <Building2 className="h-8 w-8 mr-3" />
+                    Enhanced Salon Management
+                  </h2>
+                  <p className="text-indigo-100 text-lg">
+                    Advanced filtering, verification, and comprehensive salon oversight
+                  </p>
                 </div>
-                <select
-                  value={salonStatusFilter}
-                  onChange={(e) => setSalonStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">All Status</option>
-                  <option value="verified">Verified</option>
-                  <option value="pending">Pending</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-                <div className="flex items-center justify-end">
-                  <button onClick={() => { setSalonStatusFilter(''); setOwnerSearchTerm(''); }} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Clear</button>
+                <div className="mt-4 lg:mt-0 flex items-center space-x-4">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                    <div className="text-sm font-medium">Total Salons</div>
+                    <div className="text-2xl font-bold">{salons.length}</div>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                    <div className="text-sm font-medium">Pending Review</div>
+                    <div className="text-2xl font-bold">{pendingSalons.length}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Salons Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredSalons.map((salon: any) => (
-                <div key={salon._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                  {salon.coverImages && salon.coverImages[0] && (
-                    <div className="h-48 overflow-hidden">
-                      <img src={salon.coverImages[0]} alt={salon.name} className="w-full h-full object-cover" />
-                    </div>
+            {/* Status Filter Pills */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex flex-wrap items-center gap-3 mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mr-4">Filter by Status:</h3>
+                {[
+                  { key: '', label: 'All Salons', count: salons.length },
+                  { key: 'verified', label: 'Verified', count: salons.filter((s: any) => s.verified === true).length },
+                  { key: 'pending', label: 'Pending Review', count: salons.filter((s: any) => s.verified === false).length },
+                  { key: 'rejected', label: 'Rejected', count: 0 }, // Since we only have verified true/false, rejected count is 0
+                ].map((filter) => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setSalonStatusFilter(filter.key)}
+                    className={`flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 ${
+                      salonStatusFilter === filter.key
+                        ? filter.key === ''
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+                          : filter.key === 'verified'
+                          ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
+                          : filter.key === 'pending'
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg'
+                          : 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {filter.key && getSalonStatusIcon(filter.key)}
+                    <span className={filter.key ? 'ml-2' : ''}>{filter.label}</span>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
+                      salonStatusFilter === filter.key
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-200 text-gray-600'
+                    }`}>
+                      {filter.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Advanced Search and Sort */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search salons by name, address, email, or phone..."
+                    value={salonSearchQuery}
+                    onChange={(e) => setSalonSearchQuery(e.target.value)}
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  />
+                  {salonSearchQuery && (
+                    <button
+                      onClick={() => setSalonSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
                   )}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">{salon.name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{salon.address}</p>
-                      </div>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        salon.verificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
-                        salon.verificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {salon.verificationStatus}
+                </div>
+
+                <select
+                  value={salonSortBy}
+                  onChange={(e) => setSalonSortBy(e.target.value)}
+                  className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="name-desc">Name (Z-A)</option>
+                  <option value="status">Status Priority</option>
+                  <option value="most-bookings">Most Bookings</option>
+                </select>
+              </div>
+
+              {/* Results Summary */}
+              {(salonSearchQuery || salonStatusFilter) && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-blue-800">
+                      <Filter className="h-5 w-5 mr-2" />
+                      <span className="font-medium">
+                        Showing {filteredSalons.length} of {salons.length} salons
                       </span>
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
-                        {salon.phone}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Mail className="h-4 w-4 mr-2" />
-                        {salon.email}
-                      </div>
-                      {/* Simple performance highlights derived from bookings */}
-                      <div className="grid grid-cols-3 gap-2 text-xs mt-2">
-                        <div className="bg-blue-50 text-blue-700 rounded px-2 py-1 text-center">
-                          {bookings.filter((b: any) => b.salon?._id === salon._id).length} bookings
+                    <button
+                      onClick={() => {
+                        setSalonSearchQuery('');
+                        setSalonStatusFilter('');
+                        setSalonSortBy('newest');
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      Clear Filters
+                    </button>
+                  </div>
+                  {salonSearchQuery && (
+                    <div className="mt-2 text-sm text-blue-700">
+                      Search: "<span className="font-semibold">{salonSearchQuery}</span>"
+                    </div>
+                  )}
+                  {salonStatusFilter && (
+                    <div className="mt-1 text-sm text-blue-700">
+                      Status: <span className="font-semibold capitalize">{salonStatusFilter}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Enhanced Salons Grid */}
+            {filteredSalons.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
+                <div className="max-w-md mx-auto">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Building2 className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {salonSearchQuery || salonStatusFilter ? 'No matching salons found' : 'No salons registered yet'}
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {salonSearchQuery || salonStatusFilter 
+                      ? 'Try adjusting your search criteria or filters to find salons.'
+                      : 'When salon owners register their businesses, they will appear here for verification.'
+                    }
+                  </p>
+                  {(salonSearchQuery || salonStatusFilter) && (
+                    <button
+                      onClick={() => {
+                        setSalonSearchQuery('');
+                        setSalonStatusFilter('');
+                      }}
+                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredSalons.map((salon: any) => (
+                  <div key={salon._id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-slideInUp">
+                    {/* Salon Image */}
+                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                      {salon.coverImages && salon.coverImages[0] ? (
+                        <img 
+                          src={salon.coverImages[0]} 
+                          alt={salon.name} 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Camera className="h-12 w-12 text-gray-400" />
                         </div>
-                        <div className="bg-green-50 text-green-700 rounded px-2 py-1 text-center">
-                          {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'completed').length} completed
-                        </div>
-                        <div className="bg-amber-50 text-amber-700 rounded px-2 py-1 text-center">
-                          {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'confirmed').length} active
-                        </div>
+                      )}
+                      
+                      {/* Status Badge Overlay */}
+                      <div className="absolute top-3 right-3">
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${getSalonStatusBadgeColor(getSalonStatus(salon))}`}>
+                          {getSalonStatusIcon(getSalonStatus(salon))}
+                          <span className="ml-1.5 capitalize">{getSalonStatus(salon)}</span>
+                        </span>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          setSelectedSalonId(salon._id);
-                          setShowSalonDetailsModal(true);
-                        }}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                      >
-                        View Details
-                      </button>
-                      {salon.verificationStatus === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => verifySalonMutation.mutate(salon._id)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                          >
-                            <CheckCircle className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() => rejectSalonMutation.mutate(salon._id)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                          >
-                            <XCircle className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
+
+                    {/* Salon Details */}
+                    <div className="p-6">
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
+                          <Scissors className="h-5 w-5 text-indigo-600 mr-2" />
+                          {salon.name}
+                        </h3>
+                        <p className="text-gray-600 flex items-center">
+                          <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                          {salon.address}
+                        </p>
+                      </div>
+
+                      {/* Contact Information */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                          {salon.phone}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                          {salon.email}
+                        </div>
+                        {salon.createdAt && (
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+                            Registered {new Date(salon.createdAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Performance Metrics */}
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 rounded-lg px-3 py-2 text-center">
+                          <div className="text-lg font-bold">
+                            {bookings.filter((b: any) => b.salon?._id === salon._id).length}
+                          </div>
+                          <div className="text-xs font-medium">Total</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 rounded-lg px-3 py-2 text-center">
+                          <div className="text-lg font-bold">
+                            {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'completed').length}
+                          </div>
+                          <div className="text-xs font-medium">Completed</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 rounded-lg px-3 py-2 text-center">
+                          <div className="text-lg font-bold">
+                            {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'confirmed').length}
+                          </div>
+                          <div className="text-xs font-medium">Active</div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setSelectedSalonId(salon._id);
+                            setShowSalonDetailsModal(true);
+                          }}
+                          className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium flex items-center justify-center"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </button>
+                        
+                        {getSalonStatus(salon) === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => verifySalonMutation.mutate(salon._id)}
+                              className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center justify-center"
+                              title="Verify Salon"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => rejectSalonMutation.mutate(salon._id)}
+                              className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center"
+                              title="Reject Salon"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         );
 

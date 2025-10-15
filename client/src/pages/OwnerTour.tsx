@@ -52,7 +52,7 @@ const OwnerTour: React.FC = () => {
           <div className="relative aspect-video w-full bg-slate-900">
             <iframe
               className="absolute inset-0 h-full w-full"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+              src="https://www.youtube.com/embed/FfJv9QRT5gI"
               title="Owner Dashboard Tour"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
@@ -66,7 +66,7 @@ const OwnerTour: React.FC = () => {
               </p>
             </div>
             <button
-              onClick={() => window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank')}
+              onClick={() => window.open('https://www.youtube.com/watch?v=FfJv9QRT5gI', '_blank')}
               className="inline-flex items-center justify-center px-5 py-3 rounded-xl bg-blue-600 text-white font-semibold shadow-md hover:bg-blue-700 transition-colors"
             >
               <Video className="h-5 w-5 mr-2" />

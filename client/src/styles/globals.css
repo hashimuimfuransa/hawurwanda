@@ -128,6 +128,10 @@
   .animate-fade-in-right {
     animation: fadeInRight 0.8s ease-out forwards;
   }
+
+  .animate-slide-in-up {
+    animation: slideInUp 0.5s ease-out forwards;
+  }
   
   .animate-gradient {
     background-size: 200% 200%;
@@ -220,6 +224,17 @@
     to {
       opacity: 1;
       transform: scale(1);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
   

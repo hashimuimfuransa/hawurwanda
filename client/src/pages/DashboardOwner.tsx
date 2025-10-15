@@ -35,7 +35,13 @@ import {
   Activity,
   Award,
   Target,
-  Zap
+  Zap,
+  Filter,
+  Search,
+  SortAsc,
+  SortDesc,
+  Calendar as CalendarIcon,
+  User as UserIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -44,6 +50,9 @@ const DashboardOwner: React.FC = () => {
   const { language } = useTranslationStore();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
+  const [bookingFilter, setBookingFilter] = useState('all');
+  const [bookingSort, setBookingSort] = useState('newest');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleCreateSalon = () => {
@@ -59,11 +68,34 @@ const DashboardOwner: React.FC = () => {
   };
 
   // Get salon data
-  const { data: salon, isLoading: salonLoading } = useQuery({
+  const { data: salon, isLoading: salonLoading, refetch: refetchSalon } = useQuery({
     queryKey: ['owner-salon'],
     queryFn: () => salonService.getSalon(user?.salonId!),
     enabled: !!user?.salonId,
+    refetchOnMount: 'always',
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
+
+  // Manual refresh function
+  const handleRefreshStatus = async () => {
+    try {
+      await refetchSalon();
+      toast.success('Status refreshed');
+    } catch (error) {
+      toast.error('Failed to refresh status');
+    }
+  };
+
+  // Helper function to get salon status (consistent with admin panel)
+  const getSalonStatus = (salon: any) => {
+    console.log('Salon data:', salon);
+    console.log('Salon verified field:', salon?.verified);
+    console.log('Salon verified type:', typeof salon?.verified);
+    if (salon?.verified === true) return 'verified';
+    if (salon?.verified === false) return 'pending';
+    return 'unknown';
+  };
 
   // Get salon bookings
   const { data: bookings } = useQuery({
@@ -120,6 +152,81 @@ const DashboardOwner: React.FC = () => {
     }
   };
 
+  // Filter and sort bookings helper functions
+  const getFilteredAndSortedBookings = () => {
+    if (!bookings?.bookings) return [];
+
+    let filteredBookings = bookings.bookings;
+
+    // Apply status filter
+    if (bookingFilter !== 'all') {
+      filteredBookings = filteredBookings.filter((booking: any) => booking.status === bookingFilter);
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filteredBookings = filteredBookings.filter((booking: any) => 
+        booking.client?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.service?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.barber?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    filteredBookings = [...filteredBookings].sort((a: any, b: any) => {
+      switch (bookingSort) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'appointment-newest':
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case 'appointment-oldest':
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case 'price-high':
+          return (b.service?.price || 0) - (a.service?.price || 0);
+        case 'price-low':
+          return (a.service?.price || 0) - (b.service?.price || 0);
+        case 'client-name':
+          return (a.client?.name || '').localeCompare(b.client?.name || '');
+        default:
+          return 0;
+      }
+    });
+
+    return filteredBookings;
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'confirmed':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'completed':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return <Clock className="h-3 w-3" />;
+      case 'confirmed':
+        return <CheckCircle className="h-3 w-3" />;
+      case 'completed':
+        return <CheckCircle className="h-3 w-3" />;
+      case 'cancelled':
+        return <XCircle className="h-3 w-3" />;
+      default:
+        return <AlertCircle className="h-3 w-3" />;
+    }
+  };
+
   const handlePaymentRecord = async (bookingId: string) => {
     toast.info('Payment recording feature coming soon!');
   };
@@ -170,7 +277,7 @@ const DashboardOwner: React.FC = () => {
   ];
 
   // Show pending approval state if salon exists but not verified
-  if (salon && !salon.verified) {
+  if (salon && getSalonStatus(salon) === 'pending') {
     return (
       <DashboardLayout
         title="Salon Owner"
@@ -203,7 +310,7 @@ const DashboardOwner: React.FC = () => {
                 {/* Status Badge */}
                 <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6 shadow-lg border border-amber-200">
                   <span className="w-2 h-2 bg-amber-500 rounded-full mr-2.5 animate-pulse"></span>
-                  Pending Verification
+                  {getSalonStatus(salon) === 'pending' ? 'Pending Verification' : 'Under Review'}
                 </div>
 
                 {/* Main Message */}
@@ -268,6 +375,13 @@ const DashboardOwner: React.FC = () => {
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                  <button
+                    onClick={handleRefreshStatus}
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-green-700 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200"
+                  >
+                    <Activity className="h-5 w-5 mr-2" />
+                    <span>Refresh Status</span>
+                  </button>
                   <button
                     onClick={() => setActiveTab('settings')}
                     className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
@@ -779,42 +893,235 @@ const DashboardOwner: React.FC = () => {
   );
 
   // Bookings Tab Content
-  const renderBookings = () => (
-    <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-      <div className="p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">All Bookings</h2>
-            <p className="text-sm text-slate-600">Manage all your salon bookings</p>
+  const renderBookings = () => {
+    const filteredBookings = getFilteredAndSortedBookings();
+    const statusCounts = {
+      all: bookings?.bookings?.length || 0,
+      pending: bookings?.bookings?.filter((b: any) => b.status === 'pending').length || 0,
+      confirmed: bookings?.bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
+      completed: bookings?.bookings?.filter((b: any) => b.status === 'completed').length || 0,
+      cancelled: bookings?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Enhanced Header with Controls */}
+        <div className="bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-indigo-50/50 to-blue-50/30">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1 flex items-center">
+                  <Calendar className="h-6 w-6 mr-3 text-indigo-600" />
+                  Booking Management
+                </h2>
+                <p className="text-sm text-slate-600">Monitor, filter, and manage all salon bookings</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-sm text-slate-600">
+                  <span>Total Bookings:</span>
+                  <span className="font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded-full">
+                    {statusCounts.all}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-slate-600">Total: <span className="font-bold text-slate-900">{bookings?.bookings?.length || 0}</span></span>
+
+          <div className="p-6 lg:p-8">
+            {/* Status Filter Pills */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter by Status
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { key: 'all', label: 'All Bookings', count: statusCounts.all, color: 'slate' },
+                  { key: 'pending', label: 'Pending', count: statusCounts.pending, color: 'amber' },
+                  { key: 'confirmed', label: 'Confirmed', count: statusCounts.confirmed, color: 'blue' },
+                  { key: 'completed', label: 'Completed', count: statusCounts.completed, color: 'emerald' },
+                  { key: 'cancelled', label: 'Cancelled', count: statusCounts.cancelled, color: 'red' },
+                ].map((filter) => (
+                  <button
+                    key={filter.key}
+                    onClick={() => setBookingFilter(filter.key)}
+                    className={`inline-flex items-center px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 border ${
+                      bookingFilter === filter.key
+                        ? filter.color === 'slate'
+                          ? 'bg-slate-600 text-white border-slate-600 shadow-lg shadow-slate-500/25'
+                          : filter.color === 'amber'
+                          ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/25'
+                          : filter.color === 'blue'
+                          ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/25'
+                          : filter.color === 'emerald'
+                          ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/25'
+                          : 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/25'
+                        : filter.color === 'slate'
+                        ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        : filter.color === 'amber'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                        : filter.color === 'blue'
+                        ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                        : filter.color === 'emerald'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                        : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                    }`}
+                  >
+                    {getStatusIcon(filter.key === 'all' ? 'all' : filter.key)}
+                    <span className="ml-2">{filter.label}</span>
+                    <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${
+                      bookingFilter === filter.key
+                        ? 'bg-white/20 text-white'
+                        : filter.color === 'slate'
+                        ? 'bg-slate-200 text-slate-700'
+                        : filter.color === 'amber'
+                        ? 'bg-amber-200 text-amber-700'
+                        : filter.color === 'blue'
+                        ? 'bg-blue-200 text-blue-700'
+                        : filter.color === 'emerald'
+                        ? 'bg-emerald-200 text-emerald-700'
+                        : 'bg-red-200 text-red-700'
+                    }`}>
+                      {filter.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search and Sort Controls */}
+            <div className="flex flex-col lg:flex-row gap-4 mb-6">
+              {/* Search Bar */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                  <input
+                    type="text"
+                    placeholder="Search by client name, service, or barber..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-slate-900 placeholder-slate-500"
+                  />
+                </div>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="lg:w-64">
+                <select
+                  value={bookingSort}
+                  onChange={(e) => setBookingSort(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-slate-900 appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em',
+                  }}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="appointment-newest">Latest Appointments</option>
+                  <option value="appointment-oldest">Earliest Appointments</option>
+                  <option value="price-high">Highest Price</option>
+                  <option value="price-low">Lowest Price</option>
+                  <option value="client-name">Client Name A-Z</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results Summary */}
+            {(bookingFilter !== 'all' || searchQuery.trim()) && (
+              <div className="mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
+                <p className="text-sm text-indigo-700">
+                  <span className="font-semibold">
+                    {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+                  </span>
+                  {bookingFilter !== 'all' && (
+                    <span> with status "{bookingFilter}"</span>
+                  )}
+                  {searchQuery.trim() && (
+                    <span> matching "{searchQuery}"</span>
+                  )}
+                  {(bookingFilter !== 'all' || searchQuery.trim()) && (
+                    <button
+                      onClick={() => {
+                        setBookingFilter('all');
+                        setSearchQuery('');
+                      }}
+                      className="ml-2 text-indigo-600 hover:text-indigo-800 font-semibold underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-        {bookings?.bookings?.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-              <Calendar className="h-12 w-12 text-blue-600" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No bookings found</h3>
-            <p className="text-slate-600">Your booking list is empty</p>
+
+        {/* Bookings List */}
+        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+          <div className="p-6 lg:p-8">
+            {filteredBookings.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-blue-200 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                  {searchQuery.trim() || bookingFilter !== 'all' ? (
+                    <Search className="h-12 w-12 text-indigo-600" />
+                  ) : (
+                    <Calendar className="h-12 w-12 text-indigo-600" />
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {searchQuery.trim() || bookingFilter !== 'all' 
+                    ? 'No matching bookings found' 
+                    : 'No bookings yet'
+                  }
+                </h3>
+                <p className="text-slate-600 mb-4">
+                  {searchQuery.trim() || bookingFilter !== 'all'
+                    ? 'Try adjusting your search criteria or filters'
+                    : 'Your booking list is empty. Bookings will appear here once customers start booking appointments.'
+                  }
+                </p>
+                {(searchQuery.trim() || bookingFilter !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setBookingFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredBookings.map((booking: any, index: number) => (
+                  <div 
+                    key={booking._id}
+                    className="group transform transition-all duration-200 hover:scale-[1.01]"
+                    style={{
+                      animationDelay: `${index * 50}ms`,
+                      animation: 'slideInUp 0.3s ease-out forwards'
+                    }}
+                  >
+                    <BookingCard
+                      booking={booking}
+                      onStatusChange={handleBookingStatusChange}
+                      onPaymentRecord={handlePaymentRecord}
+                      userRole={user.role}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings?.bookings?.map((booking: any) => (
-              <BookingCard
-                key={booking._id}
-                booking={booking}
-                onStatusChange={handleBookingStatusChange}
-                onPaymentRecord={handlePaymentRecord}
-                userRole={user.role}
-              />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Barbers Tab Content
   const renderBarbers = () => (
