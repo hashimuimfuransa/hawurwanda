@@ -3,11 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
-import { adminService, superAdminService } from '../services/api';
+import { adminService, superAdminService, notificationService } from '../services/api';
 import { 
   Users, Building2, CheckCircle, XCircle, BarChart3, Search, Eye,
   Shield, Plus, Trash2, Edit, TrendingUp, Activity, Settings, Crown,
-  UserPlus, Home, Calendar, MapPin, Phone, Mail, Clock, Star
+  UserPlus, Home, Calendar, MapPin, Phone, Mail, Clock, Star, Bell
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
@@ -441,6 +441,20 @@ const SuperAdminDashboard: React.FC = () => {
     queryFn: async () => (await superAdminService.getAllUsers({ search: searchTerm, role: selectedRole, page: currentPage, limit: 10 })).data,
     enabled: user?.role === 'superadmin',
   });
+
+  // Get notifications
+  const { data: notificationsData } = useQuery({
+    queryKey: ['superadmin-notifications'],
+    queryFn: () => notificationService.getNotifications(),
+    enabled: user?.role === 'superadmin',
+  });
+
+  // Get notification count
+  const { data: notificationCount } = useQuery({
+    queryKey: ['superadmin-notification-count'],
+    queryFn: () => notificationService.getNotificationCount(),
+    enabled: user?.role === 'superadmin',
+  });
   
   // Mutations with proper types
   const createAdminMutation = useMutation<unknown, ApiError, CreateUserData>({
@@ -487,6 +501,23 @@ const SuperAdminDashboard: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['superadmin-users'] });
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Failed to update user'),
+  });
+
+  // Notification mutations
+  const markNotificationReadMutation = useMutation({
+    mutationFn: (notificationId: string) => notificationService.markAsRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['superadmin-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['superadmin-notification-count'] });
+    },
+  });
+
+  const markAllNotificationsReadMutation = useMutation({
+    mutationFn: () => notificationService.markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['superadmin-notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['superadmin-notification-count'] });
+    },
   });
 
   // Handlers
@@ -569,6 +600,63 @@ const SuperAdminDashboard: React.FC = () => {
         {/* Add other stat cards similarly */}
     </div>
   );
+
+  const renderNotifications = () => (
+    <div id="notifications-section" className="bg-white rounded-xl shadow-sm border border-gray-200">
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
+          {notificationsData?.data?.notifications?.filter((n: any) => !n.read).length > 0 && (
+            <button
+              onClick={() => markAllNotificationsReadMutation.mutate()}
+              className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="p-6">
+        {notificationsData?.data?.notifications?.length === 0 ? (
+          <div className="text-center py-12">
+            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No notifications yet</p>
+            <p className="text-sm text-gray-500 mt-2">
+              You'll receive system notifications and updates here.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {notificationsData?.data?.notifications?.map((notification: any) => (
+              <div
+                key={notification._id}
+                className={`p-4 rounded-lg border-l-4 ${
+                  !notification.read ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-300'
+                } cursor-pointer hover:shadow-md transition-all duration-200`}
+                onClick={() => !notification.read && markNotificationReadMutation.mutate(notification._id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className={`text-sm font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {notification.payload.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">{notification.payload.message}</p>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {new Date(notification.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {!notification.read && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
   
   const renderUsers = () => (
       <div>
@@ -623,16 +711,26 @@ const SuperAdminDashboard: React.FC = () => {
   );
 
   return (
-    <DashboardLayout title="Super Admin Dashboard">
+    <DashboardLayout 
+      title="Super Admin Dashboard"
+      onNotificationClick={() => {
+        // Scroll to notifications section
+        const notificationsElement = document.getElementById('notifications-section');
+        if (notificationsElement) {
+          notificationsElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }}
+    >
         <div className="p-6">
             <h1 className="text-3xl font-bold mb-2">Super Admin Dashboard</h1>
             <p className="text-gray-600 mb-6">Welcome back, {user.name}!</p>
             
             {/* Tab Navigation can be added here */}
             
-            {/* For simplicity, showing overview and users directly */}
+            {/* For simplicity, showing overview, notifications, and users directly */}
             <div className="space-y-8">
               {renderOverview()}
+              {renderNotifications()}
               {renderUsers()}
             </div>
             

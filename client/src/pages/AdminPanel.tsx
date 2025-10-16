@@ -71,12 +71,22 @@ const AdminPanel: React.FC = () => {
   const [bookingSearchTerm, setBookingSearchTerm] = useState('');
   const [bookingStatusFilter, setBookingStatusFilter] = useState('');
   const [salonStatusFilter, setSalonStatusFilter] = useState('');
-  const [salonSearchQuery, setSalonSearchQuery] = useState('');
-  const [salonSortBy, setSalonSortBy] = useState('newest');
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
   });
+  
+  // Staff management state
+  const [showStaffDetailsModal, setShowStaffDetailsModal] = useState(false);
+  const [showStaffMigrationModal, setShowStaffMigrationModal] = useState(false);
+  const [showServiceAssignmentModal, setShowServiceAssignmentModal] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<any>(null);
+  const [selectedSalonForMigration, setSelectedSalonForMigration] = useState<string>('');
+  const [selectedStaffServices, setSelectedStaffServices] = useState<string[]>([]);
+  
+  // Booking management state
+  const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
 
   // Redirect super admins to super admin dashboard
   useEffect(() => {
@@ -153,10 +163,17 @@ const AdminPanel: React.FC = () => {
     queryFn: () => adminService.getComprehensiveStats(),
   });
 
+  // Staff management data
+  const { data: staffData, isLoading: staffLoading } = useQuery({
+    queryKey: ['admin-staff', searchTerm, selectedRole],
+    queryFn: () => adminService.getAllStaff({ search: searchTerm, role: selectedRole }),
+  });
+
   // Extract data from API responses (handle both direct arrays and nested data structures)
   const users = Array.isArray(usersData) ? usersData : (usersData?.data?.users || usersData?.data || []);
-  const salons = Array.isArray(salonsData) ? salonsData : (salonsData?.data?.salons || salonsData?.data || []);
+  const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
   const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.data?.bookings || bookingsData?.data || []);
+  const staff = Array.isArray(staffData) ? staffData : (staffData?.data?.staff || staffData?.data || []);
   const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.data?.notifications || notificationsData?.data || []);
   const reports = reportsData?.data || reportsData || {};
   const analytics = analyticsData?.data || analyticsData || {};
@@ -191,8 +208,6 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-salons'] });
-      queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
-      queryClient.invalidateQueries({ queryKey: ['salons'] });
       toast.success('Salon verified successfully');
       setShowSalonDetailsModal(false);
       setSelectedSalonId(null);
@@ -207,8 +222,6 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-salons'] });
-      queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
-      queryClient.invalidateQueries({ queryKey: ['salons'] });
       toast.success('Salon rejected');
       setShowSalonDetailsModal(false);
       setSelectedSalonId(null);
@@ -265,84 +278,76 @@ const AdminPanel: React.FC = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-notifications'] }),
   });
 
-  // Helper function for salon status badge styling
-  const getSalonStatusBadgeColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'verified':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'pending':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
+  // Staff management mutations
+  const updateStaffSalonMutation = useMutation({
+    mutationFn: ({ staffId, salonId }: { staffId: string; salonId: string }) => 
+      adminService.updateStaffSalon(staffId, salonId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff salon updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update staff salon');
+    },
+  });
 
-  const getSalonStatusIcon = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'verified':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'pending':
-        return <Clock className="h-4 w-4" />;
-      case 'rejected':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return <AlertTriangle className="h-4 w-4" />;
-    }
-  };
+  const deactivateStaffMutation = useMutation({
+    mutationFn: (staffId: string) => adminService.deactivateStaff(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff deactivated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to deactivate staff');
+    },
+  });
 
-  // Helper function to get salon status based on verified field
-  const getSalonStatus = (salon: any) => {
-    if (salon.verified === true) return 'verified';
-    if (salon.verified === false) return 'pending';
-    return 'unknown';
-  };
+  const activateStaffMutation = useMutation({
+    mutationFn: (staffId: string) => adminService.activateStaff(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff activated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to activate staff');
+    },
+  });
 
-  // Enhanced salon filtering and sorting
-  const getFilteredAndSortedSalons = () => {
-    let filtered = salons.filter((salon: any) => {
-      // Status filter using the verified boolean field
-      const salonStatus = getSalonStatus(salon);
-      const statusMatch = !salonStatusFilter || salonStatus === salonStatusFilter.toLowerCase();
-      
-      // Search filter - search across multiple fields
-      const searchMatch = !salonSearchQuery || 
-        salon.name?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
-        salon.address?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
-        salon.email?.toLowerCase().includes(salonSearchQuery.toLowerCase()) ||
-        salon.phone?.includes(salonSearchQuery);
-        
-      return statusMatch && searchMatch;
-    });
+  const updateStaffServicesMutation = useMutation({
+    mutationFn: ({ staffId, services }: { staffId: string; services: string[] }) => 
+      adminService.updateStaffServices(staffId, services),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff services updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update staff services');
+    },
+  });
 
-    // Sort salons based on selected criteria
-    filtered.sort((a: any, b: any) => {
-      switch (salonSortBy) {
-        case 'name-asc':
-          return (a.name || '').localeCompare(b.name || '');
-        case 'name-desc':
-          return (b.name || '').localeCompare(a.name || '');
-        case 'newest':
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        case 'oldest':
-          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
-        case 'most-bookings':
-          const aBookings = bookings.filter((b: any) => b.salon?._id === a._id).length;
-          const bBookings = bookings.filter((b: any) => b.salon?._id === b._id).length;
-          return bBookings - aBookings;
-        case 'status':
-          const statusOrder = { verified: 0, pending: 1, rejected: 2 };
-          const aStatus = statusOrder[getSalonStatus(a) as keyof typeof statusOrder] ?? 3;
-          const bStatus = statusOrder[getSalonStatus(b) as keyof typeof statusOrder] ?? 3;
-          return aStatus - bStatus;
-        default:
-          return 0;
-      }
-    });
+  // Booking management mutations
+  const updateBookingStatusMutation = useMutation({
+    mutationFn: ({ bookingId, status }: { bookingId: string; status: string }) => 
+      adminService.updateBookingStatus(bookingId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+      toast.success('Booking status updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update booking status');
+    },
+  });
 
-    return filtered;
-  };
+  const deleteBookingMutation = useMutation({
+    mutationFn: (bookingId: string) => adminService.deleteBooking(bookingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-bookings'] });
+      toast.success('Booking deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete booking');
+    },
+  });
 
   // Filter functions
   const filteredUsers = users.filter((u: any) => {
@@ -352,11 +357,16 @@ const AdminPanel: React.FC = () => {
     return matchesSearch && matchesRole;
   });
 
-  const filteredSalons = getFilteredAndSortedSalons();
+  const filteredSalons = salons.filter((s: any) => {
+    const matchesSearch = s.name?.toLowerCase().includes(ownerSearchTerm.toLowerCase());
+    const matchesStatus = !salonStatusFilter || (s.verificationStatus || s.status) === salonStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const filteredBookings = bookings.filter((b: any) => {
-    const matchesSearch = b.salon?.name?.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
-                         b.user?.name?.toLowerCase().includes(bookingSearchTerm.toLowerCase());
+    const matchesSearch = b.salonId?.name?.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
+                         b.clientId?.name?.toLowerCase().includes(bookingSearchTerm.toLowerCase()) ||
+                         b.serviceId?.title?.toLowerCase().includes(bookingSearchTerm.toLowerCase());
     const matchesStatus = !bookingStatusFilter || b.status === bookingStatusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -366,13 +376,91 @@ const AdminPanel: React.FC = () => {
     totalUsers: users.length,
     totalSalons: salons.length,
     totalBookings: bookings.length,
-    pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verified === false).length,
-    verifiedSalons: salons.filter((s: any) => s.verified === true).length,
+    pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verificationStatus === 'pending').length,
+    verifiedSalons: salons.filter((s: any) => s.verificationStatus === 'verified').length,
     activeBookings: bookings.filter((b: any) => b.status === 'confirmed').length,
     completedBookings: bookings.filter((b: any) => b.status === 'completed').length,
     revenue: bookings
       .filter((b: any) => b.status === 'completed')
       .reduce((sum: number, b: any) => sum + (b.totalPrice || 0), 0),
+  };
+
+  // Staff management handlers
+  const handleViewStaff = (staff: any) => {
+    setSelectedStaff(staff);
+    setShowStaffDetailsModal(true);
+  };
+
+  const handleMigrateStaff = (staff: any) => {
+    setSelectedStaff(staff);
+    setShowStaffMigrationModal(true);
+  };
+
+  const handleStaffMigration = () => {
+    if (selectedStaff && selectedSalonForMigration) {
+      updateStaffSalonMutation.mutate({
+        staffId: selectedStaff._id,
+        salonId: selectedSalonForMigration,
+      });
+      setShowStaffMigrationModal(false);
+      setSelectedStaff(null);
+      setSelectedSalonForMigration('');
+    }
+  };
+
+  const handleDeactivateStaff = (staff: any) => {
+    if (window.confirm(`Are you sure you want to deactivate ${staff.name}?`)) {
+      deactivateStaffMutation.mutate(staff._id);
+    }
+  };
+
+  const handleActivateStaff = (staff: any) => {
+    if (window.confirm(`Are you sure you want to activate ${staff.name}?`)) {
+      activateStaffMutation.mutate(staff._id);
+    }
+  };
+
+  const handleAssignServices = (staff: any) => {
+    setSelectedStaff(staff);
+    setSelectedStaffServices(staff.assignedServices || []);
+    setShowServiceAssignmentModal(true);
+  };
+
+  const handleServiceAssignment = () => {
+    if (selectedStaff) {
+      // Update staff services
+      updateStaffServicesMutation.mutate({
+        staffId: selectedStaff._id,
+        services: selectedStaffServices,
+      });
+      setShowServiceAssignmentModal(false);
+      setSelectedStaff(null);
+      setSelectedStaffServices([]);
+    }
+  };
+
+  const toggleServiceAssignment = (serviceId: string) => {
+    setSelectedStaffServices(prev => 
+      prev.includes(serviceId) 
+        ? prev.filter(id => id !== serviceId)
+        : [...prev, serviceId]
+    );
+  };
+
+  // Booking management handlers
+  const handleViewBooking = (booking: any) => {
+    setSelectedBooking(booking);
+    setShowBookingDetailsModal(true);
+  };
+
+  const handleUpdateBookingStatus = (bookingId: string, status: string) => {
+    updateBookingStatusMutation.mutate({ bookingId, status });
+  };
+
+  const handleDeleteBooking = (bookingId: string) => {
+    if (window.confirm('Are you sure you want to delete this booking?')) {
+      deleteBookingMutation.mutate(bookingId);
+    }
   };
 
   const renderContent = () => {
@@ -760,291 +848,126 @@ const AdminPanel: React.FC = () => {
 
       case 'salons':
         return (
-          <div className="space-y-8">
-            {/* Enhanced Header */}
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white">
-              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center">
-                <div>
-                  <h2 className="text-3xl font-bold mb-2 flex items-center">
-                    <Building2 className="h-8 w-8 mr-3" />
-                    Enhanced Salon Management
-                  </h2>
-                  <p className="text-indigo-100 text-lg">
-                    Advanced filtering, verification, and comprehensive salon oversight
-                  </p>
-                </div>
-                <div className="mt-4 lg:mt-0 flex items-center space-x-4">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                    <div className="text-sm font-medium">Total Salons</div>
-                    <div className="text-2xl font-bold">{salons.length}</div>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-                    <div className="text-sm font-medium">Pending Review</div>
-                    <div className="text-2xl font-bold">{pendingSalons.length}</div>
-                  </div>
-                </div>
-              </div>
+          <div className="space-y-6">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Salon Management</h2>
+              <p className="text-gray-600 mt-1">Verify and manage salon registrations</p>
             </div>
 
-            {/* Status Filter Pills */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mr-4">Filter by Status:</h3>
-                {[
-                  { key: '', label: 'All Salons', count: salons.length },
-                  { key: 'verified', label: 'Verified', count: salons.filter((s: any) => s.verified === true).length },
-                  { key: 'pending', label: 'Pending Review', count: salons.filter((s: any) => s.verified === false).length },
-                  { key: 'rejected', label: 'Rejected', count: 0 }, // Since we only have verified true/false, rejected count is 0
-                ].map((filter) => (
-                  <button
-                    key={filter.key}
-                    onClick={() => setSalonStatusFilter(filter.key)}
-                    className={`flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 ${
-                      salonStatusFilter === filter.key
-                        ? filter.key === ''
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
-                          : filter.key === 'verified'
-                          ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-lg'
-                          : filter.key === 'pending'
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg'
-                          : 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {filter.key && getSalonStatusIcon(filter.key)}
-                    <span className={filter.key ? 'ml-2' : ''}>{filter.label}</span>
-                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-bold ${
-                      salonStatusFilter === filter.key
-                        ? 'bg-white/20 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}>
-                      {filter.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Advanced Search and Sort */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Search & Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                   <input
                     type="text"
-                    placeholder="Search salons by name, address, email, or phone..."
-                    value={salonSearchQuery}
-                    onChange={(e) => setSalonSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Search salons..."
+                    value={ownerSearchTerm}
+                    onChange={(e) => setOwnerSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  {salonSearchQuery && (
-                    <button
-                      onClick={() => setSalonSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
                 </div>
-
                 <select
-                  value={salonSortBy}
-                  onChange={(e) => setSalonSortBy(e.target.value)}
-                  className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  value={salonStatusFilter}
+                  onChange={(e) => setSalonStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="name-asc">Name (A-Z)</option>
-                  <option value="name-desc">Name (Z-A)</option>
-                  <option value="status">Status Priority</option>
-                  <option value="most-bookings">Most Bookings</option>
+                  <option value="">All Status</option>
+                  <option value="verified">Verified</option>
+                  <option value="pending">Pending</option>
+                  <option value="rejected">Rejected</option>
                 </select>
-              </div>
-
-              {/* Results Summary */}
-              {(salonSearchQuery || salonStatusFilter) && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-blue-800">
-                      <Filter className="h-5 w-5 mr-2" />
-                      <span className="font-medium">
-                        Showing {filteredSalons.length} of {salons.length} salons
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSalonSearchQuery('');
-                        setSalonStatusFilter('');
-                        setSalonSortBy('newest');
-                      }}
-                      className="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
-                  {salonSearchQuery && (
-                    <div className="mt-2 text-sm text-blue-700">
-                      Search: "<span className="font-semibold">{salonSearchQuery}</span>"
-                    </div>
-                  )}
-                  {salonStatusFilter && (
-                    <div className="mt-1 text-sm text-blue-700">
-                      Status: <span className="font-semibold capitalize">{salonStatusFilter}</span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-end">
+                  <button onClick={() => { setSalonStatusFilter(''); setOwnerSearchTerm(''); }} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Clear</button>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Enhanced Salons Grid */}
-            {filteredSalons.length === 0 ? (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-                <div className="max-w-md mx-auto">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Building2 className="h-10 w-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {salonSearchQuery || salonStatusFilter ? 'No matching salons found' : 'No salons registered yet'}
-                  </h3>
-                  <p className="text-gray-500 mb-6">
-                    {salonSearchQuery || salonStatusFilter 
-                      ? 'Try adjusting your search criteria or filters to find salons.'
-                      : 'When salon owners register their businesses, they will appear here for verification.'
-                    }
-                  </p>
-                  {(salonSearchQuery || salonStatusFilter) && (
-                    <button
-                      onClick={() => {
-                        setSalonSearchQuery('');
-                        setSalonStatusFilter('');
-                      }}
-                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      Reset Filters
-                    </button>
+            {/* Salons Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredSalons.map((salon: any) => (
+                <div key={salon._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                  {salon.coverImages && salon.coverImages[0] && (
+                    <div className="h-48 overflow-hidden">
+                      <img src={salon.coverImages[0]} alt={salon.name} className="w-full h-full object-cover" />
+                    </div>
                   )}
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSalons.map((salon: any) => (
-                  <div key={salon._id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 animate-slideInUp">
-                    {/* Salon Image */}
-                    <div className="relative h-48 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-                      {salon.coverImages && salon.coverImages[0] ? (
-                        <img 
-                          src={salon.coverImages[0]} 
-                          alt={salon.name} 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" 
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Camera className="h-12 w-12 text-gray-400" />
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-900">{salon.name}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{salon.address}</p>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        salon.verificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
+                        salon.verificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {salon.verificationStatus}
+                      </span>
+                    </div>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Phone className="h-4 w-4 mr-2" />
+                        {salon.phone}
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Mail className="h-4 w-4 mr-2" />
+                        {salon.email}
+                      </div>
+                      {/* Simple performance highlights derived from bookings */}
+                      <div className="grid grid-cols-3 gap-2 text-xs mt-2">
+                        <div className="bg-blue-50 text-blue-700 rounded px-2 py-1 text-center">
+                          {bookings.filter((b: any) => b.salonId?._id === salon._id).length} bookings
                         </div>
-                      )}
-                      
-                      {/* Status Badge Overlay */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${getSalonStatusBadgeColor(getSalonStatus(salon))}`}>
-                          {getSalonStatusIcon(getSalonStatus(salon))}
-                          <span className="ml-1.5 capitalize">{getSalonStatus(salon)}</span>
-                        </span>
+                        <div className="bg-green-50 text-green-700 rounded px-2 py-1 text-center">
+                          {bookings.filter((b: any) => b.salonId?._id === salon._id && b.status === 'completed').length} completed
+                        </div>
+                        <div className="bg-amber-50 text-amber-700 rounded px-2 py-1 text-center">
+                          {bookings.filter((b: any) => b.salonId?._id === salon._id && b.status === 'confirmed').length} active
+                        </div>
                       </div>
                     </div>
-
-                    {/* Salon Details */}
-                    <div className="p-6">
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center">
-                          <Scissors className="h-5 w-5 text-indigo-600 mr-2" />
-                          {salon.name}
-                        </h3>
-                        <p className="text-gray-600 flex items-center">
-                          <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                          {salon.address}
-                        </p>
-                      </div>
-
-                      {/* Contact Information */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                          {salon.phone}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                          {salon.email}
-                        </div>
-                        {salon.createdAt && (
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                            Registered {new Date(salon.createdAt).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Performance Metrics */}
-                      <div className="grid grid-cols-3 gap-2 mb-4">
-                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 rounded-lg px-3 py-2 text-center">
-                          <div className="text-lg font-bold">
-                            {bookings.filter((b: any) => b.salon?._id === salon._id).length}
-                          </div>
-                          <div className="text-xs font-medium">Total</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 rounded-lg px-3 py-2 text-center">
-                          <div className="text-lg font-bold">
-                            {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'completed').length}
-                          </div>
-                          <div className="text-xs font-medium">Completed</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 rounded-lg px-3 py-2 text-center">
-                          <div className="text-lg font-bold">
-                            {bookings.filter((b: any) => b.salon?._id === salon._id && b.status === 'confirmed').length}
-                          </div>
-                          <div className="text-xs font-medium">Active</div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setSelectedSalonId(salon._id);
-                            setShowSalonDetailsModal(true);
-                          }}
-                          className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium flex items-center justify-center"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Details
-                        </button>
-                        
-                        {getSalonStatus(salon) === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => verifySalonMutation.mutate(salon._id)}
-                              className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all duration-200 flex items-center justify-center"
-                              title="Verify Salon"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => rejectSalonMutation.mutate(salon._id)}
-                              className="px-4 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all duration-200 flex items-center justify-center"
-                              title="Reject Salon"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setSelectedSalonId(salon._id);
+                          setShowSalonDetailsModal(true);
+                        }}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        View Details
+                      </button>
+                      {salon.verificationStatus === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => verifySalonMutation.mutate(salon._id)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <CheckCircle className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => rejectSalonMutation.mutate(salon._id)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            <XCircle className="h-5 w-5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
           </div>
         );
 
       case 'owners':
+        function setShowUserModal(arg0: boolean) {
+          throw new Error('Function not implemented.');
+        }
+
         return (
           <div className="space-y-6">
             {/* Header */}
@@ -1254,6 +1177,7 @@ const AdminPanel: React.FC = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -1263,10 +1187,10 @@ const AdminPanel: React.FC = () => {
                           #{booking._id.slice(-6)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.user?.name || 'N/A'}
+                          {booking.clientId?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.salon?.name || 'N/A'}
+                          {booking.salonId?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(booking.date).toLocaleDateString()} {booking.time}
@@ -1283,6 +1207,46 @@ const AdminPanel: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {booking.totalPrice?.toLocaleString()} RWF
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleViewBooking(booking)}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              View
+                            </button>
+                            {booking.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleUpdateBookingStatus(booking._id, 'confirmed')}
+                                  className="text-green-600 hover:text-green-800 font-medium"
+                                >
+                                  Confirm
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateBookingStatus(booking._id, 'cancelled')}
+                                  className="text-red-600 hover:text-red-800 font-medium"
+                                >
+                                  Cancel
+                                </button>
+                              </>
+                            )}
+                            {booking.status === 'confirmed' && (
+                              <button
+                                onClick={() => handleUpdateBookingStatus(booking._id, 'completed')}
+                                className="text-green-600 hover:text-green-800 font-medium"
+                              >
+                                Complete
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDeleteBooking(booking._id)}
+                              className="text-red-600 hover:text-red-800 font-medium"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1576,6 +1540,192 @@ const AdminPanel: React.FC = () => {
           </div>
         );
 
+      case 'staff':
+        return (
+          <div className="space-y-6">
+            {/* Staff Management Header */}
+            <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl shadow-lg border border-gray-200 p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Staff Management</h3>
+                  <p className="text-gray-600 mt-1">
+                    Manage all salon staff members across the platform
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="p-3 bg-blue-500 rounded-xl">
+                    <UserCheck className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Search and Filter Controls */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <input
+                      type="text"
+                      placeholder="Search staff by name, email, or salon..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="sm:w-48">
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Roles</option>
+                    <option value="barber">Barbers</option>
+                    <option value="staff">Staff</option>
+                    <option value="manager">Managers</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Staff List */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              {staffLoading ? (
+                <div className="p-8 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading staff...</p>
+                </div>
+              ) : staff.length === 0 ? (
+                <div className="p-8 text-center">
+                  <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No staff members found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Staff Member
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Salon
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Joined
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {staff.map((staffMember: any) => (
+                        <tr key={staffMember._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                  <span className="text-white font-medium text-sm">
+                                    {staffMember.name?.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {staffMember.name}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {staffMember.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {staffMember.salonId?.name || 'No Salon'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {staffMember.salonId?.address || ''}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {staffMember.role || 'Staff'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              staffMember.isActive !== false 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {staffMember.isActive !== false ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(staffMember.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleViewStaff(staffMember)}
+                                className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleAssignServices(staffMember)}
+                                className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
+                                title="Assign Services"
+                              >
+                                <Settings className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleMigrateStaff(staffMember)}
+                                className="text-purple-600 hover:text-purple-900 p-1 rounded"
+                                title="Migrate to Another Salon"
+                              >
+                                <ArrowUp className="h-4 w-4" />
+                              </button>
+                              {staffMember.isActive !== false ? (
+                                <button
+                                  onClick={() => handleDeactivateStaff(staffMember)}
+                                  className="text-red-600 hover:text-red-900 p-1 rounded"
+                                  title="Deactivate"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleActivateStaff(staffMember)}
+                                  className="text-green-600 hover:text-green-900 p-1 rounded"
+                                  title="Activate"
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
       case 'notifications':
         return (
           <div className="space-y-6">
@@ -1667,6 +1817,7 @@ const AdminPanel: React.FC = () => {
     { id: 'verification', label: 'Salon Verification', icon: Shield, badge: stats.pendingSalons || undefined },
     { id: 'salons', label: 'Salons', icon: Building2 },
     { id: 'owners', label: 'Owners', icon: Briefcase },
+    { id: 'staff', label: 'Staff Management', icon: UserCheck },
     { id: 'bookings', label: 'Bookings', icon: Calendar },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'reports', label: 'Reports', icon: FileText },
@@ -1705,9 +1856,426 @@ const AdminPanel: React.FC = () => {
             setShowSalonDetailsModal(false);
             setSelectedSalonId(null);
           }}
-          salonDetails={salonDetails?.data?.salon || salonDetails?.salon || salonDetails}
+          salonDetails={salonDetails}
           salonDetailsLoading={salonDetailsLoading}
         />
+
+        {/* Staff Details Modal */}
+        {showStaffDetailsModal && selectedStaff && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Staff Details</h3>
+                  <button
+                    onClick={() => setShowStaffDetailsModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">
+                      {selectedStaff.name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
+                    <p className="text-gray-600">{selectedStaff.email}</p>
+                    <p className="text-sm text-gray-500">{selectedStaff.phone}</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <p className="text-sm text-gray-900">{selectedStaff.role || 'Staff'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      selectedStaff.isActive !== false 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {selectedStaff.isActive !== false ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Salon</label>
+                    <p className="text-sm text-gray-900">{selectedStaff.salonId?.name || 'No Salon'}</p>
+                    <p className="text-xs text-gray-500">{selectedStaff.salonId?.address || ''}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Joined Date</label>
+                    <p className="text-sm text-gray-900">
+                      {new Date(selectedStaff.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedStaff.specialties && selectedStaff.specialties.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedStaff.specialties.map((specialty: string, index: number) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        >
+                          {specialty}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedStaff.experience && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                    <p className="text-sm text-gray-900">{selectedStaff.experience} years</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Staff Migration Modal */}
+        {showStaffMigrationModal && selectedStaff && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Migrate Staff</h3>
+                  <button
+                    onClick={() => setShowStaffMigrationModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Migrate <strong>{selectedStaff.name}</strong> to a different salon
+                  </p>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select New Salon
+                  </label>
+                  <select
+                    value={selectedSalonForMigration}
+                    onChange={(e) => setSelectedSalonForMigration(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Choose a salon...</option>
+                    {salons
+                      .filter((salon: any) => salon._id !== selectedStaff.salon?._id)
+                      .map((salon: any) => (
+                        <option key={salon._id} value={salon._id}>
+                          {salon.name} - {salon.address}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={() => setShowStaffMigrationModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleStaffMigration}
+                    disabled={!selectedSalonForMigration}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Migrate Staff
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Service Assignment Modal */}
+        {showServiceAssignmentModal && selectedStaff && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-900">Assign Services to Staff</h3>
+                  <button
+                    onClick={() => setShowServiceAssignmentModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">
+                      {selectedStaff.name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
+                    <p className="text-gray-600">{selectedStaff.email}</p>
+                    <p className="text-sm text-gray-500">{selectedStaff.salonId?.name || 'No Salon'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Available Services</h4>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {salons
+                      .find((salon: any) => salon._id === selectedStaff.salon?._id)
+                      ?.services?.map((service: any) => (
+                        <div
+                          key={service._id}
+                          className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                            selectedStaffServices.includes(service._id)
+                              ? 'border-blue-500 bg-blue-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => toggleServiceAssignment(service._id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <h5 className="font-medium text-gray-900">{service.title}</h5>
+                              <p className="text-sm text-gray-600">{service.description}</p>
+                              <div className="flex items-center mt-2 text-sm text-gray-500">
+                                <Clock className="h-4 w-4 mr-1" />
+                                <span>{service.durationMinutes} minutes</span>
+                                <span className="mx-2">•</span>
+                                <span className="font-medium">{service.price.toLocaleString()} RWF</span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              {selectedStaffServices.includes(service._id) ? (
+                                <CheckCircle className="h-6 w-6 text-blue-500" />
+                              ) : (
+                                <div className="h-6 w-6 border-2 border-gray-300 rounded-full"></div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowServiceAssignmentModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleServiceAssignment}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Assign Services
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Booking Details Modal */}
+        {showBookingDetailsModal && selectedBooking && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900">Booking Details</h3>
+                  <button
+                    onClick={() => setShowBookingDetailsModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-6 w-6 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Booking Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Booking Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Booking ID</label>
+                          <p className="text-sm text-gray-900">#{selectedBooking._id.slice(-6)}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Date & Time</label>
+                          <p className="text-sm text-gray-900">
+                            {new Date(selectedBooking.date).toLocaleDateString()} at {selectedBooking.time}
+                          </p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Status</label>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            selectedBooking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            selectedBooking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                            selectedBooking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {selectedBooking.status}
+                          </span>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                          <p className="text-sm text-gray-900 font-semibold">
+                            {selectedBooking.totalPrice?.toLocaleString()} RWF
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Name</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.name || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Email</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.email || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Phone</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.phone || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Salon & Service Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Salon Name</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.name || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Address</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.address || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">District</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.district || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Service Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Service</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.title || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Category</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.category || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Duration</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.durationMinutes || 'N/A'} minutes</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Price</label>
+                          <p className="text-sm text-gray-900 font-semibold">
+                            {selectedBooking.serviceId?.price?.toLocaleString()} RWF
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Barber Information */}
+                  {selectedBooking.barberId && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Stylist Information</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Name</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.name || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Email</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.email || 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">Phone</label>
+                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.phone || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowBookingDetailsModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Close
+                    </button>
+                    {selectedBooking.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            handleUpdateBookingStatus(selectedBooking._id, 'confirmed');
+                            setShowBookingDetailsModal(false);
+                          }}
+                          className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Confirm Booking
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleUpdateBookingStatus(selectedBooking._id, 'cancelled');
+                            setShowBookingDetailsModal(false);
+                          }}
+                          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                          Cancel Booking
+                        </button>
+                      </>
+                    )}
+                    {selectedBooking.status === 'confirmed' && (
+                      <button
+                        onClick={() => {
+                          handleUpdateBookingStatus(selectedBooking._id, 'completed');
+                          setShowBookingDetailsModal(false);
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Mark as Completed
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

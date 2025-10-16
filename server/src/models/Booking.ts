@@ -23,7 +23,6 @@ export interface IBooking extends Document {
 const bookingSchema = new Schema<IBooking>({
   bookingId: {
     type: String,
-    required: [true, 'Booking ID is required'],
     unique: true,
   },
   clientId: {

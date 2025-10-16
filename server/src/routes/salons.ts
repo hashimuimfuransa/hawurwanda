@@ -1,7 +1,9 @@
 import express from 'express';
 import multer from 'multer';
+import bcrypt from 'bcrypt';
 import { authenticateToken, requireOwnerOrAdmin, AuthRequest } from '../middlewares/auth';
 import { validateRequest, validateParams } from '../middlewares/validation';
+import { validateObjectIdParam, validateObjectIdFields, handleInvalidObjectIdError, isValidObjectId } from '../utils/validation';
 import { Salon } from '../models/Salon';
 import { Service } from '../models/Service';
 import { User } from '../models/User';
@@ -9,6 +11,7 @@ import { Availability } from '../models/Availability';
 import { Notification } from '../models/Notification';
 import Joi from 'joi';
 import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
+import { sendStaffWelcomeEmail, sendOwnerWelcomeEmail } from '../utils/welcomeEmails';
 
 const router = express.Router();
 
@@ -86,8 +89,8 @@ router.get('/', async (req, res) => {
 
     const salons = await Salon.find(query)
       .populate('ownerId', 'name email phone')
-      .populate('services', 'title price durationMinutes category')
-      .populate('barbers', 'name profilePhoto')
+      .populate('services', 'title price durationMinutes category targetAudience')
+      .populate('barbers', 'name profilePhoto assignedServices')
       .sort({ verified: -1, createdAt: -1 })
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
@@ -109,12 +112,14 @@ router.get('/', async (req, res) => {
 });
 
 // Get salon by ID
-router.get('/:id', async (req, res): Promise<void> => {
+router.get('/:id', validateObjectIdParam('id'), async (req, res): Promise<void> => {
   try {
-    const salon = await Salon.findById(req.params.id)
+    const salonId = req.params.id;
+
+    const salon = await Salon.findById(salonId)
       .populate('ownerId', 'name email phone')
-      .populate('services', 'title price durationMinutes category description')
-      .populate('barbers', 'name profilePhoto');
+      .populate('services', 'title price durationMinutes category description targetAudience')
+      .populate('barbers', 'name profilePhoto assignedServices');
 
     if (!salon) {
       res.status(404).json({ message: 'Salon not found' });
@@ -231,8 +236,8 @@ router.post(
 
       const populatedSalon = await Salon.findById(salon._id)
         .populate('ownerId', 'name email phone')
-        .populate('services', 'title price durationMinutes')
-        .populate('barbers', 'name profilePhoto');
+        .populate('services', 'title price durationMinutes targetAudience')
+        .populate('barbers', 'name profilePhoto assignedServices');
 
       res.status(201).json({
         message: 'Salon created successfully and pending admin approval',
@@ -246,7 +251,7 @@ router.post(
 );
 
 // Update salon (owner or admin)
-router.patch('/:id', authenticateToken, requireOwnerOrAdmin, validateRequest(updateSalonSchema), async (req: AuthRequest, res): Promise<void> => {
+router.patch('/:id', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('id'), validateRequest(updateSalonSchema), async (req: AuthRequest, res): Promise<void> => {
   try {
     const salonId = req.params.id;
     const userId = req.user!._id;
@@ -268,8 +273,8 @@ router.patch('/:id', authenticateToken, requireOwnerOrAdmin, validateRequest(upd
       req.body,
       { new: true, runValidators: true }
     ).populate('ownerId', 'name email phone')
-     .populate('services', 'title price durationMinutes')
-     .populate('barbers', 'name profilePhoto');
+     .populate('services', 'title price durationMinutes targetAudience')
+     .populate('barbers', 'name profilePhoto assignedServices');
 
     res.json({
       message: 'Salon updated successfully',
@@ -282,7 +287,7 @@ router.patch('/:id', authenticateToken, requireOwnerOrAdmin, validateRequest(upd
 });
 
 // Upload salon gallery images
-router.post('/:id/gallery', authenticateToken, requireOwnerOrAdmin, upload.array('images', 5), async (req: AuthRequest, res): Promise<void> => {
+router.post('/:id/gallery', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('id'), upload.array('images', 5), async (req: AuthRequest, res): Promise<void> => {
   try {
     const salonId = req.params.id;
     const files = req.files as Express.Multer.File[];
@@ -322,10 +327,10 @@ router.post('/:id/gallery', authenticateToken, requireOwnerOrAdmin, upload.array
 });
 
 // Add service to salon (owner only)
-router.post('/:id/services', authenticateToken, requireOwnerOrAdmin, async (req: AuthRequest, res): Promise<void> => {
+router.post('/:id/services', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('id'), async (req: AuthRequest, res): Promise<void> => {
   try {
     const salonId = req.params.id;
-    const { title, description, durationMinutes, price, category } = req.body;
+    const { title, description, durationMinutes, price, category, targetAudience } = req.body;
 
     // Check if user owns the salon
     const salon = await Salon.findById(salonId);
@@ -346,6 +351,7 @@ router.post('/:id/services', authenticateToken, requireOwnerOrAdmin, async (req:
       durationMinutes,
       price,
       category,
+      targetAudience,
     });
 
     await service.save();
@@ -364,8 +370,8 @@ router.post('/:id/services', authenticateToken, requireOwnerOrAdmin, async (req:
   }
 });
 
-// Add barber to salon (owner only)
-router.post('/:id/barbers', authenticateToken, requireOwnerOrAdmin, async (req: AuthRequest, res): Promise<void> => {
+// Add barber to salon (owner only) - existing endpoint for backward compatibility
+router.post('/:id/barbers', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('id'), validateObjectIdFields(['barberId']), async (req: AuthRequest, res): Promise<void> => {
   try {
     const salonId = req.params.id;
     const { barberId } = req.body;
@@ -429,10 +435,182 @@ router.post('/:id/barbers', authenticateToken, requireOwnerOrAdmin, async (req: 
   }
 });
 
-// Get salon services
-router.get('/:id/services', async (req, res) => {
+// Create new staff member with comprehensive info (owner only)
+router.post('/:id/staff', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('id'), upload.single('profilePhoto'), async (req: AuthRequest, res): Promise<void> => {
   try {
-    const services = await Service.find({ salonId: req.params.id, isActive: true })
+    const salonId = req.params.id;
+    const { 
+      name, 
+      email, 
+      phone, 
+      nationalId,
+      password, 
+      staffCategory, 
+      specialties,
+      experience,
+      bio,
+      credentials,
+      workSchedule 
+    } = req.body;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to add staff to this salon' });
+      return;
+    }
+
+    // Check if email or phone already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { phone }] 
+    });
+    if (existingUser) {
+      res.status(400).json({ message: 'User with this email or phone already exists' });
+      return;
+    }
+
+    let profilePhotoUrl: string | undefined;
+    
+    // Upload profile photo if provided
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'staff/profiles',
+        `profile-${Date.now()}`
+      );
+      profilePhotoUrl = result.secure_url;
+    }
+
+    // Parse arrays from JSON strings
+    let parsedSpecialties: string[] = [];
+    let parsedCredentials: string[] = [];
+    let parsedWorkSchedule: any = {};
+
+    if (specialties) {
+      try {
+        parsedSpecialties = JSON.parse(specialties);
+      } catch (e) {
+        parsedSpecialties = specialties.split(',').map((s: string) => s.trim());
+      }
+    }
+
+    if (credentials) {
+      try {
+        parsedCredentials = JSON.parse(credentials);
+      } catch (e) {
+        parsedCredentials = credentials.split(',').map((c: string) => c.trim());
+      }
+    }
+
+    if (workSchedule) {
+      try {
+        parsedWorkSchedule = JSON.parse(workSchedule);
+      } catch (e) {
+        console.warn('Invalid work schedule format');
+      }
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Create new staff member
+    const staffMember = new User({
+      name,
+      email,
+      phone,
+      nationalId: nationalId || undefined,
+      passwordHash,
+      role: 'barber', // Default role for staff members
+      salonId,
+      profilePhoto: profilePhotoUrl,
+      isVerified: true, // Staff members created by owner are pre-verified
+      staffCategory,
+      specialties: parsedSpecialties,
+      experience,
+      bio,
+      credentials: parsedCredentials,
+      workSchedule: parsedWorkSchedule,
+    });
+
+    await staffMember.save();
+
+    // Add staff member to salon barbers list
+    salon.barbers.push(staffMember._id as any);
+    await salon.save();
+
+    // Create availability for staff member based on work schedule
+    const defaultAvailability = {
+      monday: [{ start: '08:00', end: '18:00', available: true }],
+      tuesday: [{ start: '08:00', end: '18:00', available: true }],
+      wednesday: [{ start: '08:00', end: '18:00', available: true }],
+      thursday: [{ start: '08:00', end: '18:00', available: true }],
+      friday: [{ start: '08:00', end: '18:00', available: true }],
+      saturday: [{ start: '09:00', end: '17:00', available: true }],
+      sunday: [{ start: '10:00', end: '16:00', available: true }],
+    };
+
+    // Convert work schedule to availability format
+    const weeklyAvailability: any = {};
+    Object.keys(defaultAvailability).forEach(day => {
+      if (parsedWorkSchedule[day] && parsedWorkSchedule[day].available) {
+        weeklyAvailability[day] = [{
+          start: parsedWorkSchedule[day].start || '08:00',
+          end: parsedWorkSchedule[day].end || '18:00',
+          available: true
+        }];
+      } else {
+        weeklyAvailability[day] = defaultAvailability[day as keyof typeof defaultAvailability];
+      }
+    });
+
+    const availability = new Availability({
+      barberId: staffMember._id,
+      salonId,
+      weeklyAvailability,
+    });
+
+    await availability.save();
+
+    // Return staff member without password hash
+    const staffMemberResponse = await User.findById(staffMember._id).select('-passwordHash');
+
+    // Send welcome email to staff member
+    try {
+      await sendStaffWelcomeEmail(
+        email,
+        name,
+        salon.name,
+        password,
+        staffCategory
+      );
+      console.log(`Welcome email sent to staff member: ${email}`);
+    } catch (emailError) {
+      console.error('Failed to send welcome email to staff member:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.status(201).json({
+      message: 'Staff member created successfully',
+      staff: staffMemberResponse,
+    });
+  } catch (error) {
+    console.error('Add staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get salon services
+router.get('/:id/services', validateObjectIdParam('id'), async (req, res) => {
+  try {
+    const salonId = req.params.id;
+
+    const services = await Service.find({ salonId, isActive: true })
       .sort({ category: 1, title: 1 });
 
     res.json({ services });
@@ -442,11 +620,91 @@ router.get('/:id/services', async (req, res) => {
   }
 });
 
-// Get salon barbers
-router.get('/:id/barbers', async (req, res) => {
+// Update service (owner only)
+router.patch('/:salonId/services/:serviceId', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res): Promise<void> => {
   try {
+    const { salonId, serviceId } = req.params;
+    const { title, description, durationMinutes, price, category, targetAudience, isActive } = req.body;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to update services for this salon' });
+      return;
+    }
+
+    // Find and update the service
+    const service = await Service.findOneAndUpdate(
+      { _id: serviceId, salonId },
+      { title, description, durationMinutes, price, category, targetAudience, isActive },
+      { new: true, runValidators: true }
+    );
+
+    if (!service) {
+      res.status(404).json({ message: 'Service not found' });
+      return;
+    }
+
+    res.json({
+      message: 'Service updated successfully',
+      service,
+    });
+  } catch (error) {
+    console.error('Update service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete service (owner only)
+router.delete('/:salonId/services/:serviceId', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const { salonId, serviceId } = req.params;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to delete services for this salon' });
+      return;
+    }
+
+    // Find and delete the service
+    const service = await Service.findOneAndDelete({ _id: serviceId, salonId });
+
+    if (!service) {
+      res.status(404).json({ message: 'Service not found' });
+      return;
+    }
+
+    // Remove service from salon's services array
+    salon.services = salon.services.filter(id => id.toString() !== serviceId);
+    await salon.save();
+
+    res.json({
+      message: 'Service deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get salon barbers/staff
+router.get('/:id/barbers', validateObjectIdParam('id'), async (req, res) => {
+  try {
+    const salonId = req.params.id;
+
     const barbers = await User.find({ 
-      salonId: req.params.id, 
+      salonId, 
       role: 'barber' 
     }).select('-passwordHash');
 
@@ -456,5 +714,189 @@ router.get('/:id/barbers', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Get all staff members with comprehensive info
+router.get('/:id/staff', authenticateToken, validateObjectIdParam('id'), async (req, res) => {
+  try {
+    const salonId = req.params.id;
+
+    const staff = await User.find({ 
+      salonId, 
+      role: 'barber' // All staff members have 'barber' role but different staffCategory
+    }).select('-passwordHash')
+      .sort({ createdAt: -1 });
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Get staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff member (owner only)
+router.patch('/:salonId/staff/:staffId', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('staffId'), upload.single('profilePhoto'), async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const { salonId, staffId } = req.params;
+    const updateData = req.body;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to update staff in this salon' });
+      return;
+    }
+
+    // Check if staff member exists and belongs to this salon
+    const staffMember = await User.findOne({ _id: staffId, salonId });
+    if (!staffMember) {
+      res.status(404).json({ message: 'Staff member not found' });
+      return;
+    }
+
+    // Handle profile photo update if provided
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'staff/profiles',
+        `profile-${Date.now()}`
+      );
+      updateData.profilePhoto = result.secure_url;
+    }
+
+    // Parse arrays if they're strings
+    if (updateData.specialties && typeof updateData.specialties === 'string') {
+      try {
+        updateData.specialties = JSON.parse(updateData.specialties);
+      } catch (e) {
+        updateData.specialties = updateData.specialties.split(',').map((s: string) => s.trim());
+      }
+    }
+
+    if (updateData.credentials && typeof updateData.credentials === 'string') {
+      try {
+        updateData.credentials = JSON.parse(updateData.credentials);
+      } catch (e) {
+        updateData.credentials = updateData.credentials.split(',').map((c: string) => c.trim());
+      }
+    }
+
+    if (updateData.workSchedule && typeof updateData.workSchedule === 'string') {
+      try {
+        updateData.workSchedule = JSON.parse(updateData.workSchedule);
+      } catch (e) {
+        console.warn('Invalid work schedule format in update');
+      }
+    }
+
+    // Update staff member
+    const updatedStaff = await User.findByIdAndUpdate(
+      staffId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-passwordHash');
+
+    res.json({
+      message: 'Staff member updated successfully',
+      staff: updatedStaff,
+    });
+  } catch (error) {
+    console.error('Update staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete staff member (owner only)
+router.delete('/:salonId/staff/:staffId', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('staffId'), async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const { salonId, staffId } = req.params;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to delete staff from this salon' });
+      return;
+    }
+
+    // Check if staff member exists and belongs to this salon
+    const staffMember = await User.findOne({ _id: staffId, salonId });
+    if (!staffMember) {
+      res.status(404).json({ message: 'Staff member not found' });
+      return;
+    }
+
+    // Remove staff member from salon barbers list
+    salon.barbers = salon.barbers.filter(barberId => barberId.toString() !== staffId);
+    await salon.save();
+
+    // Delete availability records for this staff member
+    await Availability.deleteMany({ barberId: staffId });
+
+    // Delete the staff member
+    await User.findByIdAndDelete(staffId);
+
+    res.json({ message: 'Staff member deleted successfully' });
+  } catch (error) {
+    console.error('Delete staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff services (owner only)
+router.patch('/:salonId/staff/:staffId/services', authenticateToken, requireOwnerOrAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('staffId'), async (req: AuthRequest, res): Promise<void> => {
+  try {
+    const { salonId, staffId } = req.params;
+    const { services } = req.body;
+
+    // Check if user owns the salon
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      res.status(404).json({ message: 'Salon not found' });
+      return;
+    }
+
+    if (salon.ownerId.toString() !== req.user!._id.toString()) {
+      res.status(403).json({ message: 'Not authorized to update staff services for this salon' });
+      return;
+    }
+
+    // Find and update the staff member's assigned services
+    const staff = await User.findOneAndUpdate(
+      { _id: staffId, salonId },
+      { assignedServices: services },
+      { new: true }
+    ).select('-passwordHash');
+
+    if (!staff) {
+      res.status(404).json({ message: 'Staff member not found' });
+      return;
+    }
+
+    res.json({
+      message: 'Staff services updated successfully',
+      staff: {
+        _id: staff._id,
+        name: staff.name,
+        email: staff.email,
+        assignedServices: staff.assignedServices
+      }
+    });
+  } catch (error) {
+    console.error('Update staff services error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Add error handling middleware for ObjectId cast errors
+router.use(handleInvalidObjectIdError);
 
 export default router;

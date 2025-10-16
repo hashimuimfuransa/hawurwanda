@@ -4,8 +4,14 @@ import sgMail from '@sendgrid/mail';
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
 const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'info@excellencecoachinghub.com';
 
+console.log('SendGrid API Key configured:', !!SENDGRID_API_KEY);
+console.log('From Email:', FROM_EMAIL);
+
 if (SENDGRID_API_KEY) {
   sgMail.setApiKey(SENDGRID_API_KEY);
+  console.log('SendGrid API key set successfully');
+} else {
+  console.error('SendGrid API key is not configured');
 }
 
 interface EmailOptions {
@@ -20,6 +26,9 @@ interface EmailOptions {
  */
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   try {
+    console.log('Attempting to send email to:', options.to);
+    console.log('Subject:', options.subject);
+    
     if (!SENDGRID_API_KEY) {
       console.error('SendGrid API key is not configured');
       return false;

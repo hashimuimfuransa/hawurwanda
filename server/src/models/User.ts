@@ -5,11 +5,28 @@ export interface IUser extends Document {
   name: string;
   email: string;
   phone: string;
+  nationalId?: string;
   passwordHash: string;
   role: 'client' | 'barber' | 'owner' | 'admin' | 'superadmin';
   salonId?: Types.ObjectId;
   profilePhoto?: string;
   isVerified: boolean;
+  // Enhanced staff information
+  staffCategory?: 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'other';
+  specialties?: string[];
+  experience?: string; // Years of experience
+  bio?: string;
+  credentials?: string[]; // Array of certifications/credentials
+  assignedServices?: string[]; // Array of service IDs assigned to this staff member
+  workSchedule?: {
+    monday?: { start: string; end: string; available: boolean };
+    tuesday?: { start: string; end: string; available: boolean };
+    wednesday?: { start: string; end: string; available: boolean };
+    thursday?: { start: string; end: string; available: boolean };
+    friday?: { start: string; end: string; available: boolean };
+    saturday?: { start: string; end: string; available: boolean };
+    sunday?: { start: string; end: string; available: boolean };
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +54,13 @@ const userSchema = new Schema<IUser>({
     trim: true,
     match: [/^(\+250|250|0)?[0-9]{9}$/, 'Please enter a valid Rwandan phone number'],
   },
+  nationalId: {
+    type: String,
+    required: false,
+    trim: true,
+    match: [/^[0-9]{16}$/, 'Please enter a valid 16-digit national ID'],
+    sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
+  },
   passwordHash: {
     type: String,
     required: [true, 'Password is required'],
@@ -59,6 +83,70 @@ const userSchema = new Schema<IUser>({
   isVerified: {
     type: Boolean,
     default: false,
+  },
+  // Enhanced staff information
+  staffCategory: {
+    type: String,
+    enum: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'other'],
+    required: false,
+  },
+  specialties: [{
+    type: String,
+    trim: true,
+  }],
+  experience: {
+    type: String,
+    trim: true,
+  },
+  bio: {
+    type: String,
+    maxlength: [500, 'Bio cannot exceed 500 characters'],
+    trim: true,
+  },
+  credentials: [{
+    type: String,
+    trim: true,
+  }],
+  assignedServices: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Service',
+  }],
+  workSchedule: {
+    monday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    tuesday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    wednesday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    thursday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    friday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    saturday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
+    sunday: {
+      start: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      end: { type: String, match: /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/ },
+      available: { type: Boolean, default: false },
+    },
   },
 }, {
   timestamps: true,

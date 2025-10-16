@@ -8,6 +8,7 @@ export interface IService extends Document {
   durationMinutes: number;
   price: number;
   category: string;
+  targetAudience: string[];
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -44,8 +45,19 @@ const serviceSchema = new Schema<IService>({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['haircut', 'styling', 'coloring', 'treatment', 'beard', 'massage', 'other'],
+    enum: ['hair', 'nails', 'skincare', 'massage', 'makeup', 'other'],
     default: 'other',
+  },
+  targetAudience: {
+    type: [String],
+    required: [true, 'Target audience is required'],
+    enum: ['children', 'adults', 'men', 'women', 'both'],
+    validate: {
+      validator: function(v: string[]) {
+        return v && v.length > 0;
+      },
+      message: 'At least one target audience must be selected'
+    }
   },
   isActive: {
     type: Boolean,

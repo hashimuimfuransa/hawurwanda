@@ -17,15 +17,17 @@ const Booking: React.FC = () => {
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   // Fetch salon data
-  const { data: salon, isLoading: salonLoading } = useQuery({
+  const { data: salonResponse, isLoading: salonLoading } = useQuery({
     queryKey: ['salon', salonId],
     queryFn: () => salonService.getSalon(salonId!),
     enabled: !!salonId,
   });
 
+  const salon = salonResponse?.data?.salon || salonResponse?.salon;
+
   // Find the specific service and barber
-  const service = salon?.data?.services?.find((s: any) => s._id === serviceId);
-  const barber = salon?.data?.barbers?.find((b: any) => b._id === barberId);
+  const service = salon?.services?.find((s: any) => s._id === serviceId);
+  const barber = salon?.barbers?.find((b: any) => b._id === barberId);
 
   // Create booking mutation
   const createBookingMutation = useMutation({
@@ -103,7 +105,7 @@ const Booking: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Salon:</span>
-                  <span className="font-medium">{salon?.data?.name}</span>
+                  <span className="font-medium">{salon?.name}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Price:</span>
@@ -153,7 +155,7 @@ const Booking: React.FC = () => {
           serviceId={serviceId!}
           service={service}
           barber={barber}
-          salon={salon?.data}
+          salon={salon}
           onSubmit={handleBookingSubmit}
         />
       </div>

@@ -27,6 +27,7 @@ interface DashboardLayoutProps {
   activeTab?: string;
   onTabChange?: (tab: string) => void;
   headerActions?: React.ReactNode;
+  onNotificationClick?: () => void;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -36,7 +37,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   sidebarItems = [],
   activeTab = '',
   onTabChange = () => {},
-  headerActions
+  headerActions,
+  onNotificationClick
 }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -221,7 +223,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       </button>
                       
                       {/* Mobile notifications */}
-                      <button className="relative p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+                      <button 
+                        onClick={onNotificationClick}
+                        className="relative p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                      >
                         <Bell className="h-5 w-5" />
                         <span className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></span>
                       </button>
@@ -312,7 +317,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 </div>
 
                 {/* Desktop Notifications */}
-                <button className="relative p-3 text-slate-400 hover:text-slate-700 hover:bg-white/80 rounded-2xl transition-all duration-200 shadow-sm group">
+                <button 
+                  onClick={onNotificationClick}
+                  className="relative p-3 text-slate-400 hover:text-slate-700 hover:bg-white/80 rounded-2xl transition-all duration-200 shadow-sm group"
+                >
                   <Bell className="h-5 w-5" />
                   <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg flex items-center justify-center">
                     <span className="text-white text-xs font-bold">3</span>

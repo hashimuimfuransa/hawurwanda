@@ -46,7 +46,11 @@ router.post('/', authenticateToken, validateRequest(createBookingSchema), async 
     });
 
     if (existingBooking) {
-      return res.status(400).json({ message: 'Time slot is already booked' });
+      return res.status(400).json({ 
+        message: 'Time slot is already booked',
+        details: 'This time slot has been taken by another customer. Please select a different time.',
+        code: 'TIME_SLOT_CONFLICT'
+      });
     }
 
     // Calculate amounts
@@ -339,7 +343,11 @@ router.get('/availability/:barberId', async (req, res) => {
     // Get barber's availability
     const availability = await Availability.findOne({ barberId });
     if (!availability) {
-      return res.status(404).json({ message: 'Barber availability not found' });
+      return res.status(404).json({ 
+        message: 'Barber availability not found',
+        details: 'This stylist has not set their working hours yet. Please contact the salon directly.',
+        code: 'NO_AVAILABILITY_SET'
+      });
     }
 
     // Get existing bookings for the date

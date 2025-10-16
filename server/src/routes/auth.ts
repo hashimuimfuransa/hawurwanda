@@ -6,6 +6,7 @@ import { User } from '../models/User';
 import { authenticateToken, AuthRequest } from '../middlewares/auth';
 import { validateRequest } from '../middlewares/validation';
 import { authRateLimit } from '../middlewares/rateLimiter';
+import { sendOwnerWelcomeEmail } from '../utils/welcomeEmails';
 
 // JWT utility function
 const generateToken = (userId: string): string => {
@@ -62,6 +63,22 @@ router.post('/register', authRateLimit, validateRequest(registerSchema), async (
     });
 
     await user.save();
+
+    // Send welcome email for salon owners
+    if (role === 'owner') {
+      try {
+        await sendOwnerWelcomeEmail(
+          email,
+          name,
+          'Your Salon', // Default salon name, will be updated when salon is created
+          password
+        );
+        console.log(`Welcome email sent to salon owner: ${email}`);
+      } catch (emailError) {
+        console.error('Failed to send welcome email to salon owner:', emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     // Generate JWT
     const token = generateToken(user._id.toString());

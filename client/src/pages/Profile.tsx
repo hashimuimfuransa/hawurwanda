@@ -109,9 +109,10 @@ const Profile: React.FC = () => {
   }
 
   // Calculate stats for user dashboard
-  const completedBookings = bookings?.bookings?.filter((booking: any) => booking.status === 'completed') || [];
-  const upcomingBookings = bookings?.bookings?.filter((booking: any) => booking.status === 'confirmed') || [];
-  const totalSpent = completedBookings.reduce((sum: number, booking: any) => sum + (booking.totalPrice || 0), 0);
+  const bookingsList = bookings?.data?.bookings || bookings?.bookings || [];
+  const completedBookings = bookingsList.filter((booking: any) => booking.status === 'completed');
+  const upcomingBookings = bookingsList.filter((booking: any) => booking.status === 'confirmed');
+  const totalSpent = completedBookings.reduce((sum: number, booking: any) => sum + (booking.amountTotal || 0), 0);
 
   return (
     <>
@@ -347,7 +348,7 @@ const Profile: React.FC = () => {
                 </div>
                 <div className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 px-4 py-2 rounded-full">
                   <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                    {bookings?.bookings?.length || 0} {t('total', language)}
+                    {bookingsList.length} {t('total', language)}
                   </span>
                 </div>
               </div>
@@ -373,7 +374,7 @@ const Profile: React.FC = () => {
                   <p className="text-gray-600 dark:text-gray-400 text-lg font-medium">{t('loadingBookings', language)}</p>
                   <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">{t('pleaseWaitAppointments', language)}</p>
                 </div>
-              ) : bookings?.bookings?.length === 0 ? (
+              ) : bookingsList.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <Calendar className="h-12 w-12 text-gray-400 dark:text-gray-500" />
@@ -402,7 +403,7 @@ const Profile: React.FC = () => {
                     </div>
                   </div>
 
-                  {bookings?.bookings?.map((booking: any) => (
+                  {bookingsList.map((booking: any) => (
                     <div key={booking._id} className="transform hover:scale-[1.02] transition-all duration-200">
                       <BookingCard
                         booking={booking}

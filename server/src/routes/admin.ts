@@ -237,6 +237,158 @@ router.get('/reports', authenticateToken, requireAdmin, async (req: AuthRequest,
   }
 });
 
+// Get all bookings (admin only)
+router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { 
+      status, 
+      salonId, 
+      search, 
+      startDate, 
+      endDate, 
+      page = 1, 
+      limit = 10 
+    } = req.query;
+
+    const query: any = {};
+
+    // Filter by status
+    if (status) query.status = status;
+
+    // Filter by salon
+    if (salonId) query.salonId = salonId;
+
+    // Filter by date range
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate as string);
+      if (endDate) query.date.$lte = new Date(endDate as string);
+    }
+
+    // Search by client name or service
+    if (search) {
+      query.$or = [
+        { 'clientId.name': new RegExp(search as string, 'i') },
+        { 'serviceId.title': new RegExp(search as string, 'i') },
+      ];
+    }
+
+    const bookings = await Booking.find(query)
+      .populate('clientId', 'name email phone')
+      .populate('salonId', 'name address district')
+      .populate('barberId', 'name email phone')
+      .populate('serviceId', 'title category price durationMinutes')
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) * 1)
+      .skip((Number(page) - 1) * Number(limit));
+
+    const total = await Booking.countDocuments(query);
+
+    // Calculate booking statistics
+    const totalBookings = await Booking.countDocuments();
+    const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
+    const completedBookings = await Booking.countDocuments({ status: 'completed' });
+    const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
+
+    // Calculate total revenue
+    const revenueResult = await Booking.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+    ]);
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+
+    res.json({
+      bookings,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        total,
+      },
+      statistics: {
+        totalBookings,
+        confirmedBookings,
+        completedBookings,
+        cancelledBookings,
+        totalRevenue,
+      },
+    });
+  } catch (error) {
+    console.error('Get bookings error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update booking status (admin only)
+router.patch('/bookings/:bookingId/status', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'confirmed', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const booking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { status },
+      { new: true }
+    )
+      .populate('clientId', 'name email phone')
+      .populate('salonId', 'name address district')
+      .populate('barberId', 'name email phone')
+      .populate('serviceId', 'title category price durationMinutes');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json({ booking });
+  } catch (error) {
+    console.error('Update booking status error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get booking details (admin only)
+router.get('/bookings/:bookingId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findById(bookingId)
+      .populate('clientId', 'name email phone')
+      .populate('salonId', 'name address district')
+      .populate('barberId', 'name email phone')
+      .populate('serviceId', 'title category price durationMinutes');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json({ booking });
+  } catch (error) {
+    console.error('Get booking details error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete booking (admin only)
+router.delete('/bookings/:bookingId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    const booking = await Booking.findByIdAndDelete(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('Delete booking error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get all users (admin only)
 router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
@@ -271,6 +423,190 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
     });
   } catch (error) {
     console.error('Get users error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get all staff members (admin only)
+router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { search, role, page = 1, limit = 10 } = req.query;
+    const query: any = {
+      role: { $in: ['barber', 'owner'] } // Only staff members and salon owners
+    };
+
+    if (role) query.role = role;
+    if (search) {
+      query.$or = [
+        { name: new RegExp(search as string, 'i') },
+        { email: new RegExp(search as string, 'i') },
+        { phone: new RegExp(search as string, 'i') },
+      ];
+    }
+
+    const staff = await User.find(query)
+      .select('-passwordHash')
+      .populate({
+        path: 'salonId',
+        select: 'name address district',
+        options: { strictPopulate: false }
+      })
+      .populate('assignedServices', 'title category')
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) * 1)
+      .skip((Number(page) - 1) * Number(limit));
+
+    // For staff members without salonId, try to find their salon by searching in salon.barbers
+    const staffWithSalons = await Promise.all(
+      staff.map(async (staffMember) => {
+        if (!staffMember.salonId) {
+          // Find salon where this staff member is in the barbers array
+          const salon = await Salon.findOne({ barbers: staffMember._id })
+            .select('name address district');
+          
+          if (salon) {
+            // Update the staff member's salonId
+            staffMember.salonId = salon._id;
+            await staffMember.save();
+            
+            return {
+              ...staffMember.toObject(),
+              salonId: {
+                _id: salon._id,
+                name: salon.name,
+                address: salon.address,
+                district: salon.district
+              }
+            };
+          }
+        }
+        return staffMember;
+      })
+    );
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+      staff: staffWithSalons,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        total,
+      },
+    });
+  } catch (error) {
+    console.error('Get staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get staff details (admin only)
+router.get('/staff/:staffId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const staff = await User.findById(staffId)
+      .select('-passwordHash')
+      .populate('salonId', 'name address district')
+      .populate('assignedServices', 'title category durationMinutes price');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Get staff details error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff salon (admin only)
+router.patch('/staff/:staffId/salon', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+    const { salonId } = req.body;
+
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { salonId },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address district');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Update staff salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Deactivate staff (admin only)
+router.patch('/staff/:staffId/deactivate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { isActive: false },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address district');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Deactivate staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Activate staff (admin only)
+router.patch('/staff/:staffId/activate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { isActive: true },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address district');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Activate staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff services (admin only)
+router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+    const { services } = req.body;
+
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { assignedServices: services },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address district').populate('assignedServices', 'title category');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Update staff services error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

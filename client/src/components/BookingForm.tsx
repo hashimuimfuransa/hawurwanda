@@ -47,6 +47,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState<string>('');
+  const [bookingError, setBookingError] = useState<string>('');
 
   const {
     register,
@@ -63,6 +65,9 @@ const BookingForm: React.FC<BookingFormProps> = ({
     if (!date) return;
     
     setLoadingSlots(true);
+    setSlotError('');
+    setBookingError('');
+    
     try {
       const response = await fetch(
         `/api/bookings/availability/${barberId}?date=${date}`
@@ -71,11 +76,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
       
       if (response.ok) {
         setAvailableSlots(data.availableSlots);
+        if (data.availableSlots.length === 0) {
+          setSlotError('No available time slots for this date. Please try another date or contact the salon directly.');
+        }
       } else {
-        toast.error(data.message || 'Failed to fetch available slots');
+        setSlotError(data.message || 'Failed to fetch available slots. Please try again.');
+        setAvailableSlots([]);
       }
     } catch (error) {
-      toast.error('Failed to fetch available slots');
+      setSlotError('Unable to check availability. Please try again or contact the salon.');
+      setAvailableSlots([]);
     } finally {
       setLoadingSlots(false);
     }
@@ -106,6 +116,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   const onFormSubmit = async (data: BookingFormData) => {
+    setBookingError('');
     try {
       await onSubmit({
         ...data,
@@ -114,7 +125,24 @@ const BookingForm: React.FC<BookingFormProps> = ({
         serviceId,
       });
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create booking');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create booking';
+      
+      // Handle specific booking errors
+      if (errorMessage.includes('Time slot is already booked')) {
+        setBookingError('This time slot has just been taken by another customer. Please select a different time slot.');
+        // Refresh available slots
+        if (selectedDate) {
+          fetchAvailableSlots(selectedDate);
+        }
+      } else if (errorMessage.includes('time slot')) {
+        setBookingError('The selected time slot is no longer available. Please choose another time.');
+        // Refresh available slots
+        if (selectedDate) {
+          fetchAvailableSlots(selectedDate);
+        }
+      } else {
+        setBookingError(errorMessage);
+      }
     }
   };
 
@@ -164,35 +192,96 @@ const BookingForm: React.FC<BookingFormProps> = ({
           {/* Time Slot Selection */}
           {selectedDate && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Clock className="h-4 w-4 inline mr-1" />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  <Clock className="h-4 w-4 inline mr-1" />
 {t('selectTimeSlot', language)}
-              </label>
+                </label>
+                {availableSlots.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => fetchAvailableSlots(selectedDate)}
+                    disabled={loadingSlots}
+                    className="text-xs text-blue-600 hover:text-blue-800 underline disabled:opacity-50"
+                  >
+                    {loadingSlots ? 'Refreshing...' : 'Refresh slots'}
+                  </button>
+                )}
+              </div>
               {loadingSlots ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                   <p className="text-sm text-gray-600 mt-2">Loading available slots...</p>
                 </div>
               ) : availableSlots.length > 0 ? (
-                <div className="grid grid-cols-3 gap-2">
-                  {availableSlots.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setValue('timeSlot', slot)}
-                      className={`p-2 text-sm rounded border ${
-                        watch('timeSlot') === slot
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
-                      }`}
-                    >
-                      {formatTime(slot)}
-                    </button>
-                  ))}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSlots.map((slot) => (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => {
+                          setValue('timeSlot', slot);
+                          setBookingError('');
+                        }}
+                        className={`p-2 text-sm rounded border transition-all duration-200 ${
+                          watch('timeSlot') === slot
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-md'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500 hover:shadow-sm'
+                        }`}
+                      >
+                        {formatTime(slot)}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-green-600 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" />
+                    {availableSlots.length} time slot{availableSlots.length !== 1 ? 's' : ''} available
+                  </p>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No available slots for this date</p>
+                <div className="text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                  <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-600 font-medium mb-2">No Available Time Slots</p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    {barber.name} is fully booked for {formatDate(selectedDate)}
+                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">What you can do:</p>
+                    <ul className="text-xs text-gray-500 space-y-1">
+                      <li>• Try a different date</li>
+                      <li>• Contact the salon directly: {salon.phone || 'Check salon details'}</li>
+                      <li>• Book with another stylist</li>
+                    </ul>
+                  </div>
+                </div>
               )}
+              
+              {/* Error Messages */}
+              {slotError && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{slotError}</p>
+                </div>
+              )}
+              
+              {bookingError && (
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-600">{bookingError}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBookingError('');
+                      if (selectedDate) {
+                        fetchAvailableSlots(selectedDate);
+                      }
+                    }}
+                    className="mt-2 text-xs text-orange-700 underline hover:text-orange-800"
+                  >
+                    Refresh available slots
+                  </button>
+                </div>
+              )}
+              
               {errors.timeSlot && (
                 <p className="mt-1 text-sm text-red-600">Please select a time slot</p>
               )}

@@ -98,9 +98,36 @@ export const salonService = {
   addBarber: (id: string, barberData: any) =>
     api.post(`/salons/${id}/barbers`, barberData),
   
+  // Enhanced staff management
+  createStaffMember: (id: string, staffData: FormData) =>
+    api.post(`/salons/${id}/staff`, staffData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  
+  getStaffMembers: (id: string) =>
+    api.get(`/salons/${id}/staff`),
+  
+  updateStaffMember: (salonId: string, staffId: string, staffData: any) =>
+    api.patch(`/salons/${salonId}/staff/${staffId}`, staffData),
+  
+  updateStaffServices: (salonId: string, staffId: string, services: string[]) =>
+    api.patch(`/salons/${salonId}/staff/${staffId}/services`, { services }),
+  
+  deleteStaffMember: (salonId: string, staffId: string) =>
+    api.delete(`/salons/${salonId}/staff/${staffId}`),
+  
   getServices: (id: string) =>
     api.get(`/salons/${id}/services`),
-  
+
+  addService: (id: string, serviceData: any) =>
+    api.post(`/salons/${id}/services`, serviceData),
+
+  updateService: (salonId: string, serviceId: string, serviceData: any) =>
+    api.patch(`/salons/${salonId}/services/${serviceId}`, serviceData),
+
+  deleteService: (salonId: string, serviceId: string) =>
+    api.delete(`/salons/${salonId}/services/${serviceId}`),
+
   getBarbers: (id: string) =>
     api.get(`/salons/${id}/barbers`),
 };
@@ -215,6 +242,34 @@ export const adminService = {
 
   getAllBookings: (params?: any) =>
     api.get('/admin/bookings', { params }),
+
+  getBookingDetails: (bookingId: string) =>
+    api.get(`/admin/bookings/${bookingId}`),
+
+  updateBookingStatus: (bookingId: string, status: string) =>
+    api.patch(`/admin/bookings/${bookingId}/status`, { status }),
+
+  deleteBooking: (bookingId: string) =>
+    api.delete(`/admin/bookings/${bookingId}`),
+
+  // Staff management
+  getAllStaff: (params?: any) =>
+    api.get('/admin/staff', { params }),
+  
+  getStaffDetails: (staffId: string) =>
+    api.get(`/admin/staff/${staffId}`),
+  
+  updateStaffSalon: (staffId: string, salonId: string) =>
+    api.patch(`/admin/staff/${staffId}/salon`, { salonId }),
+  
+  deactivateStaff: (staffId: string) =>
+    api.patch(`/admin/staff/${staffId}/deactivate`),
+  
+  activateStaff: (staffId: string) =>
+    api.patch(`/admin/staff/${staffId}/activate`),
+  
+  updateStaffServices: (staffId: string, services: string[]) =>
+    api.patch(`/admin/staff/${staffId}/services`, { services }),
 };
 
 export const superAdminService = {

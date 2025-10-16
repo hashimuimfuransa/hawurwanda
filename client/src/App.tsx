@@ -67,6 +67,11 @@ function App() {
               {user.role === 'owner' && (
                 <>
                   <Route path="/dashboard/owner" element={<DashboardOwner />} />
+                  <Route path="/dashboard/owner/settings" element={<DashboardOwner />} />
+                  <Route path="/dashboard/owner/bookings" element={<DashboardOwner />} />
+                  <Route path="/dashboard/owner/barbers" element={<DashboardOwner />} />
+                  <Route path="/dashboard/owner/services" element={<DashboardOwner />} />
+                  <Route path="/dashboard/owner/analytics" element={<DashboardOwner />} />
                   <Route path="/dashboard/owner/tour" element={<OwnerTour />} />
                   <Route path="/dashboard/owner/create-salon" element={<CreateSalon />} />
                 </>
