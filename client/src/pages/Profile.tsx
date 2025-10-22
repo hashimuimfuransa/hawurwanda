@@ -319,10 +319,8 @@ const Profile: React.FC = () => {
               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
                 <button
                   onClick={() => {
-                    logout(() => {
-                      toast.success('Logged out successfully');
-                      navigate('/login');
-                    });
+                    logout();
+                    toast.success('Logged out successfully');
                   }}
                   className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >

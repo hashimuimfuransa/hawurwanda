@@ -1,6 +1,8 @@
 import React from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import AuthGuard from './components/AuthGuard';
+import RoleGuard from './components/RoleGuard';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -13,7 +15,7 @@ import SalonPage from './pages/SalonPage';
 import BookingSelection from './pages/BookingSelection';
 import Booking from './pages/Booking';
 import Profile from './pages/Profile';
-import DashboardBarber from './pages/DashboardBarber';
+import DashboardStaff from './pages/DashboardStaff';
 import DashboardOwner from './pages/DashboardOwner';
 import AdminPanel from './pages/AdminPanel';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
@@ -26,14 +28,6 @@ function App() {
   const { user, isLoading } = useAuthStore();
   const location = useLocation();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   // Check if current route is a dashboard route
   const isDashboardRoute = location.pathname === '/admin' || 
                           location.pathname === '/superadmin' || 
@@ -43,6 +37,7 @@ function App() {
     <div className="min-h-screen flex flex-col">
       <main className="flex-1">
         <Routes>
+          {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/events" element={<Events />} />
@@ -57,33 +52,110 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
-          {/* Protected routes */}
-          {user && (
-            <>
-              <Route path="/profile" element={<Profile />} />
-              {user.role === 'barber' && (
-                <Route path="/dashboard/barber" element={<DashboardBarber />} />
-              )}
-              {user.role === 'owner' && (
-                <>
-                  <Route path="/dashboard/owner" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/settings" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/bookings" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/barbers" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/services" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/analytics" element={<DashboardOwner />} />
-                  <Route path="/dashboard/owner/tour" element={<OwnerTour />} />
-                  <Route path="/dashboard/owner/create-salon" element={<CreateSalon />} />
-                </>
-              )}
-              {user.role === 'admin' && (
-                <Route path="/admin" element={<AdminPanel />} />
-              )}
-              {user.role === 'superadmin' && (
-                <Route path="/superadmin" element={<SuperAdminDashboard />} />
-              )}
-            </>
-          )}
+          {/* Protected Routes - Require Authentication */}
+          <Route path="/profile" element={
+            <AuthGuard>
+              <Profile />
+            </AuthGuard>
+          } />
+          
+          {/* Staff Dashboard Routes */}
+          <Route path="/dashboard/staff" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/bookings" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/customers" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/walkins" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/earnings" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/schedule" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/notifications" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/staff/settings" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
+          
+          {/* Owner Dashboard Routes */}
+          <Route path="/dashboard/owner" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/settings" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/bookings" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/barbers" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/services" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/analytics" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <DashboardOwner />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/tour" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <OwnerTour />
+            </AuthGuard>
+          } />
+          <Route path="/dashboard/owner/create-salon" element={
+            <AuthGuard requiredRoles={['owner']}>
+              <CreateSalon />
+            </AuthGuard>
+          } />
+          
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <AuthGuard requiredRoles={['admin']}>
+              <AdminPanel />
+            </AuthGuard>
+          } />
+          
+          {/* Super Admin Routes */}
+          <Route path="/superadmin" element={
+            <AuthGuard requiredRoles={['superadmin']}>
+              <SuperAdminDashboard />
+            </AuthGuard>
+          } />
         </Routes>
       </main>
       {!isDashboardRoute && <Footer />}

@@ -7,7 +7,7 @@ export interface IUser extends Document {
   phone: string;
   nationalId?: string;
   passwordHash: string;
-  role: 'client' | 'barber' | 'owner' | 'admin' | 'superadmin';
+  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner' | 'admin' | 'superadmin';
   salonId?: Types.ObjectId;
   profilePhoto?: string;
   isVerified: boolean;
@@ -17,7 +17,7 @@ export interface IUser extends Document {
   experience?: string; // Years of experience
   bio?: string;
   credentials?: string[]; // Array of certifications/credentials
-  assignedServices?: string[]; // Array of service IDs assigned to this staff member
+  assignedServices?: Types.ObjectId[]; // Array of service IDs assigned to this staff member
   workSchedule?: {
     monday?: { start: string; end: string; available: boolean };
     tuesday?: { start: string; end: string; available: boolean };
@@ -68,7 +68,7 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ['client', 'barber', 'owner', 'admin', 'superadmin'],
+    enum: ['client', 'barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner', 'admin', 'superadmin'],
     default: 'client',
   },
   salonId: {

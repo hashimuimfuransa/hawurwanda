@@ -137,18 +137,53 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const { salonId, barberId, date, status, page = 1, limit = 10 } = req.query;
     const query: any = {};
 
+    // Debug logging
+    console.log('Get bookings - User:', req.user);
+    console.log('Get bookings - User role:', req.user?.role);
+    console.log('Get bookings - User ID:', req.user?._id);
+
     // Role-based filtering
     if (req.user!.role === 'client') {
       query.clientId = req.user!._id;
-    } else if (req.user!.role === 'barber') {
+    } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
       query.barberId = req.user!._id;
     } else if (req.user!.role === 'owner') {
       query.salonId = req.user!.salonId;
     }
 
-    // Additional filters
-    if (salonId) query.salonId = salonId;
-    if (barberId) query.barberId = barberId;
+    console.log('Get bookings - Final query:', query);
+    console.log('Get bookings - User role:', req.user!.role);
+    console.log('Get bookings - User ID:', req.user!._id);
+
+    // Debug: Check all bookings in the system
+    const allBookings = await Booking.find({}).populate('clientId', 'name email phone').populate('barberId', 'name email phone').populate('salonId', 'name address').populate('serviceId', 'title price durationMinutes');
+    console.log('All bookings in system:', allBookings.length);
+    if (allBookings.length > 0) {
+      console.log('Sample booking assignments:');
+      allBookings.forEach((booking, index) => {
+        console.log(`Booking ${index + 1}:`, {
+          id: booking._id,
+          clientId: booking.clientId?._id,
+          clientName: (booking.clientId as any)?.name,
+          barberId: booking.barberId?._id,
+          barberName: (booking.barberId as any)?.name,
+          salonId: booking.salonId?._id,
+          salonName: (booking.salonId as any)?.name,
+          serviceId: booking.serviceId?._id,
+          serviceName: (booking.serviceId as any)?.title,
+          status: booking.status
+        });
+      });
+    }
+
+    // Additional filters (but don't override role-based filtering)
+    if (salonId && req.user!.role !== 'client' && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
+      query.salonId = salonId;
+    }
+    // Don't override barberId for staff members - they should only see their own bookings
+    if (barberId && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
+      query.barberId = barberId;
+    }
     if (date) {
       const startDate = new Date(date as string);
       const endDate = new Date(startDate);
@@ -168,12 +203,26 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
 
     const total = await Booking.countDocuments(query);
 
+    console.log('Get bookings - Found bookings:', bookings.length);
+    console.log('Get bookings - Total count:', total);
+    
+    // Debug: Log booking details to see what's populated
+    if (bookings.length > 0) {
+      console.log('Sample booking data:', JSON.stringify(bookings[0], null, 2));
+      console.log('Client ID:', bookings[0].clientId);
+      console.log('Service ID:', bookings[0].serviceId);
+      console.log('Salon ID:', bookings[0].salonId);
+      console.log('Barber ID:', bookings[0].barberId);
+    }
+
     res.json({
-      bookings,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
+      data: {
+        bookings,
+        pagination: {
+          current: Number(page),
+          pages: Math.ceil(total / Number(limit)),
+          total,
+        },
       },
     });
   } catch (error) {

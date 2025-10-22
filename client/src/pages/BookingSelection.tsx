@@ -294,7 +294,7 @@ const BookingSelection: React.FC = () => {
                 <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-1" />
-                    <span>{salon.barbers.length} barbers</span>
+                    <span>{salon.barbers.length} staff</span>
                   </div>
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-1" />

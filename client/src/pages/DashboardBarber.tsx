@@ -4,6 +4,11 @@ import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
 import { bookingService, availabilityService, notificationService } from '../services/api';
 import BookingCard from '../components/BookingCard';
+import WalkInCustomerForm from '../components/WalkInCustomerForm';
+import WalkInCustomerList from '../components/WalkInCustomerList';
+import StaffBookingManagement from '../components/StaffBookingManagement';
+import EarningsSummary from '../components/EarningsSummary';
+import StaffDashboardSummary from '../components/StaffDashboardSummary';
 import { 
   Calendar, 
   Clock, 
@@ -14,29 +19,33 @@ import {
   Minus,
   CheckCircle,
   XCircle,
-  Bell
+  Bell,
+  BarChart3,
+  UserPlus,
+  ClipboardList
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const DashboardBarber: React.FC = () => {
+const DashboardStaff: React.FC = () => {
   const { user } = useAuthStore();
   const { language, t } = useTranslationStore();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showWalkInForm, setShowWalkInForm] = useState(false);
 
   // Get barber's bookings
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
     queryKey: ['barber-bookings'],
-    queryFn: () => bookingService.getBookings({ barberId: user?._id }),
+    queryFn: () => bookingService.getBookings({ barberId: user?.id }),
     enabled: !!user,
   });
 
   // Get availability
   useQuery({
-    queryKey: ['barber-availability', user?._id],
-    queryFn: () => availabilityService.getAvailability(user!._id),
-    enabled: !!user,
+    queryKey: ['barber-availability', user?.id],
+    queryFn: () => availabilityService.getAvailability(user!.id),
+    enabled: !!user && !!user.id,
   });
 
   // Get notifications
@@ -115,12 +124,12 @@ const DashboardBarber: React.FC = () => {
     blockSlotsMutation.mutate({ slots: [slot], action: 'unblock' });
   };
 
-  if (!user || user.role !== 'barber') {
+  if (!user || !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(user.role)) {
     return (
       <div className="min-h-screen py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20">
-            <p className="text-red-600">{t('accessDenied', { language })}. {t('barbersOnly', { language })}</p>
+            <p className="text-red-600">{t('accessDenied', { language })}. {t('staffOnly', { language })}</p>
           </div>
         </div>
       </div>
@@ -152,59 +161,79 @@ const DashboardBarber: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{t('barberDashboard', { language })}</h1>
-          <p className="text-lg text-gray-600">{t('welcomeBack', { language })}, {user.name}!</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Staff Dashboard</h1>
+              <p className="text-lg text-gray-600">Welcome back, {user.name}!</p>
+              <p className="text-sm text-gray-500 capitalize">{(user as any).staffCategory || user.role}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Today</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="h-6 w-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{t('todayBookings', { language })}</p>
-                <p className="text-2xl font-semibold text-gray-900">{todayBookings.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{t('upcoming', { language })}</p>
-                <p className="text-2xl font-semibold text-gray-900">{upcomingBookings.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{t('completed', { language })}</p>
-                <p className="text-2xl font-semibold text-gray-900">{completedBookings.length}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <DollarSign className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{t('totalEarnings', { language })}</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {totalEarnings.toLocaleString()} RWF
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Today's Bookings</p>
+                <p className="text-2xl font-bold">{todayBookings.length}</p>
+                <p className="text-blue-200 text-xs mt-1">
+                  {todayBookings.filter((b: any) => b.status === 'completed').length} completed
                 </p>
               </div>
+              <Calendar className="h-8 w-8 text-blue-200" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-green-100 text-sm font-medium">Upcoming</p>
+                <p className="text-2xl font-bold">{upcomingBookings.length}</p>
+                <p className="text-green-200 text-xs mt-1">
+                  {upcomingBookings.filter((b: any) => b.status === 'confirmed').length} confirmed
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-green-200" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-purple-100 text-sm font-medium">Completed</p>
+                <p className="text-2xl font-bold">{completedBookings.length}</p>
+                <p className="text-purple-200 text-xs mt-1">
+                  This month: {completedBookings.length}
+                </p>
+              </div>
+              <Users className="h-8 w-8 text-purple-200" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-orange-100 text-sm font-medium">Total Earnings</p>
+                <p className="text-2xl font-bold">{totalEarnings.toLocaleString()} RWF</p>
+                <p className="text-orange-200 text-xs mt-1">
+                  Commission: {(totalEarnings * 0.7).toLocaleString()} RWF
+                </p>
+              </div>
+              <DollarSign className="h-8 w-8 text-orange-200" />
             </div>
           </div>
         </div>
@@ -212,9 +241,12 @@ const DashboardBarber: React.FC = () => {
         {/* Tabs */}
         <div className="mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+            <nav className="-mb-px flex space-x-8 overflow-x-auto">
               {[
                 { id: 'overview', label: 'Overview', icon: Calendar },
+                { id: 'bookings', label: 'Bookings', icon: ClipboardList },
+                { id: 'walkins', label: 'Walk-ins', icon: UserPlus },
+                { id: 'earnings', label: 'Earnings', icon: BarChart3 },
                 { id: 'schedule', label: 'Schedule', icon: Clock },
                 { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount?.data?.unreadCount },
                 { id: 'settings', label: 'Settings', icon: Settings },
@@ -224,7 +256,7 @@ const DashboardBarber: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center ${
+                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -247,6 +279,9 @@ const DashboardBarber: React.FC = () => {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="space-y-8">
+            {/* Today's Summary */}
+            <StaffDashboardSummary />
+
             {/* Today's Bookings */}
             <div className="card">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Today's Bookings</h2>
@@ -293,6 +328,33 @@ const DashboardBarber: React.FC = () => {
               )}
             </div>
           </div>
+        )}
+
+        {/* Bookings Tab */}
+        {activeTab === 'bookings' && (
+          <StaffBookingManagement />
+        )}
+
+        {/* Walk-ins Tab */}
+        {activeTab === 'walkins' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Walk-in Customers</h2>
+              <button
+                onClick={() => setShowWalkInForm(true)}
+                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Walk-in Customer
+              </button>
+            </div>
+            <WalkInCustomerList />
+          </div>
+        )}
+
+        {/* Earnings Tab */}
+        {activeTab === 'earnings' && (
+          <EarningsSummary />
         )}
 
         {/* Schedule Tab */}
@@ -388,8 +450,13 @@ const DashboardBarber: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Walk-in Customer Form Modal */}
+      {showWalkInForm && (
+        <WalkInCustomerForm onClose={() => setShowWalkInForm(false)} />
+      )}
     </div>
   );
 };
 
-export default DashboardBarber;
+export default DashboardStaff;

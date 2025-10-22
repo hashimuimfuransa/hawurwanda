@@ -36,8 +36,8 @@ const SalonPage: React.FC = () => {
     setSelectedBarber('');
     
     // Find staff members who can perform this service
-    const staffForService = salon.barbers?.filter((barber: any) => 
-      barber.assignedServices?.includes(serviceId)
+    const staffForService = salon.barbers?.filter((staff: any) => 
+      staff.assignedServices?.some((service: any) => service._id === serviceId)
     ) || [];
     
     setAvailableStaff(staffForService);
@@ -377,27 +377,27 @@ const SalonPage: React.FC = () => {
                     )}
 
                     {/* Staff Members */}
-                    {salon.barbers?.map((barber) => (
+                    {salon.barbers?.map((staff) => (
                       <div
-                        key={barber._id}
+                        key={staff._id}
                         className={`p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 transform hover:scale-[1.02] ${
-                          selectedBarber === barber._id
+                          selectedBarber === staff._id
                             ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 shadow-lg'
                             : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md'
                         }`}
-                        onClick={() => setSelectedBarber(barber._id)}
+                        onClick={() => setSelectedBarber(staff._id)}
                       >
                         <div className="flex items-center">
                           <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-4 relative overflow-hidden">
-                            {barber.profilePhoto ? (
+                            {staff.profilePhoto ? (
                               <img
-                                src={barber.profilePhoto}
-                                alt={barber.name}
+                                src={staff.profilePhoto}
+                                alt={staff.name}
                                 className="w-full h-full object-cover rounded-full"
                               />
                             ) : (
                               <span className="text-white font-bold text-lg">
-                                {barber.name?.charAt(0).toUpperCase()}
+                                {staff.name?.charAt(0).toUpperCase()}
                               </span>
                             )}
                             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -406,10 +406,17 @@ const SalonPage: React.FC = () => {
                           </div>
                           <div className="flex-1">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                              {barber.name}
+                              {staff.name}
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Professional Stylist
+                              {staff.role === 'barber' ? 'Professional Barber' :
+                               staff.role === 'hairstylist' ? 'Hair Stylist' :
+                               staff.role === 'nail_technician' ? 'Nail Technician' :
+                               staff.role === 'massage_therapist' ? 'Massage Therapist' :
+                               staff.role === 'esthetician' ? 'Esthetician' :
+                               staff.role === 'receptionist' ? 'Receptionist' :
+                               staff.role === 'manager' ? 'Manager' :
+                               'Professional Staff'}
                             </p>
                             <div className="flex items-center mt-2">
                               <div className="flex items-center text-yellow-500">
@@ -422,7 +429,7 @@ const SalonPage: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          {selectedBarber === barber._id && (
+                          {selectedBarber === staff._id && (
                             <div className="flex items-center">
                               <CheckCircle className="h-6 w-6 text-blue-500 mr-2" />
                               <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Selected</span>

@@ -67,10 +67,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
 
   const roleOptions = [
     { value: 'client', label: 'Client', icon: Users },
+    { value: 'barber', label: 'Barber', icon: User },
+    { value: 'hairstylist', label: 'Hair Stylist', icon: User },
+    { value: 'nail_technician', label: 'Nail Technician', icon: User },
+    { value: 'massage_therapist', label: 'Massage Therapist', icon: User },
+    { value: 'esthetician', label: 'Esthetician', icon: User },
+    { value: 'receptionist', label: 'Receptionist', icon: User },
+    { value: 'manager', label: 'Manager', icon: User },
     { value: 'owner', label: 'Salon Owner', icon: Building2 },
     { value: 'admin', label: 'Admin', icon: Shield },
-    { value: 'superadmin', label: 'Super Admin', icon: Shield },
-    { value: 'barber', label: 'Barber', icon: User }
+    { value: 'superadmin', label: 'Super Admin', icon: Shield }
   ];
 
   return (

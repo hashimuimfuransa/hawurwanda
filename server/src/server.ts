@@ -17,6 +17,8 @@ import transactionRoutes from './routes/transactions';
 import adminRoutes from './routes/admin';
 import availabilityRoutes from './routes/availability';
 import notificationRoutes from './routes/notifications';
+import walkInCustomerRoutes from './routes/walkInCustomers';
+import staffEarningsRoutes from './routes/staffEarnings';
 
 // Import middlewares
 import { errorHandler } from './middlewares/errorHandler';
@@ -85,6 +87,8 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/walk-in-customers', walkInCustomerRoutes);
+app.use('/api/staff-earnings', staffEarningsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

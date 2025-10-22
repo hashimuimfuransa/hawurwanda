@@ -3,11 +3,12 @@ import { persist } from 'zustand/middleware';
 import { api } from '../services/api';
 
 interface User {
+  _id: any;
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'client' | 'barber' | 'owner' | 'admin' | 'superadmin';
+  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner' | 'admin' | 'superadmin';
   salonId?: string;
   profilePhoto?: string;
   isVerified: boolean;
@@ -19,7 +20,7 @@ interface AuthState {
   isLoading: boolean;
   login: (phoneOrEmail: string, password: string) => Promise<void>;
   register: (userData: any) => Promise<void>;
-  logout: (callback?: () => void) => void;
+  logout: () => void;
   updateProfile: (userData: any) => Promise<void>;
   setUser: (user: User) => void;
 }
@@ -76,15 +77,14 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      logout: (callback?: () => void) => {
+      logout: () => {
         set({
           user: null,
           token: null,
         });
         localStorage.removeItem('token');
-        if (callback) {
-          callback();
-        }
+        // Redirect to login page
+        window.location.href = '/login';
       },
 
       updateProfile: async (userData: any) => {

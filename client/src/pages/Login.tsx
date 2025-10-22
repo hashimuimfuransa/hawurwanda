@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useTranslationStore } from '../stores/translationStore';
@@ -26,6 +26,7 @@ const Login: React.FC = () => {
   const { isDarkMode } = useThemeStore();
   const { language, t } = useTranslationStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -38,26 +39,38 @@ const Login: React.FC = () => {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      const result = await login(data.phoneOrEmail, data.password);
+      await login(data.phoneOrEmail, data.password);
       toast.success('Login successful!');
       
       // Get user from auth store to check role
       const { user } = useAuthStore.getState();
       
-      // Redirect based on user role
-      if (user?.role === 'client') {
-        navigate('/salons');
-      } else if (user?.role === 'admin') {
-        navigate('/admin');
-      } else if (user?.role === 'superadmin') {
-        navigate('/superadmin');
-      } else if (user?.role === 'owner') {
-        navigate('/dashboard/owner');
-      } else if (user?.role === 'barber') {
-        navigate('/dashboard/barber');
-      } else {
-        navigate('/');
+      // Check if there's a redirect path from the location state
+      const from = location.state?.from;
+      
+      // If there's a redirect path and user has access to it, go there
+      if (from && from !== '/login') {
+        navigate(from, { replace: true });
+        return;
       }
+      
+      // Otherwise, redirect based on user role
+      const roleDashboardMap: Record<string, string> = {
+        'client': '/profile',
+        'barber': '/dashboard/staff',
+        'hairstylist': '/dashboard/staff',
+        'nail_technician': '/dashboard/staff',
+        'massage_therapist': '/dashboard/staff',
+        'esthetician': '/dashboard/staff',
+        'receptionist': '/dashboard/staff',
+        'manager': '/dashboard/staff',
+        'owner': '/dashboard/owner',
+        'admin': '/admin',
+        'superadmin': '/superadmin'
+      };
+
+      const redirectPath = roleDashboardMap[user?.role || ''] || '/profile';
+      navigate(redirectPath, { replace: true });
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -92,10 +105,10 @@ const Login: React.FC = () => {
               </div>
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {t('loginTitle', language)}
+              {t('loginTitle')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-              {t('loginSubtitle', language)}
+              {t('loginSubtitle')}
             </p>
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-emerald-100 to-blue-100 dark:from-emerald-900 dark:to-blue-900 text-emerald-800 dark:text-emerald-200 rounded-full text-sm font-semibold mb-6">
               <Sparkles className="w-4 h-4 mr-2" />
@@ -109,7 +122,7 @@ const Login: React.FC = () => {
               {/* Email/Phone Input */}
               <div>
                 <label htmlFor="phoneOrEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {t('phoneOrEmail', language)}
+                  {t('phoneOrEmail')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -121,7 +134,7 @@ const Login: React.FC = () => {
                     })}
                     type="text"
                     className="w-full pl-10 pr-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-200"
-                    placeholder={t('emailPlaceholder', language)}
+                    placeholder={t('emailPlaceholder')}
                   />
                 </div>
                 {errors.phoneOrEmail && (

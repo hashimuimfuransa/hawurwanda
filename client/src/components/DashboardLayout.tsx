@@ -65,7 +65,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const handleLogout = () => {
     logout();
-    navigate('/');
   };
 
   return (

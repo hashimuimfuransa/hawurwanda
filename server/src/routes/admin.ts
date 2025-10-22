@@ -432,7 +432,7 @@ router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, r
   try {
     const { search, role, page = 1, limit = 10 } = req.query;
     const query: any = {
-      role: { $in: ['barber', 'owner'] } // Only staff members and salon owners
+      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'] }
     };
 
     if (role) query.role = role;
@@ -644,7 +644,7 @@ router.post('/users/create', authenticateToken, requireAdmin, validateRequest(cr
     // Only add salonId for barbers if provided
     // Owners will create their salon later and get approved by admin
     // Barbers will be assigned to salons later
-    if (req.body.salonId && (role === 'barber' || role === 'owner')) {
+    if (req.body.salonId && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role)) {
       userData.salonId = req.body.salonId;
     }
 
@@ -1238,7 +1238,7 @@ router.patch('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asyn
     if (salonId !== undefined) updateData.salonId = salonId;
 
     // Validate role-specific requirements
-    if (role && (role === 'barber' || role === 'owner') && !salonId && !user?.salonId) {
+    if (role && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId && !user?.salonId) {
       return res.status(400).json({ 
         message: 'Barbers and owners must be assigned to a salon' 
       });
@@ -1402,7 +1402,7 @@ router.post('/superadmin/users', authenticateToken, requireSuperAdmin, validateR
     }
 
     // Validate role-specific requirements
-    if ((role === 'barber' || role === 'owner') && !salonId) {
+    if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId) {
       return res.status(400).json({
         message: 'Barbers and owners must be assigned to a salon',
       });
@@ -1576,7 +1576,7 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest
       .populate('clientId', 'name email phone')
       .populate('barberId', 'name email phone')
       .populate('salonId', 'name address')
-      .populate('serviceId', 'name price durationMinutes')
+      .populate('serviceId', 'title price durationMinutes')
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .skip((Number(page) - 1) * Number(limit));
@@ -1646,7 +1646,7 @@ router.get('/activities', authenticateToken, requireAdmin, async (req: AuthReque
       .populate('clientId', 'name')
       .populate('salonId', 'name')
       .populate('barberId', 'name')
-      .populate('serviceId', 'name')
+      .populate('serviceId', 'title')
       .sort({ createdAt: -1 })
       .limit(25);
     
@@ -1727,6 +1727,54 @@ router.get('/activities', authenticateToken, requireAdmin, async (req: AuthReque
     });
   } catch (error) {
     console.error('Get admin activities error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update user roles based on staffCategory (admin only)
+router.post('/update-user-roles', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    console.log('Starting user role update...');
+    
+    // Find all users with staffCategory but role is 'barber'
+    const usersToUpdate = await User.find({
+      staffCategory: { $exists: true, $ne: null },
+      role: 'barber'
+    });
+
+    console.log(`Found ${usersToUpdate.length} users to update`);
+
+    const updatedUsers = [];
+
+    for (const user of usersToUpdate) {
+      if (user.staffCategory && user.staffCategory !== 'barber') {
+        console.log(`Updating user ${user.name} (${user.email}) from 'barber' to '${user.staffCategory}'`);
+        
+        await User.findByIdAndUpdate(user._id, {
+          role: user.staffCategory
+        });
+        
+        updatedUsers.push({
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          oldRole: 'barber',
+          newRole: user.staffCategory
+        });
+        
+        console.log(`✓ Updated ${user.name} to role: ${user.staffCategory}`);
+      }
+    }
+
+    console.log('User role update completed!');
+
+    res.json({
+      message: 'User roles updated successfully',
+      updatedCount: updatedUsers.length,
+      updatedUsers
+    });
+  } catch (error) {
+    console.error('Error updating user roles:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

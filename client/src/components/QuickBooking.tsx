@@ -41,7 +41,7 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
     if (!selectedService || !salon.barbers) return [];
     
     return salon.barbers.filter(barber => 
-      barber.assignedServices?.includes(selectedService)
+      barber.assignedServices?.some((service: any) => service._id === selectedService)
     );
   }, [selectedService, salon.barbers]);
 

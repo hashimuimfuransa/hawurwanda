@@ -1225,7 +1225,7 @@ const DashboardOwner: React.FC = () => {
             </div>
           </div>
           <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Team Members</h3>
-          <p className="text-2xl lg:text-3xl font-bold text-slate-900">{(barbers?.data?.barbers || (barbers as any)?.barbers || [])?.length || 0}</p>
+          <p className="text-2xl lg:text-3xl font-bold text-slate-900">{(staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.length || 0}</p>
           <p className="text-xs lg:text-sm text-slate-500 mt-2">Barbers & Staff</p>
         </div>
 
@@ -1293,7 +1293,7 @@ const DashboardOwner: React.FC = () => {
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full">
-                    {(barbers?.data?.barbers || (barbers as any)?.barbers || [])?.length || 0}
+                    {(staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.length || 0}
                   </span>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Manage Team</h3>
@@ -1874,11 +1874,21 @@ const DashboardOwner: React.FC = () => {
                       <div className="space-y-3 mb-4">
                         {/* Category */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-600 font-medium">Category:</span>
+                          <span className="text-sm text-slate-600 font-medium">Role:</span>
                           <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800">
                             {categoryInfo.icon} {categoryInfo.label}
                           </span>
                         </div>
+                        
+                        {/* Staff Category (if different from role) */}
+                        {staff.staffCategory && staff.staffCategory !== staff.role && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-600 font-medium">Category:</span>
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800">
+                              {getCategoryInfo(staff.staffCategory).icon} {getCategoryInfo(staff.staffCategory).label}
+                            </span>
+                          </div>
+                        )}
                         
                         {/* Phone */}
                         <div className="flex items-center text-sm text-slate-600">
@@ -2767,21 +2777,21 @@ const DashboardOwner: React.FC = () => {
       };
     }).sort((a: any, b: any) => b.bookingCount - a.bookingCount) || [];
 
-    // Top barbers
-    const barberStats = (barbers?.data?.barbers || (barbers as any)?.barbers || [])?.map((barber: any) => {
-      const barberBookings = bookings?.data?.bookings?.filter((b: any) => 
-        b.barber?._id === barber._id
+    // Top staff members
+    const staffStats = (staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.map((staff: any) => {
+      const staffBookings = bookings?.data?.bookings?.filter((b: any) => 
+        b.barber?._id === staff._id
       ) || [];
-      const barberRevenue = barberBookings
+      const staffRevenue = staffBookings
         .filter((b: any) => b.status === 'completed')
         .reduce((sum: number, b: any) => sum + (b.service?.price || 0), 0);
       
       return {
-        ...barber,
-        bookingCount: barberBookings.length,
-        revenue: barberRevenue,
-        completionRate: barberBookings.length > 0 
-          ? (barberBookings.filter((b: any) => b.status === 'completed').length / barberBookings.length * 100).toFixed(1)
+        ...staff,
+        bookingCount: staffBookings.length,
+        revenue: staffRevenue,
+        completionRate: staffBookings.length > 0 
+          ? (staffBookings.filter((b: any) => b.status === 'completed').length / staffBookings.length * 100).toFixed(1)
           : 0
       };
     }).sort((a: any, b: any) => b.bookingCount - a.bookingCount) || [];
@@ -2911,19 +2921,19 @@ const DashboardOwner: React.FC = () => {
               <p className="text-sm text-slate-600">Best performing team members</p>
             </div>
             <div className="p-6 lg:p-8">
-              {barberStats.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No barber data available</div>
+              {staffStats.length === 0 ? (
+                <div className="text-center py-8 text-slate-500">No staff data available</div>
               ) : (
                 <div className="space-y-4">
-                  {barberStats.slice(0, 5).map((barber: any, index: number) => (
-                    <div key={barber._id} className="flex items-center space-x-4">
+                  {staffStats.slice(0, 5).map((staff: any, index: number) => (
+                    <div key={staff._id} className="flex items-center space-x-4">
                       <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
                         {index + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{barber.name}</div>
+                        <div className="font-semibold text-slate-900 truncate">{staff.name}</div>
                         <div className="text-sm text-slate-500">
-                          {barber.bookingCount} bookings • {barber.completionRate}% completion
+                          {staff.bookingCount} bookings • {staff.completionRate}% completion
                         </div>
                       </div>
                       <Star className="h-5 w-5 text-amber-500" />

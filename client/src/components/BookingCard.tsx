@@ -17,22 +17,22 @@ interface BookingCardProps {
       _id: string;
       name: string;
       phone: string;
-    };
+    } | null;
     barberId: {
       _id: string;
       name: string;
       profilePhoto?: string;
-    };
+    } | null;
     salonId: {
       _id: string;
       name: string;
       address: string;
-    };
+    } | null;
     serviceId: {
       _id: string;
       title: string;
       durationMinutes: number;
-    };
+    } | null;
   };
   onStatusChange?: (bookingId: string, status: string) => void;
   onPaymentRecord?: (bookingId: string) => void;
@@ -84,15 +84,15 @@ const BookingCard: React.FC<BookingCardProps> = ({
   };
 
   return (
-    <div className="card">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            {booking.serviceId.title}
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-4 sm:p-6 hover:shadow-md transition-all duration-300">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
+            {booking.serviceId?.title || 'Service Not Available'}
           </h3>
-          <p className="text-sm text-gray-600">{t('bookingNumber', language)} #{booking.bookingId}</p>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">{t('bookingNumber', language)} #{booking.bookingId}</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </span>
@@ -102,47 +102,51 @@ const BookingCard: React.FC<BookingCardProps> = ({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {/* Date and Time */}
-        <div className="flex items-center text-gray-600">
-          <Calendar className="h-4 w-4 mr-2" />
-          <span>{formatDate(booking.timeSlot)}</span>
-          <Clock className="h-4 w-4 ml-4 mr-2" />
-          <span>{formatTime(booking.timeSlot)}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center text-gray-600 dark:text-gray-400 gap-1 sm:gap-4">
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="text-sm">{formatDate(booking.timeSlot)}</span>
+          </div>
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="text-sm">{formatTime(booking.timeSlot)}</span>
+          </div>
         </div>
 
         {/* Location */}
-        <div className="flex items-center text-gray-600">
-          <MapPin className="h-4 w-4 mr-2" />
-          <span>{booking.salonId.name}</span>
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
+          <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="text-sm truncate">{booking.salonId?.name || 'Salon Not Available'}</span>
         </div>
 
         {/* Barber */}
-        <div className="flex items-center text-gray-600">
-          <User className="h-4 w-4 mr-2" />
-          <span>{booking.barberId.name}</span>
+        <div className="flex items-center text-gray-600 dark:text-gray-400">
+          <User className="h-4 w-4 mr-2 flex-shrink-0" />
+          <span className="text-sm truncate">{booking.barberId?.name || 'Barber Not Available'}</span>
         </div>
 
         {/* Client (for barbers/owners) */}
         {userRole !== 'client' && (
-          <div className="flex items-center text-gray-600">
-            <User className="h-4 w-4 mr-2" />
-            <span>{booking.clientId.name} - {booking.clientId.phone}</span>
+          <div className="flex items-center text-gray-600 dark:text-gray-400">
+            <User className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="text-sm truncate">{booking.clientId?.name || 'Client Not Available'} - {booking.clientId?.phone || 'N/A'}</span>
           </div>
         )}
 
         {/* Payment Info */}
-        <div className="flex items-center justify-between text-gray-600">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-gray-600 dark:text-gray-400 gap-2">
           <div className="flex items-center">
-            <CreditCard className="h-4 w-4 mr-2" />
-            <span>{booking.paymentMethod.toUpperCase()}</span>
+            <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="text-sm">{booking.paymentMethod.toUpperCase()}</span>
           </div>
-          <div className="text-right">
-            <div className="font-semibold text-gray-900">
+          <div className="text-left sm:text-right">
+            <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
               {booking.amountTotal.toLocaleString()} RWF
             </div>
             {booking.paymentStatus === 'partial' && (
-              <div className="text-sm text-yellow-600">
+              <div className="text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">
                 Paid: {booking.depositPaid.toLocaleString()} RWF
                 <br />
                 Balance: {booking.balanceRemaining.toLocaleString()} RWF

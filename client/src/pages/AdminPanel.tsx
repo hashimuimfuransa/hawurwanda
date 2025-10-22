@@ -1583,8 +1583,13 @@ const AdminPanel: React.FC = () => {
                   >
                     <option value="">All Roles</option>
                     <option value="barber">Barbers</option>
-                    <option value="staff">Staff</option>
+                    <option value="hairstylist">Hair Stylists</option>
+                    <option value="nail_technician">Nail Technicians</option>
+                    <option value="massage_therapist">Massage Therapists</option>
+                    <option value="esthetician">Estheticians</option>
+                    <option value="receptionist">Receptionists</option>
                     <option value="manager">Managers</option>
+                    <option value="owner">Owners</option>
                   </select>
                 </div>
               </div>

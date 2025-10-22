@@ -90,7 +90,14 @@ router.get('/', async (req, res) => {
     const salons = await Salon.find(query)
       .populate('ownerId', 'name email phone')
       .populate('services', 'title price durationMinutes category targetAudience')
-      .populate('barbers', 'name profilePhoto assignedServices')
+      .populate({
+        path: 'barbers',
+        select: 'name profilePhoto role staffCategory',
+        populate: {
+          path: 'assignedServices',
+          select: 'title _id'
+        }
+      })
       .sort({ verified: -1, createdAt: -1 })
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
@@ -119,7 +126,14 @@ router.get('/:id', validateObjectIdParam('id'), async (req, res): Promise<void> 
     const salon = await Salon.findById(salonId)
       .populate('ownerId', 'name email phone')
       .populate('services', 'title price durationMinutes category description targetAudience')
-      .populate('barbers', 'name profilePhoto assignedServices');
+      .populate({
+        path: 'barbers',
+        select: 'name profilePhoto role staffCategory',
+        populate: {
+          path: 'assignedServices',
+          select: 'title _id'
+        }
+      });
 
     if (!salon) {
       res.status(404).json({ message: 'Salon not found' });
@@ -390,7 +404,7 @@ router.post('/:id/barbers', authenticateToken, requireOwnerOrAdmin, validateObje
 
     // Check if barber exists and has barber role
     const barber = await User.findById(barberId);
-    if (!barber || barber.role !== 'barber') {
+    if (!barber || !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(barber.role)) {
       res.status(400).json({ message: 'Invalid barber' });
       return;
     }
@@ -526,7 +540,7 @@ router.post('/:id/staff', authenticateToken, requireOwnerOrAdmin, validateObject
       phone,
       nationalId: nationalId || undefined,
       passwordHash,
-      role: 'barber', // Default role for staff members
+      role: staffCategory || 'barber', // Use staffCategory as role, fallback to barber
       salonId,
       profilePhoto: profilePhotoUrl,
       isVerified: true, // Staff members created by owner are pre-verified
@@ -543,6 +557,12 @@ router.post('/:id/staff', authenticateToken, requireOwnerOrAdmin, validateObject
     // Add staff member to salon barbers list
     salon.barbers.push(staffMember._id as any);
     await salon.save();
+
+    // Automatically assign staff to all salon services if no specific assignments
+    if (!staffMember.assignedServices || staffMember.assignedServices.length === 0) {
+      staffMember.assignedServices = salon.services as any;
+      await staffMember.save();
+    }
 
     // Create availability for staff member based on work schedule
     const defaultAvailability = {
@@ -722,7 +742,7 @@ router.get('/:id/staff', authenticateToken, validateObjectIdParam('id'), async (
 
     const staff = await User.find({ 
       salonId, 
-      role: 'barber' // All staff members have 'barber' role but different staffCategory
+      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'] }
     }).select('-passwordHash')
       .sort({ createdAt: -1 });
 

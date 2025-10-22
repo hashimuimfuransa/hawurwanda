@@ -16,7 +16,7 @@ import DashboardLayout from '../components/DashboardLayout';
 // TYPE DEFINITIONS
 //==============================================
 
-type UserRole = 'client' | 'barber' | 'owner' | 'admin' | 'superadmin';
+type UserRole = 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner' | 'admin' | 'superadmin';
 
 interface ISalon {
   _id: string;
@@ -152,6 +152,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSu
               <select name="role" value={formData.role} onChange={handleSelectChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                 <option value="client">👤 Client</option>
                 <option value="barber">✂️ Barber</option>
+                <option value="hairstylist">💇 Hair Stylist</option>
+                <option value="nail_technician">💅 Nail Technician</option>
+                <option value="massage_therapist">💆 Massage Therapist</option>
+                <option value="esthetician">🧴 Esthetician</option>
+                <option value="receptionist">📞 Receptionist</option>
+                <option value="manager">👔 Manager</option>
                 <option value="owner">🏢 Owner</option>
                 <option value="admin">🛡️ Admin</option>
               </select>
@@ -248,6 +254,12 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, user, on
               <select name="role" value={formData.role} onChange={handleChange} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" disabled={user?.role === 'superadmin'}>
                 <option value="client">👤 Client</option>
                 <option value="barber">✂️ Barber</option>
+                <option value="hairstylist">💇 Hair Stylist</option>
+                <option value="nail_technician">💅 Nail Technician</option>
+                <option value="massage_therapist">💆 Massage Therapist</option>
+                <option value="esthetician">🧴 Esthetician</option>
+                <option value="receptionist">📞 Receptionist</option>
+                <option value="manager">👔 Manager</option>
                 <option value="owner">🏢 Owner</option>
                 <option value="admin">🛡️ Admin</option>
                 {user?.role === 'superadmin' && <option value="superadmin">⚡ Super Admin</option>}
@@ -307,9 +319,25 @@ const ViewUserModal: React.FC<ViewUserModalProps> = ({ isOpen, onClose, user }) 
                   user.role === 'superadmin' ? 'bg-red-100 text-red-800' :
                   user.role === 'admin' ? 'bg-orange-100 text-orange-800' :
                   user.role === 'owner' ? 'bg-purple-100 text-purple-800' :
-                  user.role === 'barber' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                  user.role === 'barber' ? 'bg-blue-100 text-blue-800' :
+                  user.role === 'hairstylist' ? 'bg-pink-100 text-pink-800' :
+                  user.role === 'nail_technician' ? 'bg-rose-100 text-rose-800' :
+                  user.role === 'massage_therapist' ? 'bg-green-100 text-green-800' :
+                  user.role === 'esthetician' ? 'bg-yellow-100 text-yellow-800' :
+                  user.role === 'receptionist' ? 'bg-cyan-100 text-cyan-800' :
+                  user.role === 'manager' ? 'bg-indigo-100 text-indigo-800' :
+                  'bg-slate-100 text-slate-800'
                 }`}>
                   {user.role === 'superadmin' && '⚡ '}
+                  {user.role === 'admin' && '🛡️ '}
+                  {user.role === 'owner' && '🏢 '}
+                  {user.role === 'barber' && '✂️ '}
+                  {user.role === 'hairstylist' && '💇 '}
+                  {user.role === 'nail_technician' && '💅 '}
+                  {user.role === 'massage_therapist' && '💆 '}
+                  {user.role === 'esthetician' && '🧴 '}
+                  {user.role === 'receptionist' && '📞 '}
+                  {user.role === 'manager' && '👔 '}
                   {user.role}
                 </span>
                 <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${user.isVerified ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>

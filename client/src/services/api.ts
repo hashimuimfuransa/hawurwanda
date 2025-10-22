@@ -119,9 +119,6 @@ export const salonService = {
   getServices: (id: string) =>
     api.get(`/salons/${id}/services`),
 
-  addService: (id: string, serviceData: any) =>
-    api.post(`/salons/${id}/services`, serviceData),
-
   updateService: (salonId: string, serviceId: string, serviceData: any) =>
     api.patch(`/salons/${salonId}/services/${serviceId}`, serviceData),
 
@@ -309,4 +306,38 @@ export const superAdminService = {
   
   createAdmin: (adminData: any) =>
     api.post('/admin/superadmin/create-admin', adminData),
+};
+
+export const walkInCustomerService = {
+  createWalkIn: (walkInData: any) =>
+    api.post('/walk-in-customers', walkInData),
+  
+  getWalkIns: (params?: any) =>
+    api.get('/walk-in-customers', { params }),
+  
+  getWalkInById: (id: string) =>
+    api.get(`/walk-in-customers/${id}`),
+  
+  updateWalkIn: (id: string, walkInData: any) =>
+    api.patch(`/walk-in-customers/${id}`, walkInData),
+  
+  deleteWalkIn: (id: string) =>
+    api.delete(`/walk-in-customers/${id}`),
+  
+  getSalonWalkIns: (params?: any) =>
+    api.get('/walk-in-customers/salon/all', { params }),
+};
+
+export const staffEarningsService = {
+  getEarnings: (params?: any) =>
+    api.get('/staff-earnings', { params }),
+  
+  getEarningsSummary: (staffId: string, params?: any) =>
+    api.get(`/staff-earnings/summary/${staffId}`, { params }),
+  
+  updateDailyEarnings: (staffId: string, date?: string) =>
+    api.post(`/staff-earnings/update/${staffId}`, { date }),
+  
+  getSalonEarnings: (params?: any) =>
+    api.get('/staff-earnings/salon/all', { params }),
 };

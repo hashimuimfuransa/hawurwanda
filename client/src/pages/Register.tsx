@@ -14,7 +14,7 @@ interface RegisterForm {
   phone: string;
   password: string;
   confirmPassword: string;
-  role: 'client' | 'barber' | 'owner';
+  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner';
 }
 
 const Register: React.FC = () => {
@@ -45,8 +45,8 @@ const Register: React.FC = () => {
       // Redirect based on user role after registration
       if (data.role === 'owner') {
         navigate('/dashboard/owner');
-      } else if (data.role === 'barber') {
-        navigate('/dashboard/barber');
+      } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(data.role)) {
+        navigate('/dashboard/staff');
       } else if (data.role === 'client') {
         navigate('/salons');
       } else {
@@ -181,6 +181,12 @@ const Register: React.FC = () => {
                     <option value="">Select account type</option>
                     <option value="client">Client - Book appointments</option>
                     <option value="barber">Barber - Provide services</option>
+                    <option value="hairstylist">Hair Stylist - Provide hair services</option>
+                    <option value="nail_technician">Nail Technician - Provide nail services</option>
+                    <option value="massage_therapist">Massage Therapist - Provide massage services</option>
+                    <option value="esthetician">Esthetician - Provide skincare services</option>
+                    <option value="receptionist">Receptionist - Manage appointments</option>
+                    <option value="manager">Manager - Manage salon operations</option>
                     <option value="owner">Salon Owner - Manage salon</option>
                   </select>
                   {errors.role && (

@@ -143,7 +143,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const query: any = {};
 
     // Role-based filtering
-    if (req.user!.role === 'barber') {
+    if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
       query.barberId = req.user!._id;
     } else if (req.user!.role === 'owner') {
       query.salonId = req.user!.salonId;
