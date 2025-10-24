@@ -271,6 +271,9 @@ export const adminService = {
 
 export const superAdminService = {
   // Super Admin specific methods
+  getStats: () =>
+    api.get('/admin/superadmin/stats'),
+  
   getSuperAdminStats: () =>
     api.get('/admin/superadmin/stats'),
   
