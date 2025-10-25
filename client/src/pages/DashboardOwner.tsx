@@ -45,7 +45,9 @@ import {
   Bell,
   Trophy,
   Medal,
-  TrendingUp as TrendingUpIcon
+  TrendingUp as TrendingUpIcon,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -184,10 +186,21 @@ const DashboardOwner: React.FC = () => {
   };
 
   // Get salon bookings
-  const { data: bookings } = useQuery({
-    queryKey: ['salon-bookings'],
-    queryFn: () => bookingService.getBookings({ salonId: user?.salonId }),
+  const { data: bookings, isLoading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useQuery({
+    queryKey: ['salon-bookings', user?.salonId],
+    queryFn: async () => {
+      console.log('🔍 Frontend: Fetching bookings for salonId:', user?.salonId);
+      const result = await bookingService.getBookings({ salonId: user?.salonId });
+      console.log('📦 Frontend: Raw booking API response:', result);
+      console.log('📊 Frontend: Bookings data structure:', result?.data);
+      console.log('📋 Frontend: Bookings array:', result?.data?.bookings);
+      console.log('🔢 Frontend: Number of bookings:', result?.data?.bookings?.length);
+      return result;
+    },
     enabled: !!user?.salonId,
+    refetchOnMount: true,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   // Get salon barbers (legacy)
@@ -364,6 +377,19 @@ const DashboardOwner: React.FC = () => {
     },
   });
 
+  // Update salon settings mutation
+  const updateSalonMutation = useMutation({
+    mutationFn: (salonData: any) => salonService.updateSalon(user?.salonId!, salonData),
+    onSuccess: () => {
+      toast.success('Salon settings updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
+      setEditMode(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update salon settings');
+    },
+  });
+
   // Notification mutations
   const markNotificationReadMutation = useMutation({
     mutationFn: (notificationId: string) => notificationService.markAsRead(notificationId),
@@ -381,9 +407,9 @@ const DashboardOwner: React.FC = () => {
 
   // Calculate staff earnings from completed bookings - moved to top level to avoid hooks rule violation
   const staffEarnings = React.useMemo(() => {
-    if (!staffMembers?.data?.staff || !bookings?.data?.bookings) return [];
+    if (!staffMembers?.data?.staff || !bookings?.data?.data?.bookings) return [];
     
-    const completedBookings = bookings.data.bookings.filter((booking: any) => 
+    const completedBookings = bookings.data.data.bookings.filter((booking: any) => 
       booking.status === 'completed' && booking.barber
     );
     
@@ -429,9 +455,18 @@ const DashboardOwner: React.FC = () => {
 
   // Filter and sort bookings helper functions
   const getFilteredAndSortedBookings = () => {
-    if (!bookings?.data?.bookings) return [];
+    console.log('🔄 Frontend: getFilteredAndSortedBookings called');
+    console.log('📦 Frontend: Full bookings object:', bookings);
+    console.log('📊 Frontend: bookings?.data:', bookings?.data);
+    console.log('📋 Frontend: bookings?.data?.data?.bookings:', bookings?.data?.data?.bookings);
+    
+    if (!bookings?.data?.data?.bookings) {
+      console.log('❌ Frontend: No bookings data found, returning empty array');
+      return [];
+    }
 
-    let filteredBookings = bookings.data.bookings;
+    let filteredBookings = bookings.data.data.bookings;
+    console.log('✅ Frontend: Initial filtered bookings:', filteredBookings.length);
 
     // Apply status filter
     if (bookingFilter !== 'all') {
@@ -832,6 +867,166 @@ const DashboardOwner: React.FC = () => {
     return info || { value: 'other', label: 'Other', icon: '🔧' };
   };
 
+  // Render settings function
+  function renderSettings() {
+    const isEditingBasic = editMode === 'basic';
+    const displayName = formData.name || salon?.name || '';
+    const displayPhone = formData.phone || salon?.phone || '';
+    const displayEmail = formData.email || salon?.email || '';
+    const displayAddress = formData.address || salon?.address || '';
+    const displayDistrict = formData.district || salon?.district || '';
+
+    return (
+      <div className="space-y-6">
+        {/* Basic Information */}
+        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-50/30 flex items-center justify-between">
+            <div>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Salon Information</h2>
+              <p className="text-sm text-slate-600">Update your salon details</p>
+            </div>
+            {!isEditingBasic && (
+              <button
+                onClick={() => {
+                  setFormData({
+                    name: salon?.name || '',
+                    phone: salon?.phone || '',
+                    email: salon?.email || '',
+                    address: salon?.address || '',
+                    district: salon?.district || '',
+                  });
+                  setEditMode('basic');
+                }}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </button>
+            )}
+          </div>
+          
+          <div className="p-6 lg:p-8">
+            {isEditingBasic ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Salon Name*</label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Salon name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Phone*</label>
+                  <input
+                    type="tel"
+                    value={displayPhone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="+250788123456"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Email*</label>
+                  <input
+                    type="email"
+                    value={displayEmail}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="salon@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Address*</label>
+                  <input
+                    type="text"
+                    value={displayAddress}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Street address"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">District*</label>
+                  <input
+                    type="text"
+                    value={displayDistrict}
+                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="District"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
+                  <button
+                    onClick={() => {
+                      setEditMode(null);
+                      setFormData({});
+                    }}
+                    className="px-4 py-2 text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!formData.name || !formData.phone || !formData.email || !formData.address || !formData.district) {
+                        toast.error('Please fill in all required fields');
+                        return;
+                      }
+                      updateSalonMutation.mutate(formData);
+                    }}
+                    disabled={updateSalonMutation.isPending}
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 transition-all font-semibold"
+                  >
+                    {updateSalonMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Salon Name</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.name}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Phone</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.phone || 'Not provided'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Email</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.email || 'Not provided'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Address</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.address || 'Not provided'}</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">District</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.district || 'Not provided'}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Support Section */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-2xl lg:rounded-3xl border border-blue-200/60 shadow-lg p-6 lg:p-8">
+          <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2 text-blue-600" />
+            Need More Help?
+          </h3>
+          <p className="text-sm text-slate-700 mb-4">For additional changes or support, contact our team.</p>
+          <a href="mailto:support@hawurwanda.com" className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+            <Mail className="h-4 w-4 mr-2" />
+            Contact Support
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   if (!user || user.role !== 'owner') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50">
@@ -863,7 +1058,7 @@ const DashboardOwner: React.FC = () => {
   }
 
   // Calculate booking stats for sidebar badges
-  const pendingBookings = bookings?.data?.bookings?.filter((booking: any) => 
+  const pendingBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
     booking.status === 'pending'
   ) || [];
 
@@ -1157,13 +1352,13 @@ const DashboardOwner: React.FC = () => {
     );
   }
 
-  const todayBookings = bookings?.data?.bookings?.filter((booking: any) => {
+  const todayBookings = bookings?.data?.data?.bookings?.filter((booking: any) => {
     const bookingDate = new Date(booking.timeSlot).toDateString();
     const today = new Date().toDateString();
     return bookingDate === today;
   }) || [];
 
-  const completedBookings = bookings?.data?.bookings?.filter((booking: any) => 
+  const completedBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
     booking.status === 'completed'
   ) || [];
 
@@ -1171,7 +1366,7 @@ const DashboardOwner: React.FC = () => {
     sum + booking.amountTotal, 0
   );
 
-  const confirmedBookings = bookings?.data?.bookings?.filter((booking: any) => 
+  const confirmedBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
     booking.status === 'confirmed'
   ) || [];
 
@@ -1458,7 +1653,7 @@ const DashboardOwner: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
                   <p className="text-xs text-blue-600 font-medium mb-1">Total Bookings</p>
-                  <p className="text-2xl font-bold text-blue-900">{bookings?.data?.bookings?.length || 0}</p>
+                  <p className="text-2xl font-bold text-blue-900">{bookings?.data?.data?.bookings?.length || 0}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50">
                   <p className="text-xs text-amber-600 font-medium mb-1">Pending</p>
@@ -1521,7 +1716,7 @@ const DashboardOwner: React.FC = () => {
               <ArrowUp className="h-4 w-4 rotate-90" />
             </button>
           </div>
-          {bookings?.data?.bookings?.length === 0 ? (
+          {bookings?.data?.data?.bookings?.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <Calendar className="h-10 w-10 text-slate-400" />
@@ -1531,7 +1726,7 @@ const DashboardOwner: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {bookings?.data?.bookings?.slice(0, 5).map((booking: any) => (
+              {bookings?.data?.data?.bookings?.slice(0, 5).map((booking: any) => (
                 <BookingCard
                   key={booking._id}
                   booking={booking}
@@ -1550,13 +1745,33 @@ const DashboardOwner: React.FC = () => {
 
   // Bookings Tab Content
   function renderBookings() {
+    if (bookingsError) {
+      const errorMessage = (bookingsError as any)?.response?.data?.message || 'Failed to load bookings';
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-red-900 mb-2">Unable to Load Bookings</h3>
+          <p className="text-red-700 mb-4">{errorMessage}</p>
+          <button
+            onClick={() => refetchBookings()}
+            disabled={bookingsLoading}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            {bookingsLoading ? 'Retrying...' : 'Try Again'}
+          </button>
+        </div>
+      );
+    }
+
     const filteredBookings = getFilteredAndSortedBookings();
     const statusCounts = {
-      all: bookings?.data?.bookings?.length || 0,
-      pending: bookings?.data?.bookings?.filter((b: any) => b.status === 'pending').length || 0,
-      confirmed: bookings?.data?.bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
-      completed: bookings?.data?.bookings?.filter((b: any) => b.status === 'completed').length || 0,
-      cancelled: bookings?.data?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
+      all: bookings?.data?.data?.bookings?.length || 0,
+      pending: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'pending').length || 0,
+      confirmed: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
+      completed: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'completed').length || 0,
+      cancelled: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
     };
 
     return (
@@ -1573,6 +1788,14 @@ const DashboardOwner: React.FC = () => {
                 <p className="text-sm text-slate-600">Monitor, filter, and manage all salon bookings</p>
               </div>
               <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => refetchBookings()}
+                  disabled={bookingsLoading}
+                  className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                  title="Refresh bookings"
+                >
+                  <RefreshCw className={`h-5 w-5 ${bookingsLoading ? 'animate-spin' : ''}`} />
+                </button>
                 <div className="flex items-center space-x-2 text-sm text-slate-600">
                   <span>Total Bookings:</span>
                   <span className="font-bold text-slate-900 bg-slate-100 px-2 py-1 rounded-full">
@@ -2576,10 +2799,6 @@ const DashboardOwner: React.FC = () => {
   function renderServices() {
     const currentServices = services?.data?.services || services?.data?.services || (services as any)?.services || [];
     
-    // Debug logging
-    console.log('Services Data:', services);
-    console.log('Current Services:', currentServices);
-    
     return (
     <div className="bg-gradient-to-br from-white via-white to-purple-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
       <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-purple-50 to-indigo-50/30">
@@ -2589,7 +2808,20 @@ const DashboardOwner: React.FC = () => {
             <p className="text-sm text-slate-600">Manage your salon services and pricing</p>
           </div>
           <button 
-            onClick={() => setShowAddServiceForm(true)}
+            onClick={() => {
+              setServiceFormData({
+                title: '',
+                description: '',
+                price: '',
+                durationMinutes: '',
+                category: 'hair',
+                targetAudience: ['adults'],
+                isActive: true,
+                image: null,
+              });
+              setSelectedService(null);
+              setShowAddServiceForm(true);
+            }}
             className="group flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl lg:rounded-2xl hover:from-purple-700 hover:to-indigo-800 w-full sm:w-auto justify-center shadow-lg hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 font-semibold"
           >
             <Plus className="h-4 w-4 lg:h-5 lg:w-5 mr-2 group-hover:scale-110 transition-transform" />
@@ -2605,1143 +2837,413 @@ const DashboardOwner: React.FC = () => {
               <div className="w-24 h-24 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6">
                 <Package className="h-12 w-12 text-white" />
               </div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center animate-bounce shadow-lg">
-                <Plus className="h-4 w-4 text-white" />
-              </div>
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-3">Create Your Service Menu</h3>
-            <p className="text-slate-600 mb-6 max-w-md mx-auto">
-              No services added yet. Create your service offerings to start accepting bookings from customers.
-            </p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No Services Yet</h3>
+            <p className="text-slate-600 mb-6">Start building your service catalog by adding your first service</p>
             <button 
-              onClick={() => setShowAddServiceForm(true)}
-              className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-800 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-purple-500/25"
+              onClick={() => {
+                setServiceFormData({
+                  title: '',
+                  description: '',
+                  price: '',
+                  durationMinutes: '',
+                  category: 'hair',
+                  targetAudience: ['adults'],
+                  isActive: true,
+                  image: null,
+                });
+                setSelectedService(null);
+                setShowAddServiceForm(true);
+              }}
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl hover:from-purple-700 hover:to-indigo-800 font-semibold shadow-lg hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105"
             >
-              <Plus className="h-5 w-5" />
-              <span>Add Your First Service</span>
+              <Plus className="h-5 w-5 mr-2" />
+              Add Your First Service
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {currentServices.map((service: any, index: number) => {
-              const categoryInfo = getServiceCategoryInfo(service.category || 'other');
-              return (
-              <div 
-                key={service._id} 
-                className="group bg-gradient-to-r from-white to-purple-50/30 border border-slate-200/60 rounded-2xl p-6 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  animation: 'slideInUp 0.5s ease-out forwards'
-                }}
+          <div className="grid gap-6">
+            {currentServices.map((service: any) => (
+              <div
+                key={service._id}
+                className="group bg-white rounded-xl border border-slate-200/80 hover:border-purple-300 p-6 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
               >
-                <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
-                  <div className="flex-1 min-w-0 w-full">
-                    <div className="flex items-start space-x-4 mb-3">
-                      <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-purple-500/25 transition-shadow shrink-0">
-                        <Package className="h-6 w-6 text-white" />
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-slate-900 group-hover:text-purple-700 transition-colors">{service.title || service.name}</h4>
+                    <p className="text-sm text-slate-600 mt-1">{service.description}</p>
+                    <div className="flex items-center gap-6 mt-3 text-sm text-slate-500 flex-wrap">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1.5" />
+                        <span>{service.durationMinutes || service.duration} min</span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-bold text-slate-900 text-xl">{service.title}</h3>
-                          <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-100 to-indigo-200 text-purple-800">
-                            {categoryInfo.icon} {categoryInfo.label}
-                          </span>
-                        </div>
-                        {service.description && (
-                          <p className="text-sm text-slate-600 mb-3 line-clamp-2">{service.description}</p>
-                        )}
-                        <div className="flex items-center text-sm text-slate-500 mb-2">
-                          <Clock className="h-4 w-4 mr-2 text-purple-500" />
-                          <span className="font-medium">{service.durationMinutes} minutes</span>
-                        </div>
-                        {service.targetAudience && service.targetAudience.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {service.targetAudience.map((audience: string, index: number) => {
-                              const audienceInfo = targetAudienceOptions.find(opt => opt.value === audience);
-                              return (
-                                <span
-                                  key={index}
-                                  className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800"
-                                >
-                                  {audienceInfo?.icon} {audienceInfo?.label}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        )}
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1.5" />
+                        <span>${parseFloat(service.price || 0).toFixed(2)}</span>
                       </div>
+                      {service.category && (
+                        <div className="flex items-center">
+                          <Package className="h-4 w-4 mr-1.5" />
+                          <span className="capitalize">{service.category}</span>
+                        </div>
+                      )}
+                      {service.isActive !== undefined && (
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${service.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                          {service.isActive ? 'Active' : 'Inactive'}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="flex flex-col items-start lg:items-end space-y-3 w-full lg:w-auto">
-                    <div className="text-left lg:text-right">
-                      <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent mb-2">
-                        {service.price.toLocaleString()} RWF
-                      </div>
-                      <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
-                        service.isActive 
-                          ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800' 
-                          : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800'
-                      }`}>
-                        {service.isActive ? '✅ Active' : '❌ Inactive'}
-                      </span>
-                    </div>
-                    
-                    <div className="flex space-x-2 w-full lg:w-auto">
-                      <button 
-                        onClick={() => handleViewService(service)}
-                        className="flex-1 lg:flex-initial px-4 py-2 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors text-sm font-semibold flex items-center justify-center space-x-1"
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span>View</span>
-                      </button>
-                      <button 
-                        onClick={() => handleEditService(service)}
-                        className="flex-1 lg:flex-initial px-4 py-2 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors text-sm font-semibold flex items-center justify-center space-x-1"
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span>Edit</span>
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteService(service._id)}
-                        disabled={deleteServiceMutation.isPending}
-                        className="px-3 py-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {deleteServiceMutation.isPending ? (
-                          <div className="w-4 h-4 border-2 border-red-300 border-t-red-600 rounded-full animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
+                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => handleEditService(service)}
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit service"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteService(service._id)}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete service"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>
     </div>
   );
+};
+
+  // Main component render - verified salon dashboard
+  const renderVerifiedDashboard = () => {
+    return (
+      <div className="min-h-[400px]">
+        {activeTab === 'overview' && renderOverview()}
+        {activeTab === 'bookings' && renderBookings()}
+        {activeTab === 'barbers' && renderBarbers()}
+        {activeTab === 'services' && renderServices()}
+        {activeTab === 'leaderboard' && renderLeaderboard()}
+        {activeTab === 'notifications' && renderNotifications()}
+        {activeTab === 'analytics' && renderAnalytics()}
+        {activeTab === 'settings' && renderSettings()}
+      </div>
+    );
+  };
+
+  function renderLeaderboard() {
+    return (
+      <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+        <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30">
+          <div>
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Top Earners</h2>
+            <p className="text-sm text-slate-600">Staff performance based on completed bookings</p>
+          </div>
+        </div>
+        
+        <div className="p-6 lg:p-8">
+          {staffEarnings.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6">
+                <Trophy className="h-12 w-12 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No Data Yet</h3>
+              <p className="text-slate-600 mb-6">Complete bookings will appear here</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {staffEarnings.map((earning: any, index: number) => (
+                <div
+                  key={earning.staff._id}
+                  className="group bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-200/80 hover:border-blue-300 p-4 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      {index === 0 && (
+                        <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                          <Medal className="h-6 w-6 text-white" />
+                        </div>
+                      )}
+                      {index === 1 && (
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full flex items-center justify-center shadow-lg">
+                          <Medal className="h-6 w-6 text-white" />
+                        </div>
+                      )}
+                      {index === 2 && (
+                        <div className="w-12 h-12 bg-gradient-to-br from-orange-300 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                          <Medal className="h-6 w-6 text-white" />
+                        </div>
+                      )}
+                      {index > 2 && (
+                        <div className="w-12 h-12 bg-gradient-to-br from-slate-400 to-slate-600 rounded-full flex items-center justify-center shadow-lg font-bold text-white">
+                          {index + 1}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">{earning.staff.name}</h4>
+                      <p className="text-sm text-slate-600">{earning.staff.staffCategory}</p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-blue-600">${earning.totalEarnings.toFixed(2)}</p>
+                      <p className="text-xs text-slate-500">{earning.bookingCount} bookings</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   }
 
-  // Analytics Tab Content
-  function renderAnalytics() {
-    // Calculate analytics data
-    const totalBookings = bookings?.data?.bookings?.length || 0;
-    const completedBookingsCount = completedBookings.length;
-    const pendingBookings = bookings?.data?.bookings?.filter((b: any) => b.status === 'pending').length || 0;
-    const cancelledBookings = bookings?.data?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0;
-    
-    // Revenue calculations
-    const totalRevenue = completedBookings.reduce((sum: number, booking: any) => 
-      sum + (booking.service?.price || 0), 0
+  function renderNotifications() {
+    const getNotificationStyles = (type: string) => {
+      switch (type) {
+        case 'success':
+          return { bg: 'bg-emerald-50', border: 'border-emerald-200', icon: 'bg-emerald-100', iconColor: 'text-emerald-600' };
+        case 'warning':
+          return { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'bg-amber-100', iconColor: 'text-amber-600' };
+        case 'error':
+          return { bg: 'bg-red-50', border: 'border-red-200', icon: 'bg-red-100', iconColor: 'text-red-600' };
+        default:
+          return { bg: 'bg-blue-50', border: 'border-blue-200', icon: 'bg-blue-100', iconColor: 'text-blue-600' };
+      }
+    };
+
+    const getNotificationIcon = (type: string) => {
+      switch (type) {
+        case 'success':
+          return <CheckCircle className="h-5 w-5" />;
+        case 'warning':
+          return <AlertTriangle className="h-5 w-5" />;
+        case 'error':
+          return <XCircle className="h-5 w-5" />;
+        default:
+          return <Bell className="h-5 w-5" />;
+      }
+    };
+
+    const unreadCount = notificationsData?.data?.notifications?.filter((n: any) => !n.read).length || 0;
+
+    return (
+      <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+        <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Notifications</h2>
+            <p className="text-sm text-slate-600">
+              {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
+            </p>
+          </div>
+          {unreadCount > 0 && (
+            <button
+              onClick={() => markAllNotificationsReadMutation.mutate()}
+              disabled={markAllNotificationsReadMutation.isPending}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
+            >
+              Mark all read
+            </button>
+          )}
+        </div>
+
+        <div className="p-6 lg:p-8">
+          {notificationsData?.data?.notifications?.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bell className="h-8 w-8 text-slate-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No Notifications</h3>
+              <p className="text-slate-600">You're all caught up! Check back later for new notifications.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              {notificationsData?.data?.notifications?.map((notification: any) => {
+                const styles = getNotificationStyles(notification.type);
+                return (
+                  <div
+                    key={notification._id}
+                    className={`group p-4 rounded-xl border-2 transition-all duration-200 ${
+                      notification.read
+                        ? 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                        : `${styles.bg} ${styles.border} hover:shadow-md`
+                    }`}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                        notification.read ? 'bg-slate-200' : styles.icon
+                      }`}>
+                        <span className={notification.read ? 'text-slate-500' : styles.iconColor}>
+                          {getNotificationIcon(notification.type)}
+                        </span>
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <h3 className={`font-semibold ${notification.read ? 'text-slate-700' : 'text-slate-900'}`}>
+                              {notification.title}
+                            </h3>
+                            <p className={`text-sm mt-1 ${notification.read ? 'text-slate-500' : 'text-slate-600'}`}>
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-slate-500 mt-2">
+                              {new Date(notification.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                          {!notification.read && (
+                            <button
+                              onClick={() => markNotificationReadMutation.mutate(notification._id)}
+                              disabled={markNotificationReadMutation.isPending}
+                              className="ml-2 flex-shrink-0 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                            >
+                              Mark read
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     );
+  }
+
+  function renderAnalytics() {
+    const allBookings = bookings?.data?.data?.bookings || [];
+    const completedBookings = allBookings.filter((b: any) => b.status === 'completed');
+    const confirmedBookings = allBookings.filter((b: any) => b.status === 'confirmed');
+    const pendingBookings = allBookings.filter((b: any) => b.status === 'pending');
+    const cancelledBookings = allBookings.filter((b: any) => b.status === 'cancelled');
     
-    // Monthly data (last 6 months)
-    const monthlyData = Array.from({ length: 6 }, (_, i) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (5 - i));
-      const monthBookings = bookings?.data?.bookings?.filter((b: any) => {
-        const bookingDate = new Date(b.timeSlot);
-        return bookingDate.getMonth() === date.getMonth() && 
-               bookingDate.getFullYear() === date.getFullYear();
-      }) || [];
-      
-      const monthRevenue = monthBookings
-        .filter((b: any) => b.status === 'completed')
-        .reduce((sum: number, b: any) => sum + (b.service?.price || 0), 0);
-      
-      return {
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
-        bookings: monthBookings.length,
-        revenue: monthRevenue,
-        completed: monthBookings.filter((b: any) => b.status === 'completed').length
-      };
+    const totalRevenue = completedBookings.reduce((sum: number, b: any) => sum + (b.amountTotal || 0), 0);
+    const avgBookingValue = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
+    
+    const serviceBookingCounts = new Map();
+    completedBookings.forEach((booking: any) => {
+      const serviceName = booking.service?.title || booking.service?.name || 'Unknown';
+      serviceBookingCounts.set(serviceName, (serviceBookingCounts.get(serviceName) || 0) + 1);
     });
-
-    // Top services
-    const serviceStats = (services?.data?.services || (services as any)?.services || [])?.map((service: any) => {
-      const serviceBookings = bookings?.data?.bookings?.filter((b: any) => 
-        b.service?._id === service._id
-      ) || [];
-      const serviceRevenue = serviceBookings
-        .filter((b: any) => b.status === 'completed')
-        .reduce((sum: number, b: any) => sum + (b.service?.price || 0), 0);
-      
-      return {
-        ...service,
-        bookingCount: serviceBookings.length,
-        revenue: serviceRevenue
-      };
-    }).sort((a: any, b: any) => b.bookingCount - a.bookingCount) || [];
-
-    // Top staff members
-    const staffStats = (staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.map((staff: any) => {
-      const staffBookings = bookings?.data?.bookings?.filter((b: any) => 
-        b.barber?._id === staff._id
-      ) || [];
-      const staffRevenue = staffBookings
-        .filter((b: any) => b.status === 'completed')
-        .reduce((sum: number, b: any) => sum + (b.service?.price || 0), 0);
-      
-      return {
-        ...staff,
-        bookingCount: staffBookings.length,
-        revenue: staffRevenue,
-        completionRate: staffBookings.length > 0 
-          ? (staffBookings.filter((b: any) => b.status === 'completed').length / staffBookings.length * 100).toFixed(1)
-          : 0
-      };
-    }).sort((a: any, b: any) => b.bookingCount - a.bookingCount) || [];
-
-    // Peak hours analysis
-    const hourlyBookings = Array.from({ length: 24 }, (_, hour) => {
-      const count = bookings?.data?.bookings?.filter((b: any) => {
-        const bookingHour = new Date(b.timeSlot).getHours();
-        return bookingHour === hour;
-      }).length || 0;
-      return { hour, count };
-    }).filter(h => h.count > 0);
-
-    const peakHours = hourlyBookings.sort((a, b) => b.count - a.count).slice(0, 3);
+    
+    const topServices = Array.from(serviceBookingCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
 
     return (
       <div className="space-y-6">
-        {/* Overview Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <Calendar className="h-6 w-6" />
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl border border-blue-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-semibold mb-2">Total Revenue</p>
+                <p className="text-3xl font-bold text-slate-900">${totalRevenue.toFixed(2)}</p>
+                <p className="text-xs text-blue-600 mt-2">From {completedBookings.length} completed bookings</p>
               </div>
-              <TrendingUp className="h-5 w-5 opacity-80" />
+              <DollarSign className="h-8 w-8 text-blue-600 opacity-30" />
             </div>
-            <div className="text-3xl font-bold mb-1">{totalBookings}</div>
-            <div className="text-blue-100 text-sm">Total Bookings</div>
           </div>
 
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <DollarSign className="h-6 w-6" />
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl border border-emerald-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-emerald-600 font-semibold mb-2">Completed</p>
+                <p className="text-3xl font-bold text-slate-900">{completedBookings.length}</p>
+                <p className="text-xs text-emerald-600 mt-2">Avg: ${avgBookingValue.toFixed(2)}</p>
               </div>
-              <ArrowUp className="h-5 w-5 opacity-80" />
+              <CheckCircle className="h-8 w-8 text-emerald-600 opacity-30" />
             </div>
-            <div className="text-3xl font-bold mb-1">{totalRevenue.toLocaleString()} RWF</div>
-            <div className="text-emerald-100 text-sm">Total Revenue</div>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <CheckCircle className="h-6 w-6" />
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 rounded-xl border border-blue-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-semibold mb-2">Confirmed</p>
+                <p className="text-3xl font-bold text-slate-900">{confirmedBookings.length}</p>
+                <p className="text-xs text-blue-600 mt-2">Awaiting completion</p>
               </div>
-              <Target className="h-5 w-5 opacity-80" />
+              <Calendar className="h-8 w-8 text-blue-600 opacity-30" />
             </div>
-            <div className="text-3xl font-bold mb-1">{completedBookingsCount}</div>
-            <div className="text-purple-100 text-sm">Completed</div>
           </div>
 
-          <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                <Activity className="h-6 w-6" />
+          <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl border border-amber-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-amber-600 font-semibold mb-2">Pending</p>
+                <p className="text-3xl font-bold text-slate-900">{pendingBookings.length}</p>
+                <p className="text-xs text-amber-600 mt-2">Awaiting confirmation</p>
               </div>
-              <Zap className="h-5 w-5 opacity-80" />
+              <Clock className="h-8 w-8 text-amber-600 opacity-30" />
             </div>
-            <div className="text-3xl font-bold mb-1">{pendingBookings}</div>
-            <div className="text-amber-100 text-sm">Pending</div>
           </div>
         </div>
 
-        {/* Monthly Trends */}
-        <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30">
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Monthly Trends</h2>
-            <p className="text-sm text-slate-600">Bookings and revenue over the last 6 months</p>
-          </div>
-          <div className="p-6 lg:p-8">
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Booking Status Distribution */}
+          <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2 text-slate-600" />
+              Booking Status Distribution
+            </h3>
             <div className="space-y-4">
-              {monthlyData.map((month, index) => (
-                <div key={index} className="bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-xl p-4 border border-slate-200/60">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="font-semibold text-slate-900">{month.month}</div>
-                    <div className="flex items-center space-x-4 text-sm">
-                      <span className="text-blue-600 font-medium">{month.bookings} bookings</span>
-                      <span className="text-emerald-600 font-medium">{month.revenue.toLocaleString()} RWF</span>
-                    </div>
+              {[
+                { label: 'Completed', count: completedBookings.length, color: 'bg-emerald-500', total: allBookings.length },
+                { label: 'Confirmed', count: confirmedBookings.length, color: 'bg-blue-500', total: allBookings.length },
+                { label: 'Pending', count: pendingBookings.length, color: 'bg-amber-500', total: allBookings.length },
+                { label: 'Cancelled', count: cancelledBookings.length, color: 'bg-red-500', total: allBookings.length }
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-slate-700">{item.label}</span>
+                    <span className="text-sm font-bold text-slate-900">{item.count}</span>
                   </div>
-                  <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div 
-                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((month.bookings / Math.max(...monthlyData.map(m => m.bookings))) * 100, 100)}%` }}
-                    />
+                  <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className={`h-full ${item.color} rounded-full transition-all`}
+                      style={{ width: `${item.total > 0 ? (item.count / item.total) * 100 : 0}%` }}
+                    ></div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Services */}
-          <div className="bg-gradient-to-br from-white via-white to-purple-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-            <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-purple-50 to-indigo-50/30">
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Top Services</h2>
-              <p className="text-sm text-slate-600">Most popular services by bookings</p>
-            </div>
-            <div className="p-6 lg:p-8">
-              {serviceStats.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No service data available</div>
-              ) : (
-                <div className="space-y-4">
-                  {serviceStats.slice(0, 5).map((service: any, index: number) => (
-                    <div key={service._id} className="flex items-center space-x-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{service.title}</div>
-                        <div className="text-sm text-slate-500">{service.bookingCount} bookings • {service.revenue.toLocaleString()} RWF</div>
-                      </div>
-                      <Award className="h-5 w-5 text-amber-500" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Top Barbers */}
-          <div className="bg-gradient-to-br from-white via-white to-emerald-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-            <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-emerald-50 to-teal-50/30">
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Top Performers</h2>
-              <p className="text-sm text-slate-600">Best performing team members</p>
-            </div>
-            <div className="p-6 lg:p-8">
-              {staffStats.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">No staff data available</div>
-              ) : (
-                <div className="space-y-4">
-                  {staffStats.slice(0, 5).map((staff: any, index: number) => (
-                    <div key={staff._id} className="flex items-center space-x-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                        {index + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{staff.name}</div>
-                        <div className="text-sm text-slate-500">
-                          {staff.bookingCount} bookings • {staff.completionRate}% completion
-                        </div>
-                      </div>
-                      <Star className="h-5 w-5 text-amber-500" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Peak Hours */}
-        <div className="bg-gradient-to-br from-white via-white to-amber-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-amber-50 to-orange-50/30">
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Peak Hours</h2>
-            <p className="text-sm text-slate-600">Busiest times of the day</p>
-          </div>
-          <div className="p-6 lg:p-8">
-            {peakHours.length === 0 ? (
-              <div className="text-center py-8 text-slate-500">No booking data available</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {peakHours.map((peak, index) => (
-                  <div key={peak.hour} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200/60">
-                    <div className="flex items-center justify-between mb-3">
-                      <Clock className="h-8 w-8 text-amber-600" />
-                      <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-1 rounded-full">
-                        #{index + 1}
-                      </span>
-                    </div>
-                    <div className="text-2xl font-bold text-slate-900 mb-1">
-                      {peak.hour.toString().padStart(2, '0')}:00
-                    </div>
-                    <div className="text-sm text-slate-600">{peak.count} bookings</div>
-                  </div>
-                ))}
+          <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-slate-600" />
+              Top Services
+            </h3>
+            {topServices.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-slate-600 text-sm">No completed bookings yet</p>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Booking Status Distribution */}
-        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-blue-50/30">
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Booking Status Distribution</h2>
-            <p className="text-sm text-slate-600">Overview of all booking statuses</p>
-          </div>
-          <div className="p-6 lg:p-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200/60">
-                <CheckCircle className="h-8 w-8 text-emerald-600 mb-3" />
-                <div className="text-2xl font-bold text-slate-900 mb-1">{completedBookingsCount}</div>
-                <div className="text-sm text-slate-600">Completed</div>
-                <div className="text-xs text-emerald-600 font-semibold mt-2">
-                  {totalBookings > 0 ? ((completedBookingsCount / totalBookings) * 100).toFixed(1) : 0}%
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-6 border border-amber-200/60">
-                <Clock className="h-8 w-8 text-amber-600 mb-3" />
-                <div className="text-2xl font-bold text-slate-900 mb-1">{pendingBookings}</div>
-                <div className="text-sm text-slate-600">Pending</div>
-                <div className="text-xs text-amber-600 font-semibold mt-2">
-                  {totalBookings > 0 ? ((pendingBookings / totalBookings) * 100).toFixed(1) : 0}%
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 border border-red-200/60">
-                <XCircle className="h-8 w-8 text-red-600 mb-3" />
-                <div className="text-2xl font-bold text-slate-900 mb-1">{cancelledBookings}</div>
-                <div className="text-sm text-slate-600">Cancelled</div>
-                <div className="text-xs text-red-600 font-semibold mt-2">
-                  {totalBookings > 0 ? ((cancelledBookings / totalBookings) * 100).toFixed(1) : 0}%
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200/60">
-                <BarChart3 className="h-8 w-8 text-blue-600 mb-3" />
-                <div className="text-2xl font-bold text-slate-900 mb-1">{totalBookings}</div>
-                <div className="text-sm text-slate-600">Total</div>
-                <div className="text-xs text-blue-600 font-semibold mt-2">100%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Settings Tab Content
-  function renderSettings() {
-    const handleEditClick = (section: string) => {
-      setEditMode(section);
-      if (section === 'basic') {
-        setFormData({
-          name: salon?.name || '',
-          description: salon?.description || '',
-          phone: salon?.phone || '',
-          email: salon?.email || '',
-        });
-      } else if (section === 'location') {
-        setFormData({
-          address: salon?.address || '',
-          province: salon?.province || '',
-          district: salon?.district || '',
-          sector: salon?.sector || '',
-        });
-      } else if (section === 'hours') {
-        setFormData(salon?.workingHours || {});
-      }
-    };
-
-    const handleSave = async (section: string) => {
-      try {
-        let updateData = {};
-        
-        if (section === 'basic') {
-          updateData = {
-            name: formData.name,
-            description: formData.description,
-            phone: formData.phone,
-            email: formData.email,
-          };
-        } else if (section === 'location') {
-          updateData = {
-            address: formData.address,
-            province: formData.province,
-            district: formData.district,
-            sector: formData.sector,
-          };
-        } else if (section === 'hours') {
-          updateData = {
-            workingHours: formData,
-          };
-        }
-
-        await salonService.updateSalon(user?.salonId!, updateData);
-        toast.success('Settings updated successfully!');
-        setEditMode(null);
-        queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Failed to update settings');
-      }
-    };
-
-    const handleCancel = () => {
-      setEditMode(null);
-      setFormData({});
-    };
-
-    const handleSaveWorkingHours = async () => {
-      try {
-        await salonService.updateSalon(user?.salonId!, {
-          workingHours: formData,
-        });
-        toast.success('Working hours updated successfully!');
-        setEditMode(null);
-        queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
-      } catch (error: any) {
-        toast.error(error.response?.data?.message || 'Failed to update working hours');
-      }
-    };
-
-    const handleGalleryUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = event.target.files;
-      if (!files || files.length === 0) return;
-
-      try {
-        toast.loading('Uploading images...');
-        await salonService.uploadGallery(user?.salonId!, files);
-        toast.dismiss();
-        toast.success('Images uploaded successfully!');
-        queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
-      } catch (error: any) {
-        toast.dismiss();
-        toast.error(error.response?.data?.message || 'Failed to upload images');
-      }
-    };
-
-    const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-    
-    return (
-      <div className="space-y-6">
-        {/* Basic Information */}
-        <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Basic Information</h2>
-                <p className="text-sm text-slate-600">Update your salon's basic details</p>
-              </div>
-              {editMode !== 'basic' && (
-                <button
-                  onClick={() => handleEditClick('basic')}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit</span>
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="p-6 lg:p-8">
-            {editMode === 'basic' ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Salon Name</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => handleSave('basic')}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl hover:from-blue-700 hover:to-indigo-800 transition-all font-semibold"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors font-semibold"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-start space-x-4">
-                  <Building2 className="h-6 w-6 text-blue-600 mt-1" />
-                  <div>
-                    <div className="text-sm text-slate-500 mb-1">Salon Name</div>
-                    <div className="text-lg font-semibold text-slate-900">{salon?.name}</div>
-                  </div>
-                </div>
-                {salon?.description && (
-                  <div className="flex items-start space-x-4">
-                    <ImageIcon className="h-6 w-6 text-blue-600 mt-1" />
-                    <div>
-                      <div className="text-sm text-slate-500 mb-1">Description</div>
-                      <div className="text-slate-900">{salon.description}</div>
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start space-x-4">
-                    <Phone className="h-6 w-6 text-blue-600 mt-1" />
-                    <div>
-                      <div className="text-sm text-slate-500 mb-1">Phone</div>
-                      <div className="text-slate-900">{salon?.phone || 'Not set'}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4">
-                    <Mail className="h-6 w-6 text-blue-600 mt-1" />
-                    <div>
-                      <div className="text-sm text-slate-500 mb-1">Email</div>
-                      <div className="text-slate-900">{salon?.email || 'Not set'}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Location Information */}
-        <div className="bg-gradient-to-br from-white via-white to-emerald-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-emerald-50 to-teal-50/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Location</h2>
-                <p className="text-sm text-slate-600">Manage your salon's address and location</p>
-              </div>
-              {editMode !== 'location' && (
-                <button
-                  onClick={() => handleEditClick('location')}
-                  className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-semibold"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit</span>
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="p-6 lg:p-8">
-            {editMode === 'location' ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Address</label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Province</label>
-                    <input
-                      type="text"
-                      value={formData.province}
-                      onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">District</label>
-                    <input
-                      type="text"
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Sector</label>
-                    <input
-                      type="text"
-                      value={formData.sector}
-                      onChange={(e) => setFormData({ ...formData, sector: e.target.value })}
-                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-3 pt-4">
-                  <button
-                    onClick={() => handleSave('location')}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-xl hover:from-emerald-700 hover:to-teal-800 transition-all font-semibold"
-                  >
-                    Save Changes
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    className="px-6 py-3 bg-slate-200 text-slate-700 rounded-xl hover:bg-slate-300 transition-colors font-semibold"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-start space-x-4">
-                  <MapPin className="h-6 w-6 text-emerald-600 mt-1" />
-                  <div>
-                    <div className="text-sm text-slate-500 mb-1">Full Address</div>
-                    <div className="text-slate-900">{salon?.address}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <div className="text-sm text-slate-500 mb-1">Province</div>
-                    <div className="text-slate-900 font-semibold">{salon?.province}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-slate-500 mb-1">District</div>
-                    <div className="text-slate-900 font-semibold">{salon?.district}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-slate-500 mb-1">Sector</div>
-                    <div className="text-slate-900 font-semibold">{salon?.sector || 'Not set'}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Working Hours */}
-        <div className="bg-gradient-to-br from-white via-white to-purple-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-purple-50 to-indigo-50/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Working Hours</h2>
-                <p className="text-sm text-slate-600">Set your salon's operating hours</p>
-              </div>
-              {editMode !== 'hours' && (
-                <button
-                  onClick={() => handleEditClick('hours')}
-                  className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors font-semibold"
-                >
-                  <Edit className="h-4 w-4" />
-                  <span>Edit</span>
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="p-6 lg:p-8">
-            {editMode === 'hours' ? (
-              <div className="space-y-4">
-                {daysOfWeek.map((day) => (
-                  <div key={day} className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          checked={!formData[day]?.closed}
-                          onChange={(e) => setFormData({
-                            ...formData,
-                            [day]: { ...formData[day], closed: !e.target.checked }
-                          })}
-                          className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
-                        />
-                        <span className="font-semibold text-slate-900 capitalize">{day}</span>
-                      </div>
-                      {!formData[day]?.closed && (
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="time"
-                            value={formData[day]?.open || '08:00'}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              [day]: { ...formData[day], open: e.target.value }
-                            })}
-                            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          />
-                          <span className="text-slate-500 text-sm">to</span>
-                          <input
-                            type="time"
-                            value={formData[day]?.close || '18:00'}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              [day]: { ...formData[day], close: e.target.value }
-                            })}
-                            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex justify-end space-x-3 pt-6 border-t border-slate-200">
-                  <button
-                    onClick={() => setEditMode(null)}
-                    className="px-6 py-2 text-slate-700 font-semibold rounded-lg border border-slate-300 hover:bg-slate-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSaveWorkingHours()}
-                    className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Save Hours
-                  </button>
-                </div>
-              </div>
             ) : (
               <div className="space-y-3">
-                {daysOfWeek.map((day) => (
-                  <div key={day} className="flex justify-between items-center py-2">
-                    <span className="font-medium text-slate-900 capitalize">{day}</span>
-                    <span className="text-slate-600">
-                      {salon?.workingHours?.[day]?.closed ? 'Closed' : `${salon?.workingHours?.[day]?.open || '08:00'} - ${salon?.workingHours?.[day]?.close || '18:00'}`}
-                    </span>
-                  </div>
-                ))}
-                <div className="flex justify-end pt-4">
-                  <button
-                    onClick={() => setEditMode('hours')}
-                    className="inline-flex items-center px-4 py-2 text-purple-600 font-semibold hover:text-purple-700 transition-colors"
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Hours
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-    </div>
-  );
-  }
-
-  // Leaderboard Tab Content
-  function renderLeaderboard() {
-    // Use pre-calculated staff earnings from component level
-
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-white via-white to-amber-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-amber-50 to-orange-50/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Staff Leaderboard</h2>
-                <p className="text-sm text-slate-600">Top performing staff members by earnings</p>
-              </div>
-              <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
-                <Trophy className="h-6 w-6 text-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Leaderboard */}
-        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="p-6 lg:p-8">
-            {staffEarnings.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-br from-slate-500 to-slate-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6">
-                    <Trophy className="h-12 w-12 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">No Earnings Yet</h3>
-                <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                  Staff earnings will appear here once they complete bookings and generate revenue.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {staffEarnings.map((staff, index) => {
-                  const rank = index + 1;
-                  const getRankIcon = () => {
-                    switch (rank) {
-                      case 1: return <Trophy className="h-6 w-6 text-yellow-500" />;
-                      case 2: return <Medal className="h-6 w-6 text-gray-400" />;
-                      case 3: return <Award className="h-6 w-6 text-amber-600" />;
-                      default: return <span className="w-6 h-6 flex items-center justify-center text-slate-500 font-bold text-lg">#{rank}</span>;
-                    }
-                  };
-
-                  const getRankBg = () => {
-                    switch (rank) {
-                      case 1: return 'bg-gradient-to-r from-yellow-50 to-yellow-100 border-yellow-200';
-                      case 2: return 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200';
-                      case 3: return 'bg-gradient-to-r from-amber-50 to-amber-100 border-amber-200';
-                      default: return 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200';
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={staff.staff._id}
-                      className={`group ${getRankBg()} border rounded-2xl p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}
-                      style={{
-                        animationDelay: `${index * 100}ms`,
-                        animation: 'slideInUp 0.5s ease-out forwards'
-                      }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white shadow-lg">
-                            {getRankIcon()}
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-1">
-                              {staff.staff.name}
-                            </h3>
-                            <p className="text-sm text-slate-600">
-                              {staff.staff.staffCategory || 'Staff Member'}
-                            </p>
-                            <div className="flex items-center space-x-4 mt-2">
-                              <span className="text-sm text-slate-500">
-                                {staff.bookingCount} booking{staff.bookingCount !== 1 ? 's' : ''}
-                              </span>
-                              <span className="text-sm text-slate-500">
-                                {staff.staff.email}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          <div className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent mb-1">
-                            {staff.totalEarnings.toLocaleString()} RWF
-                          </div>
-                          <p className="text-sm text-slate-600">Total Earnings</p>
-                        </div>
-                      </div>
+                {topServices.map((service, index) => (
+                  <div key={service.name} className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white text-sm">
+                      {index + 1}
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Summary Stats */}
-        {staffEarnings.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-              </div>
-              <h3 className="text-sm lg:text-base font-medium text-emerald-100 mb-1">Total Staff Earnings</h3>
-              <p className="text-2xl lg:text-3xl font-bold">
-                {staffEarnings.reduce((sum, staff) => sum + staff.totalEarnings, 0).toLocaleString()} RWF
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Users className="h-6 w-6" />
-                </div>
-              </div>
-              <h3 className="text-sm lg:text-base font-medium text-blue-100 mb-1">Active Staff</h3>
-              <p className="text-2xl lg:text-3xl font-bold">{staffEarnings.length}</p>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Calendar className="h-6 w-6" />
-                </div>
-              </div>
-              <h3 className="text-sm lg:text-base font-medium text-purple-100 mb-1">Total Bookings</h3>
-              <p className="text-2xl lg:text-3xl font-bold">
-                {staffEarnings.reduce((sum, staff) => sum + staff.bookingCount, 0)}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Notifications Tab Content
-  function renderNotifications() {
-    // Use pre-calculated notifications data from component level
-    const notifications = notificationsData?.data?.notifications || [];
-    const unreadCount = notificationsData?.data?.unreadCount || 0;
-
-    const getNotificationIcon = (type: string) => {
-      switch (type) {
-        case 'booking_created': 
-        case 'booking_confirmed': 
-        case 'booking_cancelled': 
-        case 'booking_completed': 
-          return <Calendar className="h-5 w-5 text-blue-500" />;
-        case 'payment_received': 
-        case 'payment_required': 
-          return <DollarSign className="h-5 w-5 text-green-500" />;
-        case 'salon_verified': 
-        case 'salon_rejected': 
-        case 'salon_pending': 
-          return <Building2 className="h-5 w-5 text-purple-500" />;
-        default: return <Bell className="h-5 w-5 text-slate-500" />;
-      }
-    };
-
-    const getPriorityColor = (type: string) => {
-      switch (type) {
-        case 'booking_cancelled': 
-        case 'salon_rejected': 
-          return 'border-l-red-500 bg-red-50';
-        case 'payment_required': 
-        case 'salon_pending': 
-          return 'border-l-yellow-500 bg-yellow-50';
-        case 'booking_created': 
-        case 'booking_confirmed': 
-        case 'booking_completed': 
-        case 'payment_received': 
-        case 'salon_verified': 
-          return 'border-l-green-500 bg-green-50';
-        default: return 'border-l-slate-500 bg-slate-50';
-      }
-    };
-
-    const formatTimestamp = (timestamp: string) => {
-      const now = new Date();
-      const notificationDate = new Date(timestamp);
-      const diff = now.getTime() - notificationDate.getTime();
-      const minutes = Math.floor(diff / (1000 * 60));
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-      if (minutes < 60) return `${minutes}m ago`;
-      if (hours < 24) return `${hours}h ago`;
-      return `${days}d ago`;
-    };
-
-    return (
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Notifications</h2>
-                <p className="text-sm text-slate-600">
-                  {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
-                </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                {unreadCount > 0 && (
-                  <>
-                    <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
-                      {unreadCount}
-                    </span>
-                    <button
-                      onClick={() => markAllNotificationsReadMutation.mutate()}
-                      className="px-3 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      Mark all read
-                    </button>
-                  </>
-                )}
-                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                  <Bell className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Notifications List */}
-        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
-          <div className="p-6 lg:p-8">
-            {notificationsLoading ? (
-              <div className="text-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-slate-600">Loading notifications...</p>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="text-center py-16">
-                <div className="relative inline-block">
-                  <div className="w-24 h-24 bg-gradient-to-br from-slate-500 to-slate-600 rounded-3xl flex items-center justify-center shadow-2xl mb-6">
-                    <Bell className="h-12 w-12 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">No Notifications</h3>
-                <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                  You're all caught up! New notifications will appear here when they arrive.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {notifications.map((notification, index) => (
-                  <div
-                    key={notification._id}
-                    className={`group border-l-4 ${getPriorityColor(notification.type)} rounded-r-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer ${
-                      !notification.read ? 'ring-2 ring-blue-200' : ''
-                    }`}
-                    style={{
-                      animationDelay: `${index * 100}ms`,
-                      animation: 'slideInUp 0.5s ease-out forwards'
-                    }}
-                    onClick={() => !notification.read && markNotificationReadMutation.mutate(notification._id)}
-                  >
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className={`text-lg font-semibold ${!notification.read ? 'text-slate-900' : 'text-slate-700'}`}>
-                            {notification.payload.title}
-                          </h3>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-500">
-                              {formatTimestamp(notification.createdAt)}
-                            </span>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-slate-600 mt-1">{notification.payload.message}</p>
-                        <div className="flex items-center space-x-4 mt-3">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                            notification.type.includes('cancelled') || notification.type.includes('rejected') ? 'bg-red-100 text-red-800' :
-                            notification.type.includes('required') || notification.type.includes('pending') ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {notification.type.replace('_', ' ')}
-                          </span>
-                          <span className="text-xs text-slate-500 capitalize">
-                            {notification.type.replace('_', ' ')}
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{service.name}</p>
+                      <p className="text-xs text-slate-600">{service.count} booking{service.count !== 1 ? 's' : ''}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-slate-900">{service.count}</p>
                     </div>
                   </div>
                 ))}
@@ -3750,60 +3252,126 @@ const DashboardOwner: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-          <button className="group bg-gradient-to-br from-white to-blue-50/50 rounded-2xl lg:rounded-3xl p-6 border border-slate-200/60 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-blue-500/25 transition-shadow">
-                <Bell className="h-6 w-6 text-white" />
+        {/* Monthly Overview */}
+        <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2 text-slate-600" />
+            All Bookings Overview
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Client</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Service</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Date</th>
+                  <th className="text-right py-3 px-4 font-semibold text-slate-900">Amount</th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-900">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allBookings.slice(0, 10).map((booking: any) => (
+                  <tr key={booking._id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-3 px-4 text-slate-700">{booking.client?.name || 'Unknown'}</td>
+                    <td className="py-3 px-4 text-slate-700">{booking.service?.title || booking.service?.name || 'Unknown'}</td>
+                    <td className="py-3 px-4 text-slate-700">{new Date(booking.createdAt).toLocaleDateString()}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-slate-900">${(booking.amountTotal || 0).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-center">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(booking.status)}`}>
+                        {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {allBookings.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-slate-600">No bookings yet</p>
               </div>
-              <div className="text-left">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">Notification Settings</h3>
-                <p className="text-sm text-slate-600">Manage your notification preferences</p>
-              </div>
-            </div>
-          </button>
-
-          <button className="group bg-gradient-to-br from-white to-emerald-50/50 rounded-2xl lg:rounded-3xl p-6 border border-slate-200/60 shadow-lg hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg group-hover:shadow-emerald-500/25 transition-shadow">
-                <CheckCircle className="h-6 w-6 text-white" />
-              </div>
-              <div className="text-left">
-                <h3 className="text-lg font-bold text-slate-900 mb-1">Mark All as Read</h3>
-                <p className="text-sm text-slate-600">Clear all unread notifications</p>
-              </div>
-            </div>
-          </button>
+            )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Main render content function
-  function renderContent() {
-    switch (activeTab) {
-      case 'overview':
-        return renderOverview();
-      case 'bookings':
-        return renderBookings();
-      case 'barbers':
-        return renderBarbers();
-      case 'services':
-        return renderServices();
-      case 'leaderboard':
-        return renderLeaderboard();
-      case 'notifications':
-        return renderNotifications();
-      case 'analytics':
-        return renderAnalytics();
-      case 'settings':
-        return renderSettings();
-      default:
-        return renderOverview();
-    }
+  const renderPendingStatus = () => {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="h-10 w-10 text-amber-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Salon Under Review</h2>
+          <p className="text-slate-600 mb-6">
+            Your salon registration is currently being reviewed by our team. 
+            You'll receive an email notification once the verification is complete.
+          </p>
+          <button
+            onClick={handleRefreshStatus}
+            className="inline-flex items-center px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Status
+          </button>
+        </div>
+      </div>
+    );
   };
 
+  const renderUnknownStatus = () => {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="h-10 w-10 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Status Unknown</h2>
+          <p className="text-slate-600 mb-6">
+            We're having trouble determining your salon's verification status. 
+            Please contact support if this issue persists.
+          </p>
+          <button
+            onClick={handleRefreshStatus}
+            className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh Status
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Salon not found state
+  if (!salon) {
+    return (
+      <DashboardLayout
+        title="Salon Owner"
+        subtitle="Owner Dashboard"
+        sidebarItems={sidebarItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onNotificationClick={() => setActiveTab('notifications')}
+      >
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center max-w-md mx-auto p-8">
+            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Building2 className="h-10 w-10 text-slate-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">No Salon Found</h2>
+            <p className="text-slate-600 mb-6">
+              It looks like you don't have a salon registered yet. 
+              Please contact support to set up your salon profile.
+            </p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Main component return
   return (
     <DashboardLayout
       title="Salon Owner"
@@ -3820,108 +3388,103 @@ const DashboardOwner: React.FC = () => {
         </div>
       }
     >
-      {renderContent()}
+      {/* Content based on verification status */}
+      {getSalonStatus(salon) === 'pending' && renderPendingStatus()}
+      {getSalonStatus(salon) === 'unknown' && renderUnknownStatus()}
+      {getSalonStatus(salon) === 'verified' && renderVerifiedDashboard()}
 
-      {/* Add Service Form Modal */}
+      {/* Add Service Modal */}
       {showAddServiceForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[999999] overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">Add New Service</h3>
-                <button
-                  onClick={() => setShowAddServiceForm(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-purple-50 to-indigo-50/30 px-6 py-4 border-b border-slate-200/60 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">Add New Service</h2>
+              <button
+                onClick={() => setShowAddServiceForm(false)}
+                className="text-slate-500 hover:text-slate-700"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
             </div>
             
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Service Name*</label>
+                <input
+                  type="text"
+                  value={serviceFormData.title}
+                  onChange={(e) => setServiceFormData({ ...serviceFormData, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="e.g., Men's Haircut"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Description</label>
+                <textarea
+                  value={serviceFormData.description}
+                  onChange={(e) => setServiceFormData({ ...serviceFormData, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Describe your service..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Service Title *
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Price ($)*</label>
                   <input
-                    type="text"
-                    value={serviceFormData.title}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter service title"
-                    required
+                    type="number"
+                    step="0.01"
+                    value={serviceFormData.price}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, price: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Category *
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Duration (minutes)*</label>
+                  <input
+                    type="number"
+                    value={serviceFormData.durationMinutes}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, durationMinutes: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Category</label>
                   <select
                     value={serviceFormData.category}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, category: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   >
-                    {serviceCategories.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.icon} {category.label}
+                    {serviceCategories.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Status</label>
+                  <select
+                    value={serviceFormData.isActive ? 'active' : 'inactive'}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, isActive: e.target.value === 'active' })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={serviceFormData.description}
-                  onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter service description"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Price (RWF) *
-                  </label>
-                  <input
-                    type="number"
-                    value={serviceFormData.price}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter price"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Duration (minutes) *
-                  </label>
-                  <input
-                    type="number"
-                    min="15"
-                    value={serviceFormData.durationMinutes}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, durationMinutes: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter duration (min 15)"
-                    required
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Minimum 15 minutes</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Target Audience *
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Target Audience</label>
+                <div className="grid grid-cols-2 gap-3">
                   {targetAudienceOptions.map((option) => (
                     <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -3929,270 +3492,140 @@ const DashboardOwner: React.FC = () => {
                         checked={serviceFormData.targetAudience.includes(option.value)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setServiceFormData(prev => ({
-                              ...prev,
-                              targetAudience: [...prev.targetAudience, option.value]
-                            }));
+                            setServiceFormData({
+                              ...serviceFormData,
+                              targetAudience: [...serviceFormData.targetAudience, option.value]
+                            });
                           } else {
-                            setServiceFormData(prev => ({
-                              ...prev,
-                              targetAudience: prev.targetAudience.filter(aud => aud !== option.value)
-                            }));
+                            setServiceFormData({
+                              ...serviceFormData,
+                              targetAudience: serviceFormData.targetAudience.filter(a => a !== option.value)
+                            });
                           }
                         }}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                        className="w-4 h-4"
                       />
-                      <span className="text-sm text-slate-700">
-                        {option.icon} {option.label}
-                      </span>
+                      <span className="text-sm text-slate-700">{option.icon} {option.label}</span>
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Select at least one target audience</p>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={serviceFormData.isActive}
-                  onChange={(e) => setServiceFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isActive" className="ml-2 block text-sm text-slate-700">
-                  Service is active and available for booking
-                </label>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+            <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-200/60 flex items-center justify-end gap-3">
               <button
                 onClick={() => setShowAddServiceForm(false)}
-                className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddService}
-                disabled={addServiceMutation.isPending || !serviceFormData.title || !serviceFormData.price || !serviceFormData.durationMinutes || serviceFormData.targetAudience.length === 0}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                disabled={addServiceMutation.isPending}
+                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 disabled:opacity-50 transition-all"
               >
-                {addServiceMutation.isPending && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                )}
-                <span>{addServiceMutation.isPending ? 'Adding...' : 'Add Service'}</span>
+                {addServiceMutation.isPending ? 'Adding...' : 'Add Service'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* View Service Details Modal */}
-      {showServiceDetails && selectedService && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[999999] overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">Service Details</h3>
-                <button
-                  onClick={() => setShowServiceDetails(false)}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="p-3 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl shadow-lg">
-                  <Package className="h-8 w-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-2xl font-bold text-slate-900 mb-2">{selectedService.title}</h4>
-                  <div className="flex items-center space-x-4 mb-4">
-                    <span className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold bg-gradient-to-r from-purple-100 to-indigo-200 text-purple-800">
-                      {getServiceCategoryInfo(selectedService.category || 'other').icon} {getServiceCategoryInfo(selectedService.category || 'other').label}
-                    </span>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                      selectedService.isActive 
-                        ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800' 
-                        : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800'
-                    }`}>
-                      {selectedService.isActive ? '✅ Active' : '❌ Inactive'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {selectedService.description && (
-                <div>
-                  <h5 className="text-lg font-semibold text-slate-900 mb-2">Description</h5>
-                  <p className="text-slate-600">{selectedService.description}</p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h5 className="text-lg font-semibold text-slate-900 mb-2">Pricing</h5>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
-                    {selectedService.price?.toLocaleString()} RWF
-                  </div>
-                </div>
-                <div>
-                  <h5 className="text-lg font-semibold text-slate-900 mb-2">Duration</h5>
-                  <div className="flex items-center text-slate-600">
-                    <Clock className="h-5 w-5 mr-2 text-purple-500" />
-                    <span className="text-xl font-semibold">{selectedService.durationMinutes} minutes</span>
-                  </div>
-                </div>
-              </div>
-
-              {selectedService.targetAudience && selectedService.targetAudience.length > 0 && (
-                <div>
-                  <h5 className="text-lg font-semibold text-slate-900 mb-2">Target Audience</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedService.targetAudience.map((audience: string, index: number) => {
-                      const audienceInfo = targetAudienceOptions.find(opt => opt.value === audience);
-                      return (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-3 py-1 rounded-lg text-sm font-semibold bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800"
-                        >
-                          {audienceInfo?.icon} {audienceInfo?.label}
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
-              <button
-                onClick={() => setShowServiceDetails(false)}
-                className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-              >
-                Close
-              </button>
+      {/* Edit Service Modal */}
+      {showEditServiceForm && selectedService && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-50 to-indigo-50/30 px-6 py-4 border-b border-slate-200/60 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">Edit Service</h2>
               <button
                 onClick={() => {
-                  setShowServiceDetails(false);
-                  handleEditService(selectedService);
+                  setShowEditServiceForm(false);
+                  setSelectedService(null);
                 }}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all duration-200 flex items-center space-x-2"
+                className="text-slate-500 hover:text-slate-700"
               >
-                <Edit className="h-4 w-4" />
-                <span>Edit Service</span>
+                <XCircle className="h-6 w-6" />
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Service Form Modal */}
-      {showEditServiceForm && selectedService && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[999999] overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-            <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-slate-900">Edit Service</h3>
-                <button
-                  onClick={() => {
-                    setShowEditServiceForm(false);
-                    setSelectedService(null);
-                  }}
-                  className="text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
             
-            <div className="p-6 space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Service Name*</label>
+                <input
+                  type="text"
+                  value={serviceFormData.title}
+                  onChange={(e) => setServiceFormData({ ...serviceFormData, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Men's Haircut"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Description</label>
+                <textarea
+                  value={serviceFormData.description}
+                  onChange={(e) => setServiceFormData({ ...serviceFormData, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Describe your service..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Service Title *
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Price ($)*</label>
                   <input
-                    type="text"
-                    value={serviceFormData.title}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter service title"
-                    required
+                    type="number"
+                    step="0.01"
+                    value={serviceFormData.price}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, price: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Category *
-                  </label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Duration (minutes)*</label>
+                  <input
+                    type="number"
+                    value={serviceFormData.durationMinutes}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, durationMinutes: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Category</label>
                   <select
                     value={serviceFormData.category}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, category: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, category: e.target.value })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    {serviceCategories.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.icon} {category.label}
+                    {serviceCategories.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Status</label>
+                  <select
+                    value={serviceFormData.isActive ? 'active' : 'inactive'}
+                    onChange={(e) => setServiceFormData({ ...serviceFormData, isActive: e.target.value === 'active' })}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={serviceFormData.description}
-                  onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="Enter service description"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Price (RWF) *
-                  </label>
-                  <input
-                    type="number"
-                    value={serviceFormData.price}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter price"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Duration (minutes) *
-                  </label>
-                  <input
-                    type="number"
-                    min="15"
-                    value={serviceFormData.durationMinutes}
-                    onChange={(e) => setServiceFormData(prev => ({ ...prev, durationMinutes: e.target.value }))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter duration (min 15)"
-                    required
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Minimum 15 minutes</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Target Audience *
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Target Audience</label>
+                <div className="grid grid-cols-2 gap-3">
                   {targetAudienceOptions.map((option) => (
                     <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -4200,151 +3633,43 @@ const DashboardOwner: React.FC = () => {
                         checked={serviceFormData.targetAudience.includes(option.value)}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setServiceFormData(prev => ({
-                              ...prev,
-                              targetAudience: [...prev.targetAudience, option.value]
-                            }));
+                            setServiceFormData({
+                              ...serviceFormData,
+                              targetAudience: [...serviceFormData.targetAudience, option.value]
+                            });
                           } else {
-                            setServiceFormData(prev => ({
-                              ...prev,
-                              targetAudience: prev.targetAudience.filter(aud => aud !== option.value)
-                            }));
+                            setServiceFormData({
+                              ...serviceFormData,
+                              targetAudience: serviceFormData.targetAudience.filter(a => a !== option.value)
+                            });
                           }
                         }}
-                        className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                        className="w-4 h-4"
                       />
-                      <span className="text-sm text-slate-700">
-                        {option.icon} {option.label}
-                      </span>
+                      <span className="text-sm text-slate-700">{option.icon} {option.label}</span>
                     </label>
                   ))}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">Select at least one target audience</p>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="editIsActive"
-                  checked={serviceFormData.isActive}
-                  onChange={(e) => setServiceFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                />
-                <label htmlFor="editIsActive" className="ml-2 block text-sm text-slate-700">
-                  Service is active and available for booking
-                </label>
               </div>
             </div>
 
-            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+            <div className="sticky bottom-0 bg-slate-50 px-6 py-4 border-t border-slate-200/60 flex items-center justify-end gap-3">
               <button
                 onClick={() => {
                   setShowEditServiceForm(false);
                   setSelectedService(null);
                 }}
-                className="px-6 py-2 text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateService}
-                disabled={updateServiceMutation.isPending || !serviceFormData.title || !serviceFormData.price || !serviceFormData.durationMinutes || serviceFormData.targetAudience.length === 0}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                disabled={updateServiceMutation.isPending}
+                className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 transition-all"
               >
-                {updateServiceMutation.isPending && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                )}
-                <span>{updateServiceMutation.isPending ? 'Updating...' : 'Update Service'}</span>
+                {updateServiceMutation.isPending ? 'Updating...' : 'Update Service'}
               </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Service Assignment Modal */}
-      {showServiceAssignmentModal && selectedStaff && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-semibold text-gray-900">Assign Services to Staff</h3>
-                <button
-                  onClick={() => setShowServiceAssignmentModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <XCircle className="h-6 w-6" />
-                </button>
-              </div>
-            </div>
-            <div className="p-6 space-y-6">
-              <div className="flex items-center space-x-4">
-                <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">
-                    {selectedStaff.name?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
-                  <p className="text-gray-600">{selectedStaff.email}</p>
-                  <p className="text-sm text-gray-500">{selectedStaff.staffCategory || 'Staff'}</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-4">Available Services</h4>
-                <div className="space-y-3 max-h-60 overflow-y-auto">
-                  {services?.data?.services?.map((service: any) => (
-                    <div
-                      key={service._id}
-                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                        selectedStaffServices.includes(service._id)
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => toggleServiceAssignment(service._id)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h5 className="font-medium text-gray-900">{service.title}</h5>
-                          <p className="text-sm text-gray-600">{service.description}</p>
-                          <div className="flex items-center mt-2 text-sm text-gray-500">
-                            <Clock className="h-4 w-4 mr-1" />
-                            <span>{service.durationMinutes} minutes</span>
-                            <span className="mx-2">•</span>
-                            <span className="font-medium">{service.price.toLocaleString()} RWF</span>
-                            <span className="mx-2">•</span>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
-                              {service.targetAudience?.join(', ') || 'All Genders'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          {selectedStaffServices.includes(service._id) ? (
-                            <CheckCircle className="h-6 w-6 text-blue-500" />
-                          ) : (
-                            <div className="h-6 w-6 border-2 border-gray-300 rounded-full"></div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => setShowServiceAssignmentModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleServiceAssignment}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Assign Services
-                </button>
-              </div>
             </div>
           </div>
         </div>

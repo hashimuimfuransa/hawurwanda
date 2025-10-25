@@ -141,6 +141,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     console.log('Get bookings - User:', req.user);
     console.log('Get bookings - User role:', req.user?.role);
     console.log('Get bookings - User ID:', req.user?._id);
+    console.log('Get bookings - User salonId:', req.user?.salonId);
 
     // Role-based filtering
     if (req.user!.role === 'client') {
@@ -148,12 +149,20 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
       query.barberId = req.user!._id;
     } else if (req.user!.role === 'owner') {
+      if (!req.user!.salonId) {
+        console.log('WARNING: Owner user does not have salonId set!');
+        return res.status(400).json({ 
+          message: 'Salon owner must have a salon assigned. Please contact support.',
+          code: 'NO_SALON_ID'
+        });
+      }
       query.salonId = req.user!.salonId;
     }
 
     console.log('Get bookings - Final query:', query);
     console.log('Get bookings - User role:', req.user!.role);
     console.log('Get bookings - User ID:', req.user!._id);
+    console.log('Get bookings - User salonId in query:', query.salonId);
 
     // Debug: Check all bookings in the system
     const allBookings = await Booking.find({}).populate('clientId', 'name email phone').populate('barberId', 'name email phone').populate('salonId', 'name address').populate('serviceId', 'title price durationMinutes');

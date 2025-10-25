@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Building2, MapPin, Phone, Mail, FileText, Image, Upload, Video, Users, IdCard, Briefcase, Loader2 } from 'lucide-react';
-import { salonService } from '../services/api';
+import { salonService, authService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import MapLocationPicker from '../components/MapLocationPicker';
 import { 
@@ -73,12 +73,17 @@ const CreateSalon: React.FC = () => {
 
   const createSalonMutation = useMutation({
     mutationFn: (payload: FormData) => salonService.createSalon(payload),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       toast.success('Salon created successfully and pending admin approval!');
       queryClient.invalidateQueries({ queryKey: ['owner-salon'] });
 
-      if (user) {
-        setUser({ ...user, salonId: response.data?.salon?._id ?? user.salonId });
+      try {
+        const profileResponse = await authService.getProfile();
+        setUser(profileResponse.data.user);
+      } catch (error) {
+        if (user) {
+          setUser({ ...user, salonId: response.data?.salon?._id ?? user.salonId });
+        }
       }
 
       navigate('/dashboard/owner');
