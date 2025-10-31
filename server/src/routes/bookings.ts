@@ -6,9 +6,135 @@ import { Service } from '../models/Service';
 import { Transaction } from '../models/Transaction';
 import { Notification } from '../models/Notification';
 import { Availability } from '../models/Availability';
+import StaffEarnings from '../models/StaffEarnings';
+import { User } from '../models/User';
+import WalkInCustomer from '../models/WalkInCustomer';
 import Joi from 'joi';
 
 const router = express.Router();
+
+// Helper function to calculate and update staff earnings
+const updateStaffEarnings = async (staffId: string, date: Date) => {
+  try {
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const staff = await User.findById(staffId);
+    if (!staff) throw new Error('Staff member not found');
+
+    const completedBookings = await Booking.find({
+      barberId: staffId,
+      status: 'completed',
+      timeSlot: { $gte: startOfDay, $lte: endOfDay },
+    }).populate('serviceId', 'title price');
+
+    const completedWalkIns = await WalkInCustomer.find({
+      barberId: staffId,
+      status: 'completed',
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    const commissionRate = 0.7;
+    let totalEarnings = 0;
+    let bookingEarnings = 0;
+    let walkInEarnings = 0;
+    const paymentMethodBreakdown = { cash: 0, airtel: 0 };
+    const serviceMap = new Map();
+
+    completedBookings.forEach((booking: any) => {
+      const servicePrice = booking.serviceId?.price || 0;
+      const earnings = servicePrice * commissionRate;
+      bookingEarnings += earnings;
+      totalEarnings += earnings;
+
+      if (booking.paymentMethod === 'cash') {
+        paymentMethodBreakdown.cash += servicePrice;
+      } else {
+        paymentMethodBreakdown.airtel += servicePrice;
+      }
+
+      const serviceId = booking.serviceId?._id.toString();
+      const serviceName = booking.serviceId?.title || 'Unknown Service';
+      if (serviceMap.has(serviceId)) {
+        const existing = serviceMap.get(serviceId);
+        serviceMap.set(serviceId, {
+          ...existing,
+          count: existing.count + 1,
+          totalAmount: existing.totalAmount + servicePrice,
+          commission: existing.commission + earnings,
+        });
+      } else {
+        serviceMap.set(serviceId, {
+          serviceId: booking.serviceId?._id,
+          serviceName,
+          count: 1,
+          totalAmount: servicePrice,
+          commission: earnings,
+        });
+      }
+    });
+
+    completedWalkIns.forEach((walkIn: any) => {
+      const servicePrice = walkIn.amount || 0;
+      const earnings = servicePrice * commissionRate;
+      walkInEarnings += earnings;
+      totalEarnings += earnings;
+
+      if (walkIn.paymentMethod === 'cash') {
+        paymentMethodBreakdown.cash += servicePrice;
+      } else {
+        paymentMethodBreakdown.airtel += servicePrice;
+      }
+
+      const serviceId = walkIn.serviceId?.toString();
+      const serviceName = walkIn.serviceName || 'Walk-in Service';
+      if (serviceMap.has(serviceId)) {
+        const existing = serviceMap.get(serviceId);
+        serviceMap.set(serviceId, {
+          ...existing,
+          count: existing.count + 1,
+          totalAmount: existing.totalAmount + servicePrice,
+          commission: existing.commission + earnings,
+        });
+      } else {
+        serviceMap.set(serviceId, {
+          serviceId: walkIn.serviceId,
+          serviceName,
+          count: 1,
+          totalAmount: servicePrice,
+          commission: earnings,
+        });
+      }
+    });
+
+    const services = Array.from(serviceMap.values());
+    const dailyEarnings = await StaffEarnings.findOneAndUpdate(
+      { staffId, date: startOfDay },
+      {
+        staffId,
+        salonId: staff.salonId,
+        date: startOfDay,
+        totalEarnings,
+        commissionRate,
+        commissionAmount: totalEarnings,
+        bookingEarnings,
+        walkInEarnings,
+        totalBookings: completedBookings.length,
+        totalWalkIns: completedWalkIns.length,
+        paymentMethodBreakdown,
+        services,
+      },
+      { upsert: true, new: true }
+    );
+
+    return dailyEarnings;
+  } catch (error) {
+    console.error('Update staff earnings error:', error);
+    throw error;
+  }
+};
 
 // Validation schemas
 const createBookingSchema = Joi.object({
@@ -256,7 +382,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res) => {
     // Check if user has access to this booking
     const hasAccess = 
       booking.clientId._id.toString() === req.user!._id.toString() ||
-      booking.barberId._id.toString() === req.user!._id.toString() ||
+      (booking.barberId && booking.barberId._id.toString() === req.user!._id.toString()) ||
       booking.salonId._id.toString() === req.user!.salonId?.toString() ||
       req.user!.role === 'admin' ||
       req.user!.role === 'superadmin';
@@ -285,7 +411,7 @@ router.patch('/:id/status', authenticateToken, validateRequest(updateBookingStat
 
     // Check if user has permission to update this booking
     const canUpdate = 
-      booking.barberId.toString() === req.user!._id.toString() ||
+      (booking.barberId && booking.barberId.toString() === req.user!._id.toString()) ||
       booking.salonId.toString() === req.user!.salonId?.toString() ||
       req.user!.role === 'admin' ||
       req.user!.role === 'superadmin';
@@ -306,6 +432,15 @@ router.patch('/:id/status', authenticateToken, validateRequest(updateBookingStat
      .populate('barberId', 'name profilePhoto')
      .populate('salonId', 'name address')
      .populate('serviceId', 'title price durationMinutes');
+
+    // If booking is marked as completed and has a barber assigned, update earnings
+    if (status === 'completed' && booking.barberId) {
+      try {
+        await updateStaffEarnings(booking.barberId.toString(), booking.timeSlot);
+      } catch (earningError) {
+        console.error('Failed to update staff earnings:', earningError);
+      }
+    }
 
     // Create notification for status change
     const notification = new Notification({
@@ -343,7 +478,7 @@ router.patch('/:id/cancel', authenticateToken, async (req: AuthRequest, res) => 
     // Check if user can cancel this booking
     const canCancel = 
       booking.clientId.toString() === req.user!._id.toString() ||
-      booking.barberId.toString() === req.user!._id.toString() ||
+      (booking.barberId && booking.barberId.toString() === req.user!._id.toString()) ||
       booking.salonId.toString() === req.user!.salonId?.toString() ||
       req.user!.role === 'admin' ||
       req.user!.role === 'superadmin';

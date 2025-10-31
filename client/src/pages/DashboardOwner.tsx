@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
-import { salonService, bookingService, userService, notificationService } from '../services/api';
+import { salonService, bookingService, userService, notificationService, walkInCustomerService } from '../services/api';
 import BookingCard from '../components/BookingCard';
 import DashboardLayout from '../components/DashboardLayout';
+import StaffCustomerList from '../components/StaffCustomerList';
 import { 
   Building2, 
   Users, 
@@ -61,6 +62,42 @@ const DashboardOwner: React.FC = () => {
   const [bookingFilter, setBookingFilter] = useState('all');
   const [bookingSort, setBookingSort] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [earningsPeriod, setEarningsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
+
+  const earningsPeriodOptions: { value: 'day' | 'week' | 'month' | 'year'; label: string }[] = [
+    { value: 'day', label: 'Day' },
+    { value: 'week', label: 'Week' },
+    { value: 'month', label: 'Month' },
+    { value: 'year', label: 'Year' },
+  ];
+
+  const earningsPeriodLabels: Record<'day' | 'week' | 'month' | 'year', string> = {
+    day: 'Today',
+    week: 'This Week',
+    month: 'This Month',
+    year: 'This Year',
+  };
+
+  type NormalizedEarningRecord = {
+    id: string;
+    source: 'booking' | 'walkin';
+    raw: any;
+    staffId: string | null;
+    staffData?: any;
+    amount: number;
+    customerKey: string | null;
+    serviceName: string;
+    timestamp: number | null;
+  };
+
+  const formatCurrency = React.useCallback((amount: number) => {
+    return new Intl.NumberFormat('en-RW', {
+      style: 'currency',
+      currency: 'RWF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(Math.round(Number(amount) || 0));
+  }, []);
 
   // Settings state - moved from renderSettings to avoid hooks rule violation
   const [editMode, setEditMode] = useState<string | null>(null);
@@ -100,6 +137,7 @@ const DashboardOwner: React.FC = () => {
   const [showAddServiceForm, setShowAddServiceForm] = useState(false);
   const [showEditServiceForm, setShowEditServiceForm] = useState(false);
   const [showServiceDetails, setShowServiceDetails] = useState(false);
+  const [, setShowWalkInForm] = useState(false);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [serviceFormData, setServiceFormData] = useState({
     title: '',
@@ -119,10 +157,14 @@ const DashboardOwner: React.FC = () => {
       setActiveTab('settings');
     } else if (path.includes('/bookings')) {
       setActiveTab('bookings');
+    } else if (path.includes('/customers')) {
+      setActiveTab('customers');
     } else if (path.includes('/barbers')) {
       setActiveTab('barbers');
     } else if (path.includes('/services')) {
       setActiveTab('services');
+    } else if (path.includes('/earnings')) {
+      setActiveTab('earnings');
     } else if (path.includes('/analytics')) {
       setActiveTab('analytics');
     } else {
@@ -197,6 +239,15 @@ const DashboardOwner: React.FC = () => {
       console.log('🔢 Frontend: Number of bookings:', result?.data?.bookings?.length);
       return result;
     },
+    enabled: !!user?.salonId,
+    refetchOnMount: true,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: walkInsResponse, isLoading: walkInsLoading, refetch: refetchWalkIns } = useQuery({
+    queryKey: ['salon-walkins', user?.salonId],
+    queryFn: () => walkInCustomerService.getSalonWalkIns({}),
     enabled: !!user?.salonId,
     refetchOnMount: true,
     staleTime: 0,
@@ -405,43 +456,286 @@ const DashboardOwner: React.FC = () => {
     },
   });
 
-  // Calculate staff earnings from completed bookings - moved to top level to avoid hooks rule violation
-  const staffEarnings = React.useMemo(() => {
-    if (!staffMembers?.data?.staff || !bookings?.data?.data?.bookings) return [];
-    
-    const completedBookings = bookings.data.data.bookings.filter((booking: any) => 
-      booking.status === 'completed' && booking.barber
-    );
-    
-    const earningsMap = new Map();
-    
-    // Calculate earnings for each staff member
-    completedBookings.forEach((booking: any) => {
-      const barberId = booking.barber._id;
-      const servicePrice = booking.service?.price || 0;
-      const commissionRate = 0.7; // 70% commission for staff
-      const earnings = servicePrice * commissionRate;
-      
-      if (earningsMap.has(barberId)) {
-        const current = earningsMap.get(barberId);
-        earningsMap.set(barberId, {
-          ...current,
-          totalEarnings: current.totalEarnings + earnings,
-          bookingCount: current.bookingCount + 1
-        });
-      } else {
-        earningsMap.set(barberId, {
-          staff: booking.barber,
-          totalEarnings: earnings,
-          bookingCount: 1
-        });
+  const getBookingTimestamp = React.useCallback((booking: any) => {
+    const rawValue = booking?.completedAt || booking?.timeSlot || booking?.date || booking?.updatedAt || booking?.createdAt;
+    if (!rawValue) return null;
+    const timestamp = new Date(rawValue).getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+  }, []);
+
+  const periodStartTimestamp = React.useMemo(() => {
+    const now = new Date();
+    switch (earningsPeriod) {
+      case 'day': {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        start.setHours(0, 0, 0, 0);
+        return start.getTime();
+      }
+      case 'week': {
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        start.setHours(0, 0, 0, 0);
+        const day = start.getDay();
+        const diff = day === 0 ? 6 : day - 1;
+        start.setDate(start.getDate() - diff);
+        return start.getTime();
+      }
+      case 'month': {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        start.setHours(0, 0, 0, 0);
+        return start.getTime();
+      }
+      case 'year': {
+        const start = new Date(now.getFullYear(), 0, 1);
+        start.setHours(0, 0, 0, 0);
+        return start.getTime();
+      }
+      default:
+        return 0;
+    }
+  }, [earningsPeriod]);
+
+  const normalizedEarnings = React.useMemo<NormalizedEarningRecord[]>(() => {
+    const bookingsList = bookings?.data?.data?.bookings || [];
+    const walkInsList = walkInsResponse?.data?.walkInCustomers || [];
+    const normalized: NormalizedEarningRecord[] = [];
+
+    bookingsList.forEach((booking: any) => {
+      if (booking.status !== 'completed') return;
+      const staffSource = booking.barber || booking.barberId || booking.staffMember;
+      const staffId = typeof staffSource === 'string' ? staffSource : staffSource?._id || staffSource?.id || null;
+      normalized.push({
+        id: `booking-${booking._id}`,
+        source: 'booking',
+        raw: booking,
+        staffId,
+        staffData: typeof staffSource === 'object' ? staffSource : null,
+        amount: Number(
+          booking.amountTotal ??
+          booking.totalAmount ??
+          booking.paymentAmount ??
+          booking.transactionAmount ??
+          booking.payment?.amount ??
+          booking.service?.price ??
+          booking.serviceId?.price ??
+          0
+        ),
+        customerKey: booking.client?._id || booking.clientId || booking.client?.email || booking.client?.phone || `${booking.client?.name || 'customer'}-${booking._id}` || null,
+        serviceName: (() => {
+          const serviceSource = booking.service || booking.serviceId;
+          if (!serviceSource) return 'Service';
+          if (typeof serviceSource === 'string') return serviceSource;
+          return serviceSource?.title || serviceSource?.name || 'Service';
+        })(),
+        timestamp: getBookingTimestamp(booking),
+      });
+    });
+
+    walkInsList.forEach((walkIn: any) => {
+      if (walkIn.status !== 'completed' && walkIn.paymentStatus !== 'paid') return;
+      const staffSource = walkIn.barber || walkIn.barberId || walkIn.staffMember;
+      const staffId = typeof staffSource === 'string' ? staffSource : staffSource?._id || staffSource?.id || null;
+      normalized.push({
+        id: `walkin-${walkIn._id}`,
+        source: 'walkin',
+        raw: walkIn,
+        staffId,
+        staffData: typeof staffSource === 'object' ? staffSource : null,
+        amount: Number(walkIn.amount ?? 0),
+        customerKey: walkIn.clientPhone || walkIn.clientEmail || `${walkIn.clientName || 'walkin'}-${walkIn._id}` || null,
+        serviceName: walkIn.serviceName || 'Walk-in Service',
+        timestamp: getBookingTimestamp(walkIn),
+      });
+    });
+
+    return normalized;
+  }, [bookings, walkInsResponse, getBookingTimestamp]);
+
+  const periodEarningsRecords = React.useMemo(() => {
+    return normalizedEarnings.filter(record => record.timestamp !== null && record.timestamp >= periodStartTimestamp);
+  }, [normalizedEarnings, periodStartTimestamp]);
+
+  const salonCustomersSummary = React.useMemo(() => {
+    const bookingsList = bookings?.data?.data?.bookings || [];
+    const walkInsList = walkInsResponse?.data?.walkInCustomers || [];
+
+    const uniqueCustomerKeys = new Set<string>();
+
+    bookingsList.forEach((booking: any) => {
+      const clientSource = booking?.client || booking?.clientId || booking?.customer || booking?.user;
+      const key =
+        clientSource?._id ||
+        clientSource?.id ||
+        clientSource?.email ||
+        clientSource?.phone ||
+        (booking?._id ? `${clientSource?.name || 'booking'}-${booking._id}` : null);
+      if (key) {
+        uniqueCustomerKeys.add(key);
       }
     });
-    
-    // Convert to array and sort by earnings
+
+    walkInsList.forEach((walkIn: any) => {
+      const key = walkIn?.clientPhone || walkIn?.clientEmail || (walkIn?._id ? `walkin-${walkIn._id}` : null);
+      if (key) {
+        uniqueCustomerKeys.add(key);
+      }
+    });
+
+    const servedBookings = bookingsList.filter((booking: any) => booking?.status === 'completed');
+    const servedWalkIns = walkInsList.filter((walkIn: any) => walkIn?.status === 'completed');
+    const servedCount = servedBookings.length + servedWalkIns.length;
+    const totalRecords = bookingsList.length + walkInsList.length;
+    const awaitingCount = Math.max(totalRecords - servedCount, 0);
+
+    const bookingRevenue = servedBookings.reduce((sum: number, booking: any) => {
+      return (
+        sum +
+        Number(
+          booking?.amountTotal ??
+            booking?.totalAmount ??
+            booking?.paymentAmount ??
+            booking?.transactionAmount ??
+            booking?.payment?.amount ??
+            booking?.service?.price ??
+            0
+        )
+      );
+    }, 0);
+
+    const walkInRevenue = servedWalkIns.reduce((sum: number, walkIn: any) => sum + Number(walkIn?.amount ?? 0), 0);
+
+    return {
+      totalCustomers: uniqueCustomerKeys.size,
+      servedCount,
+      awaitingCount,
+      totalRevenue: bookingRevenue + walkInRevenue,
+    };
+  }, [bookings, walkInsResponse]);
+
+  const earningsSummary = React.useMemo(() => {
+    const customerSet = new Set<string>();
+    const serviceRevenue = new Map<string, { revenue: number; count: number }>();
+    let bookingCount = 0;
+    let walkInCount = 0;
+    let totalRevenue = 0;
+
+    periodEarningsRecords.forEach(record => {
+      totalRevenue += record.amount;
+      if (record.customerKey) customerSet.add(record.customerKey);
+      if (!serviceRevenue.has(record.serviceName)) {
+        serviceRevenue.set(record.serviceName, { revenue: 0, count: 0 });
+      }
+      const stats = serviceRevenue.get(record.serviceName)!;
+      stats.revenue += record.amount;
+      stats.count += 1;
+
+      if (record.source === 'booking') bookingCount += 1;
+      if (record.source === 'walkin') walkInCount += 1;
+    });
+
+    return {
+      totalRevenue,
+      totalCustomers: customerSet.size,
+      serviceRevenue,
+      bookingCount,
+      walkInCount,
+      totalCount: periodEarningsRecords.length,
+    };
+  }, [periodEarningsRecords]);
+
+  // Calculate staff earnings from completed bookings - moved to top level to avoid hooks rule violation
+  const staffEarnings = React.useMemo(() => {
+    if (periodEarningsRecords.length === 0) return [];
+
+    const staffList = staffMembers?.data?.staff || (staffMembers as any)?.staff || [];
+    const staffMap = new Map<string, any>();
+    staffList.forEach((member: any) => {
+      if (member?._id) {
+        staffMap.set(member._id, member);
+      }
+    });
+
+    const earningsMap = new Map<string, {
+      staff: any;
+      totalEarnings: number;
+      bookingCount: number;
+      customers: Set<string>;
+      serviceStats: Map<string, { count: number; revenue: number }>;
+      lastBookingAt: number | null;
+    }>();
+
+    periodEarningsRecords.forEach((record: NormalizedEarningRecord) => {
+      const staffId = record.staffId;
+      if (!staffId) return;
+
+      const existingStaff = staffMap.get(staffId);
+      const resolvedStaff = existingStaff || record.staffData || {
+        _id: staffId,
+        name: record.raw?.barberName || record.raw?.staffName || record.raw?.barber?.name || record.raw?.staffMember?.name || 'Staff Member',
+        staffCategory: record.raw?.barber?.staffCategory || record.raw?.staffCategory || record.raw?.staffMember?.staffCategory || 'staff',
+      };
+      if (!staffMap.has(staffId)) {
+        staffMap.set(staffId, resolvedStaff);
+      }
+
+      if (!earningsMap.has(staffId)) {
+        earningsMap.set(staffId, {
+          staff: resolvedStaff,
+          totalEarnings: 0,
+          bookingCount: 0,
+          customers: new Set<string>(),
+          serviceStats: new Map<string, { count: number; revenue: number }>(),
+          lastBookingAt: null,
+        });
+      }
+
+      const current = earningsMap.get(staffId)!;
+      if (!current.staff || !current.staff.name) {
+        current.staff = resolvedStaff;
+      }
+
+      const amount = Number(record.amount || 0);
+
+      if (record.customerKey) current.customers.add(record.customerKey);
+
+      current.totalEarnings += amount;
+      current.bookingCount += 1;
+
+      if (record.timestamp) {
+        if (!current.lastBookingAt || record.timestamp > current.lastBookingAt) {
+          current.lastBookingAt = record.timestamp;
+        }
+      }
+
+      const serviceName = record.serviceName || 'Service';
+      if (serviceName) {
+        if (!current.serviceStats.has(serviceName)) {
+          current.serviceStats.set(serviceName, { count: 0, revenue: 0 });
+        }
+        const stats = current.serviceStats.get(serviceName)!;
+        stats.count += 1;
+        stats.revenue += amount;
+      }
+    });
+
     return Array.from(earningsMap.values())
+      .map(entry => {
+        const topService = Array.from(entry.serviceStats.entries())
+          .sort((a, b) => (b[1].revenue || 0) - (a[1].revenue || 0))[0];
+        return {
+          staff: entry.staff,
+          totalEarnings: entry.totalEarnings,
+          bookingCount: entry.bookingCount,
+          customerCount: entry.customers.size,
+          topService: topService ? {
+            name: topService[0],
+            count: topService[1].count,
+            revenue: topService[1].revenue,
+          } : null,
+          lastBookingAt: entry.lastBookingAt,
+        };
+      })
       .sort((a, b) => b.totalEarnings - a.totalEarnings);
-  }, [staffMembers, bookings]);
+  }, [staffMembers, periodEarningsRecords]);
 
   const handleBookingStatusChange = async (bookingId: string, status: string) => {
     try {
@@ -1066,9 +1360,11 @@ const DashboardOwner: React.FC = () => {
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3, badge: undefined },
     { id: 'bookings', label: 'Bookings', icon: Calendar, badge: pendingBookings.length || undefined },
+    { id: 'customers', label: 'Customers', icon: Users, badge: undefined },
     { id: 'barbers', label: 'Team', icon: Users, badge: undefined },
     { id: 'services', label: 'Services', icon: Package, badge: undefined },
     { id: 'leaderboard', label: 'Leaderboard', icon: Award, badge: undefined },
+    { id: 'earnings', label: 'Earnings', icon: DollarSign, badge: undefined },
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, badge: undefined },
     { id: 'settings', label: 'Settings', icon: Settings, badge: undefined },
@@ -1363,7 +1659,15 @@ const DashboardOwner: React.FC = () => {
   ) || [];
 
   const totalRevenue = completedBookings.reduce((sum: number, booking: any) => 
-    sum + booking.amountTotal, 0
+    sum + Number(
+      booking.amountTotal ??
+      booking.totalAmount ??
+      booking.paymentAmount ??
+      booking.transactionAmount ??
+      booking.payment?.amount ??
+      booking.service?.price ??
+      0
+    ), 0
   );
 
   const confirmedBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
@@ -1404,7 +1708,7 @@ const DashboardOwner: React.FC = () => {
             </div>
           </div>
           <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Total Revenue</h3>
-          <p className="text-2xl lg:text-3xl font-bold text-slate-900">{totalRevenue.toLocaleString()}</p>
+          <p className="text-2xl lg:text-3xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
           <p className="text-xs lg:text-sm text-slate-500 mt-2">RWF this month</p>
         </div>
 
@@ -1493,6 +1797,26 @@ const DashboardOwner: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">Manage Team</h3>
                 <p className="text-sm text-purple-100">Add and manage your barbers</p>
+              </div>
+            </button>
+
+            {/* View Customers */}
+            <button
+              onClick={() => handleTabChange('customers')}
+              className="group relative bg-gradient-to-br from-sky-500 to-cyan-600 hover:from-sky-600 hover:to-cyan-700 rounded-2xl p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-500/30 overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                    <UserIcon className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full">
+                    {salonCustomersSummary.totalCustomers}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">View Customers</h3>
+                <p className="text-sm text-sky-100">See bookings and walk-in clients</p>
               </div>
             </button>
 
@@ -1665,7 +1989,7 @@ const DashboardOwner: React.FC = () => {
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50">
                   <p className="text-xs text-purple-600 font-medium mb-1">Revenue</p>
-                  <p className="text-lg font-bold text-purple-900">{(totalRevenue / 1000).toFixed(0)}K</p>
+                  <p className="text-lg font-bold text-purple-900">{formatCurrency(totalRevenue)}</p>
                 </div>
               </div>
             </div>
@@ -2001,6 +2325,143 @@ const DashboardOwner: React.FC = () => {
       </div>
     );
   };
+
+  function renderCustomers() {
+    const salonBookings = bookings?.data?.data?.bookings || [];
+    const salonWalkIns = walkInsResponse?.data?.walkInCustomers || [];
+
+    const uniqueCustomerSet = new Set<string>();
+    const getBookingCustomerKey = (booking: any) => {
+      const clientSource = booking.client || booking.clientId || booking.customer || booking.user;
+      return (
+        clientSource?._id ||
+        clientSource?.id ||
+        clientSource?.email ||
+        clientSource?.phone ||
+        `${clientSource?.name || 'booking'}-${booking._id}`
+      );
+    };
+
+    salonBookings.forEach((booking: any) => {
+      const key = getBookingCustomerKey(booking);
+      if (key) uniqueCustomerSet.add(key);
+    });
+
+    salonWalkIns.forEach((walkIn: any) => {
+      const key = walkIn.clientPhone || walkIn.clientEmail || `walkin-${walkIn._id}`;
+      uniqueCustomerSet.add(key);
+    });
+
+    const servedBookings = salonBookings.filter((booking: any) => booking.status === 'completed');
+    const servedWalkIns = salonWalkIns.filter((walkIn: any) => walkIn.status === 'completed');
+    const servedCount = servedBookings.length + servedWalkIns.length;
+    const totalRecords = salonBookings.length + salonWalkIns.length;
+    const awaitingCount = Math.max(totalRecords - servedCount, 0);
+
+    const bookingRevenue = servedBookings.reduce((sum: number, booking: any) => {
+      return (
+        sum +
+        Number(
+          booking.amountTotal ??
+            booking.totalAmount ??
+            booking.paymentAmount ??
+            booking.transactionAmount ??
+            booking.payment?.amount ??
+            booking.service?.price ??
+            0
+        )
+      );
+    }, 0);
+
+    const walkInRevenue = servedWalkIns.reduce((sum: number, walkIn: any) => sum + Number(walkIn.amount ?? 0), 0);
+    const totalRevenue = bookingRevenue + walkInRevenue;
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl lg:rounded-3xl border border-slate-200/60 shadow-lg overflow-hidden">
+          <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1 flex items-center gap-2">
+                <Users className="h-6 w-6 text-blue-600" />
+                Salon Customers
+              </h2>
+              <p className="text-sm text-slate-600">View and manage every customer associated with your salon</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => {
+                  refetchBookings();
+                  refetchWalkIns();
+                }}
+                className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${bookingsLoading || walkInsLoading ? 'animate-spin' : ''}`} />
+                Refresh Data
+              </button>
+              <button
+                onClick={() => setShowWalkInForm(true)}
+                className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Walk-in Customer
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6 lg:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-blue-100 font-semibold mb-2">Total Customers</p>
+                    <p className="text-3xl font-bold">{salonCustomersSummary.totalCustomers}</p>
+                  </div>
+                  <Users className="h-8 w-8 text-blue-100 opacity-70" />
+                </div>
+                <p className="text-xs text-blue-100 mt-4">Unique clients from bookings and walk-ins</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-emerald-100 font-semibold mb-2">Served Customers</p>
+                    <p className="text-3xl font-bold">{salonCustomersSummary.servedCount}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-emerald-100 opacity-70" />
+                </div>
+                <p className="text-xs text-emerald-100 mt-4">Completed services across your salon</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-amber-100 font-semibold mb-2">Awaiting Service</p>
+                    <p className="text-3xl font-bold">{salonCustomersSummary.awaitingCount}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-amber-100 opacity-70" />
+                </div>
+                <p className="text-xs text-amber-100 mt-4">Customers pending confirmation or completion</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-6 text-white shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-purple-100 font-semibold mb-2">Total Revenue</p>
+                    <p className="text-3xl font-bold">{formatCurrency(salonCustomersSummary.totalRevenue)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-purple-100 opacity-70" />
+                </div>
+                <p className="text-xs text-purple-100 mt-4">Revenue from completed bookings and walk-ins</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <StaffCustomerList showSalonView />
+
+      </div>
+    );
+  }
 
   // Enhanced Team Management Tab Content
   function renderBarbers() {
@@ -2926,9 +3387,11 @@ const DashboardOwner: React.FC = () => {
       <div className="min-h-[400px]">
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'bookings' && renderBookings()}
+        {activeTab === 'customers' && renderCustomers()}
         {activeTab === 'barbers' && renderBarbers()}
         {activeTab === 'services' && renderServices()}
         {activeTab === 'leaderboard' && renderLeaderboard()}
+        {activeTab === 'earnings' && renderEarnings()}
         {activeTab === 'notifications' && renderNotifications()}
         {activeTab === 'analytics' && renderAnalytics()}
         {activeTab === 'settings' && renderSettings()}
@@ -2988,11 +3451,24 @@ const DashboardOwner: React.FC = () => {
                     
                     <div className="flex-1">
                       <h4 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">{earning.staff.name}</h4>
-                      <p className="text-sm text-slate-600">{earning.staff.staffCategory}</p>
+                      <p className="text-sm text-slate-600 capitalize">{earning.staff.staffCategory}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3.5 w-3.5" />
+                          <span>{earning.customerCount} customers</span>
+                        </div>
+                        {earning.topService && (
+                          <div className="flex items-center gap-1">
+                            <Award className="h-3.5 w-3.5" />
+                            <span>{earning.topService.name}</span>
+                            <span>• {earning.topService.count}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="text-right">
-                      <p className="text-lg font-bold text-blue-600">${earning.totalEarnings.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-blue-600">{formatCurrency(earning.totalEarnings)}</p>
                       <p className="text-xs text-slate-500">{earning.bookingCount} bookings</p>
                     </div>
                   </div>
@@ -3000,6 +3476,187 @@ const DashboardOwner: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderEarnings() {
+    const periodLabel = earningsPeriodLabels[earningsPeriod];
+    const topBarbers = staffEarnings.slice(0, 3);
+    const leadBarber = topBarbers[0];
+    const topServicesByRevenue = Array.from(earningsSummary.serviceRevenue.entries())
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .slice(0, 4);
+
+    const breakdownParts: string[] = [];
+    if (earningsSummary.totalCount > 0) breakdownParts.push(`${earningsSummary.totalCount} services`);
+    if (earningsSummary.bookingCount > 0) breakdownParts.push(`${earningsSummary.bookingCount} bookings`);
+    if (earningsSummary.walkInCount > 0) breakdownParts.push(`${earningsSummary.walkInCount} walk-ins`);
+    const breakdownText = breakdownParts.join(' • ');
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <TrendingUpIcon className="h-5 w-5 text-blue-600" />
+            <span>Viewing {periodLabel} earnings</span>
+          </div>
+          <div className="flex items-center gap-1 bg-white/80 border border-slate-200/80 rounded-full p-1">
+            {earningsPeriodOptions.map(option => (
+              <button
+                key={option.value}
+                onClick={() => setEarningsPeriod(option.value)}
+                className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-colors ${
+                  earningsPeriod === option.value ? 'bg-blue-600 text-white shadow' : 'text-slate-600 hover:text-blue-600'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100/60 rounded-xl border border-blue-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-semibold mb-2">Total Earnings</p>
+                <p className="text-3xl font-bold text-slate-900">{formatCurrency(earningsSummary.totalRevenue)}</p>
+                <p className="text-xs text-blue-600 mt-2">
+                  {breakdownText || `No ${periodLabel.toLowerCase()} services yet`}
+                </p>
+              </div>
+              <TrendingUpIcon className="h-8 w-8 text-blue-600 opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 rounded-xl border border-emerald-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-emerald-600 font-semibold mb-2">Completed Services</p>
+                <p className="text-3xl font-bold text-slate-900">{earningsSummary.totalCount}</p>
+                <p className="text-xs text-emerald-600 mt-2">
+                  Across {staffEarnings.length} barbers{earningsSummary.walkInCount > 0 ? ` • ${earningsSummary.walkInCount} walk-ins` : ''}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-emerald-600 opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100/60 rounded-xl border border-purple-200/60 p-6 shadow-md">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-purple-600 font-semibold mb-2">Unique Customers</p>
+                <p className="text-3xl font-bold text-slate-900">{earningsSummary.totalCustomers}</p>
+                <p className="text-xs text-purple-600 mt-2">Total clients served</p>
+              </div>
+              <UserIcon className="h-8 w-8 text-purple-600 opacity-30" />
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100/60 rounded-xl border border-amber-200/60 p-6 shadow-md">
+            {leadBarber ? (
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-sm text-amber-600 font-semibold mb-2">Top Barber</p>
+                  <p className="text-lg font-bold text-slate-900">{leadBarber.staff.name}</p>
+                  <p className="text-xs text-amber-600 mt-2">{leadBarber.bookingCount} services • {formatCurrency(leadBarber.totalEarnings)}</p>
+                  {leadBarber.topService && (
+                    <p className="text-xs text-slate-500 mt-1">Best service: {leadBarber.topService.name}</p>
+                  )}
+                </div>
+                <Trophy className="h-10 w-10 text-amber-500" />
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-amber-600 font-semibold mb-2">Top Barber</p>
+                <p className="text-sm text-slate-600">Complete services to see rankings</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg">
+            <div className="px-6 py-6 border-b border-slate-200/60 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900">Barber Earnings Overview</h3>
+              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Live</span>
+            </div>
+            {staffEarnings.length === 0 ? (
+              <div className="p-8 text-center text-sm text-slate-500">No completed services yet</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50/60">
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Rank</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Barber</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Services</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Customers</th>
+                      <th className="text-right py-3 px-4 font-semibold text-slate-900">Total</th>
+                      <th className="text-right py-3 px-4 font-semibold text-slate-900">Avg / Service</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Top Service</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Last Activity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {staffEarnings.map((earning: any, index: number) => {
+                      const avgValue = earning.bookingCount ? earning.totalEarnings / earning.bookingCount : 0;
+                      return (
+                        <tr key={earning.staff._id} className="border-b border-slate-100 hover:bg-slate-50/80">
+                          <td className="py-3 px-4 font-semibold text-slate-700">#{index + 1}</td>
+                          <td className="py-3 px-4">
+                            <p className="font-semibold text-slate-900">{earning.staff.name}</p>
+                            <p className="text-xs text-slate-500 capitalize">{earning.staff.staffCategory}</p>
+                          </td>
+                          <td className="py-3 px-4 text-center text-slate-700 font-semibold">{earning.bookingCount}</td>
+                          <td className="py-3 px-4 text-center text-slate-700">{earning.customerCount}</td>
+                          <td className="py-3 px-4 text-right font-semibold text-slate-900">{formatCurrency(earning.totalEarnings)}</td>
+                          <td className="py-3 px-4 text-right text-slate-700">{formatCurrency(avgValue)}</td>
+                          <td className="py-3 px-4 text-slate-700">
+                            {earning.topService ? (
+                              <div>
+                                <p className="font-semibold text-slate-900">{earning.topService.name}</p>
+                                <p className="text-xs text-slate-500">{earning.topService.count} services</p>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-500">No data</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-center text-slate-700">
+                            {earning.lastBookingAt ? new Date(earning.lastBookingAt).toLocaleDateString() : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-gradient-to-br from-white via-white to-purple-50/60 rounded-2xl border border-purple-200/60 shadow-lg p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-purple-600" />
+              Top Services by Revenue
+            </h3>
+            {topServicesByRevenue.length === 0 ? (
+              <p className="text-sm text-slate-500">No completed services yet</p>
+            ) : (
+              <div className="space-y-3">
+                {topServicesByRevenue.map(([name, stats], index) => (
+                  <div key={name} className="flex items-center justify-between p-3 rounded-xl bg-white/80 border border-slate-200/60">
+                    <div>
+                      <p className="font-semibold text-slate-900">{index + 1}. {name}</p>
+                      <p className="text-xs text-slate-500">{stats.count} services</p>
+                    </div>
+                    <span className="text-sm font-bold text-purple-600">{formatCurrency(stats.revenue)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -3127,7 +3784,18 @@ const DashboardOwner: React.FC = () => {
     const pendingBookings = allBookings.filter((b: any) => b.status === 'pending');
     const cancelledBookings = allBookings.filter((b: any) => b.status === 'cancelled');
     
-    const totalRevenue = completedBookings.reduce((sum: number, b: any) => sum + (b.amountTotal || 0), 0);
+    const totalRevenue = completedBookings.reduce((sum: number, booking: any) => {
+      const amount = Number(
+        booking.amountTotal ??
+        booking.totalAmount ??
+        booking.paymentAmount ??
+        booking.transactionAmount ??
+        booking.payment?.amount ??
+        booking.service?.price ??
+        0
+      );
+      return sum + amount;
+    }, 0);
     const avgBookingValue = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
     
     const serviceBookingCounts = new Map();
@@ -3149,7 +3817,7 @@ const DashboardOwner: React.FC = () => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-blue-600 font-semibold mb-2">Total Revenue</p>
-                <p className="text-3xl font-bold text-slate-900">${totalRevenue.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
                 <p className="text-xs text-blue-600 mt-2">From {completedBookings.length} completed bookings</p>
               </div>
               <DollarSign className="h-8 w-8 text-blue-600 opacity-30" />
@@ -3161,7 +3829,7 @@ const DashboardOwner: React.FC = () => {
               <div>
                 <p className="text-sm text-emerald-600 font-semibold mb-2">Completed</p>
                 <p className="text-3xl font-bold text-slate-900">{completedBookings.length}</p>
-                <p className="text-xs text-emerald-600 mt-2">Avg: ${avgBookingValue.toFixed(2)}</p>
+                <p className="text-xs text-emerald-600 mt-2">Avg: {formatCurrency(avgBookingValue)}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-emerald-600 opacity-30" />
             </div>
@@ -3275,7 +3943,15 @@ const DashboardOwner: React.FC = () => {
                     <td className="py-3 px-4 text-slate-700">{booking.client?.name || 'Unknown'}</td>
                     <td className="py-3 px-4 text-slate-700">{booking.service?.title || booking.service?.name || 'Unknown'}</td>
                     <td className="py-3 px-4 text-slate-700">{new Date(booking.createdAt).toLocaleDateString()}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-slate-900">${(booking.amountTotal || 0).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-slate-900">{formatCurrency(
+                      booking.amountTotal ??
+                      booking.totalAmount ??
+                      booking.paymentAmount ??
+                      booking.transactionAmount ??
+                      booking.payment?.amount ??
+                      booking.service?.price ??
+                      0
+                    )}</td>
                     <td className="py-3 px-4 text-center">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(booking.status)}`}>
                         {booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}

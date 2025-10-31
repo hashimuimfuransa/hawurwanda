@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { staffEarningsService } from '../services/api';
+import { bookingService, staffEarningsService, walkInCustomerService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
 import { 
@@ -39,8 +39,46 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
     enabled: !!targetStaffId,
   });
 
+  const { data: allBookingsData } = useQuery({
+    queryKey: ['staff-bookings-all', targetStaffId],
+    queryFn: () => bookingService.getBookings({}),
+    enabled: !!targetStaffId,
+  });
+
+  const { data: allWalkInsData } = useQuery({
+    queryKey: ['walk-in-customers-all', targetStaffId],
+    queryFn: () => walkInCustomerService.getWalkIns({}),
+    enabled: !!targetStaffId,
+  });
+
   const summary = earningsData?.data?.summary;
   const earnings = earningsData?.data?.earnings || [];
+
+  const allBookings = useMemo(() => allBookingsData?.data?.data?.bookings || [], [allBookingsData]);
+  const allWalkIns = useMemo(() => allWalkInsData?.data?.walkInCustomers || [], [allWalkInsData]);
+
+  const completedBookings = useMemo(() => allBookings.filter((booking: any) => booking.status === 'completed'), [allBookings]);
+  const completedWalkIns = useMemo(() => allWalkIns.filter((walkIn: any) => walkIn.status === 'completed' || walkIn.paymentStatus === 'paid'), [allWalkIns]);
+
+  const totalCompletedServices = useMemo(() => completedBookings.length + completedWalkIns.length, [completedBookings, completedWalkIns]);
+  const totalEarningsFromCompleted = useMemo(() => {
+    const bookingEarnings = completedBookings.reduce((sum: number, booking: any) => sum + (booking.amountTotal || 0), 0);
+    const walkInEarnings = completedWalkIns.reduce((sum: number, walkIn: any) => sum + (walkIn.amount || 0), 0);
+    return bookingEarnings + walkInEarnings;
+  }, [completedBookings, completedWalkIns]);
+  const completedCustomers = useMemo(() => {
+    const customerSet = new Set<string>();
+    completedBookings.forEach((booking: any) => {
+      if (booking.clientId?._id) customerSet.add(booking.clientId._id);
+      else if (booking.clientId) customerSet.add(booking.clientId);
+    });
+    completedWalkIns.forEach((walkIn: any) => {
+      if (walkIn.clientPhone) customerSet.add(walkIn.clientPhone);
+      else if (walkIn.clientEmail) customerSet.add(walkIn.clientEmail);
+      else customerSet.add(`${walkIn.clientName}-${walkIn._id}`);
+    });
+    return customerSet.size;
+  }, [completedBookings, completedWalkIns]);
 
   if (isLoading) {
     return (
@@ -107,7 +145,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
       {summary ? (
         <div className="space-y-6">
           {/* Main Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
             <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="relative">
@@ -150,28 +188,28 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
               </div>
             </div>
 
-            <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="group relative overflow-hidden bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
-                    <Calendar className="h-6 w-6 text-white" />
+                    <CheckCircle className="h-6 w-6 text-white" />
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-1 text-purple-100 text-sm">
+                    <div className="flex items-center gap-1 text-green-100 text-sm">
                       <ArrowUpRight className="h-3 w-3" />
                       <span>+15%</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <p className="text-purple-100 text-sm font-medium mb-1">Total Bookings</p>
-                  <p className="text-2xl font-bold">{summary.totalBookings}</p>
+                  <p className="text-green-100 text-sm font-medium mb-1">Completed Services</p>
+                  <p className="text-2xl font-bold">{totalCompletedServices}</p>
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+            <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
@@ -179,33 +217,67 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                     <Users className="h-6 w-6 text-white" />
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center gap-1 text-orange-100 text-sm">
+                    <div className="flex items-center gap-1 text-purple-100 text-sm">
                       <ArrowUpRight className="h-3 w-3" />
-                      <span>+5%</span>
+                      <span>+10%</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <p className="text-orange-100 text-sm font-medium mb-1">Walk-ins</p>
-                  <p className="text-2xl font-bold">{summary.totalWalkIns}</p>
+                  <p className="text-purple-100 text-sm font-medium mb-1">Total Customers</p>
+                  <p className="text-2xl font-bold">{completedCustomers}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 bg-white/20 rounded-xl backdrop-blur-sm">
+                    <TrendingUp className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-indigo-100 text-sm">
+                      <ArrowUpRight className="h-3 w-3" />
+                      <span>+12%</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-indigo-100 text-sm font-medium mb-1">Earnings from Completed</p>
+                  <p className="text-2xl font-bold">{totalEarningsFromCompleted.toLocaleString()} RWF</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Additional Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 lg:gap-6">
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-lg">
-                  <Clock className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg">
+                  <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Average Daily</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Completed Bookings</h3>
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-                {summary.averageDailyEarnings.toLocaleString()} RWF
+                {completedBookings.length}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Per day</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">All time</p>
+            </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 rounded-lg">
+                  <Users className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Completed Walk-ins</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                {completedWalkIns.length}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">All time</p>
             </div>
 
             <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
@@ -219,7 +291,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                 {summary.paymentMethodBreakdown.cash.toLocaleString()} RWF
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {summary.paymentMethodBreakdown.cash > 0 
+                {summary.paymentMethodBreakdown.cash > 0
                   ? `${Math.round((summary.paymentMethodBreakdown.cash / (summary.paymentMethodBreakdown.cash + summary.paymentMethodBreakdown.airtel)) * 100)}% of total`
                   : '0% of total'
                 }
@@ -237,7 +309,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                 {summary.paymentMethodBreakdown.airtel.toLocaleString()} RWF
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {summary.paymentMethodBreakdown.airtel > 0 
+                {summary.paymentMethodBreakdown.airtel > 0
                   ? `${Math.round((summary.paymentMethodBreakdown.airtel / (summary.paymentMethodBreakdown.cash + summary.paymentMethodBreakdown.airtel)) * 100)}% of total`
                   : '0% of total'
                 }

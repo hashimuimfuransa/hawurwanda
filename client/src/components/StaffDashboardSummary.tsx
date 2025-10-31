@@ -14,53 +14,84 @@ import {
 const StaffDashboardSummary: React.FC = () => {
   const { user } = useAuthStore();
 
-  // Get today's data
-  const today = new Date().toISOString().split('T')[0];
+  const todayKey = new Date().toISOString().split('T')[0];
+  const todayLabel = React.useMemo(() => new Date().toDateString(), []);
 
   const { data: allBookings } = useQuery({
     queryKey: ['staff-bookings-all', user?.id],
-    queryFn: () => bookingService.getBookings({}), // Get all bookings, not just today's
+    queryFn: () => bookingService.getBookings({}),
     enabled: !!user && !!user.id,
   });
 
   const { data: todayBookings } = useQuery({
-    queryKey: ['staff-bookings-today', today, user?.id],
-    queryFn: () => bookingService.getBookings({ 
-      date: today 
+    queryKey: ['staff-bookings-today', todayKey, user?.id],
+    queryFn: () => bookingService.getBookings({
+      date: todayKey
     }),
     enabled: !!user && !!user.id,
   });
 
   const { data: todayWalkIns } = useQuery({
-    queryKey: ['walk-in-customers-today', today, user?.id],
-    queryFn: () => walkInCustomerService.getWalkIns({ date: today }),
+    queryKey: ['walk-in-customers-today', todayKey, user?.id],
+    queryFn: () => walkInCustomerService.getWalkIns({ date: todayKey }),
     enabled: !!user && !!user.id,
   });
 
   const { data: todayEarnings } = useQuery({
-    queryKey: ['staff-earnings-today', today, user?.id],
+    queryKey: ['staff-earnings-today', todayKey, user?.id],
     queryFn: () => staffEarningsService.getEarningsSummary(user?.id!, { period: 'today' }),
     enabled: !!user && !!user.id,
   });
 
+  const startOfToday = React.useMemo(() => {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return start;
+  }, []);
+
+  const endOfToday = React.useMemo(() => {
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    return end;
+  }, []);
+
+  const isWithinToday = React.useCallback((value: any) => {
+    if (!value) return false;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return false;
+    return parsed >= startOfToday && parsed <= endOfToday;
+  }, [startOfToday, endOfToday]);
+
   const allBookingsData = allBookings?.data?.data?.bookings || [];
-  const todayBookingsData = todayBookings?.data?.data?.bookings || [];
+  const todayBookingsData = React.useMemo(() => {
+    const apiBookings = todayBookings?.data?.data?.bookings;
+    if (apiBookings && apiBookings.length > 0) return apiBookings;
+    return allBookingsData.filter((booking: any) => isWithinToday(booking.timeSlot || booking.date));
+  }, [todayBookings, allBookingsData, isWithinToday]);
   const walkIns = todayWalkIns?.data?.walkInCustomers || [];
   const earnings = todayEarnings?.data?.summary;
 
-  // Today's metrics
-  const todayCompletedBookings = todayBookingsData.filter((b: any) => b.status === 'completed');
+  const completedBookingsTotal = React.useMemo(() => {
+    return allBookingsData.filter((booking: any) => booking.status === 'completed');
+  }, [allBookingsData]);
+  const todayCompletedBookings = React.useMemo(() => {
+    return allBookingsData.filter((booking: any) => {
+      if (booking.status !== 'completed') return false;
+      return isWithinToday(booking.completedAt || booking.updatedAt || booking.timeSlot || booking.date);
+    });
+  }, [allBookingsData, isWithinToday]);
   const todayPendingBookings = todayBookingsData.filter((b: any) => b.status === 'pending');
   const todayConfirmedBookings = todayBookingsData.filter((b: any) => b.status === 'confirmed');
-  const completedWalkIns = walkIns.filter((w: any) => w.status === 'completed');
-  const todayRevenue = [...todayCompletedBookings, ...completedWalkIns].reduce((sum: number, item: any) => 
-    sum + (item.amountTotal || item.amount), 0
+  const completedWalkIns = walkIns.filter((w: any) => (w.status === 'completed' || w.paymentStatus === 'paid') && isWithinToday(w.completedAt || w.updatedAt || w.createdAt));
+  const todayRevenue = [...todayCompletedBookings, ...completedWalkIns].reduce((sum: number, item: any) =>
+    sum + (item.amountTotal || item.totalAmount || item.paymentAmount || item.amount || 0), 0
   );
 
   // All-time metrics
   const totalBookings = allBookingsData.length;
   const totalWalkIns = walkIns.length;
   const allConfirmedBookings = allBookingsData.filter((b: any) => b.status === 'confirmed');
+  const totalCompletedServices = completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length;
 
   // Debug logging
   console.log('StaffDashboardSummary - All bookings:', allBookingsData.length);
@@ -86,8 +117,8 @@ const StaffDashboardSummary: React.FC = () => {
           </div>
           <div className="flex items-center gap-1 text-blue-100 text-xs">
             <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Appointments today</span>
-            <span className="sm:hidden">Today</span>
+            <span className="hidden sm:inline">Appointments overall</span>
+            <span className="sm:hidden">All</span>
           </div>
         </div>
 
@@ -99,12 +130,12 @@ const StaffDashboardSummary: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-green-100 text-xs sm:text-sm font-medium">Completed</div>
-              <div className="text-lg sm:text-2xl font-bold">{todayCompletedBookings.length + completedWalkIns.length}</div>
+              <div className="text-lg sm:text-2xl font-bold">{completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-green-100 text-xs">
             <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Services completed today</span>
+            <span className="hidden sm:inline">Services completed</span>
             <span className="sm:hidden">Done</span>
           </div>
         </div>

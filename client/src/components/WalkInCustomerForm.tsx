@@ -39,7 +39,8 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
     onSuccess: () => {
       toast.success('Walk-in customer added successfully!');
       queryClient.invalidateQueries({ queryKey: ['walk-in-customers'] });
-      queryClient.invalidateQueries({ queryKey: ['staff-earnings'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
       onClose();
     },
     onError: (error: any) => {
@@ -55,12 +56,37 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
       return;
     }
 
-    const selectedService = salonData?.data?.services?.find((s: any) => s._id === formData.serviceId);
-    
-    createWalkInMutation.mutate({
-      ...formData,
-      amount: parseFloat(formData.amount),
-    });
+    const normalizedPhone = formData.clientPhone.replace(/\s|-/g, '');
+    const normalizedName = formData.clientName.trim();
+    const amountValue = parseFloat(formData.amount);
+
+    if (!/^((\+250)|250|0)?[0-9]{9}$/.test(normalizedPhone)) {
+      toast.error('Please enter a valid Rwandan phone number');
+      return;
+    }
+
+    if (Number.isNaN(amountValue) || amountValue < 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+
+    const payload: any = {
+      clientName: normalizedName,
+      clientPhone: normalizedPhone,
+      serviceId: formData.serviceId,
+      amount: amountValue,
+      paymentMethod: formData.paymentMethod,
+    };
+
+    if (formData.clientEmail.trim()) {
+      payload.clientEmail = formData.clientEmail.trim();
+    }
+
+    if (formData.notes.trim()) {
+      payload.notes = formData.notes.trim();
+    }
+
+    createWalkInMutation.mutate(payload);
   };
 
   const handleServiceChange = (serviceId: string) => {

@@ -4,7 +4,7 @@ export interface IBooking extends Document {
   _id: Types.ObjectId;
   bookingId: string;
   clientId: Types.ObjectId;
-  barberId: Types.ObjectId;
+  barberId?: Types.ObjectId | null;
   salonId: Types.ObjectId;
   serviceId: Types.ObjectId;
   date: Date;
@@ -33,7 +33,7 @@ const bookingSchema = new Schema<IBooking>({
   barberId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Barber ID is required'],
+    default: null,
   },
   salonId: {
     type: Schema.Types.ObjectId,

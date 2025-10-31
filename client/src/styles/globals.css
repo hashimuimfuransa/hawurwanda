@@ -13,16 +13,18 @@
 
 @layer base {
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 transition-colors duration-200;
+    @apply text-slate-900 transition-colors duration-300 antialiased;
+    background: linear-gradient(140deg, #f9f5ff 0%, #eef6ff 45%, #ecfdf5 100%);
   }
 
   /* Dark mode styles */
   .dark body {
-    @apply bg-gray-900 text-gray-100;
+    @apply text-slate-100;
+    background: linear-gradient(140deg, #050b1a 0%, #0b162f 50%, #101827 100%);
   }
 
   /* Prevent layout shift during theme changes */

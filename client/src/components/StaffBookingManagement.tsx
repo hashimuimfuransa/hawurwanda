@@ -64,9 +64,18 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
   const updateBookingMutation = useMutation({
     mutationFn: ({ bookingId, status, notes }: { bookingId: string; status: string; notes?: string }) => 
       bookingService.updateBookingStatus(bookingId, status, notes),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Booking status updated successfully!');
-      queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings', user?.id, selectedDate, statusFilter, showSalonView], exact: true });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings-all'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings-today'] });
+      await queryClient.invalidateQueries({ queryKey: ['walk-in-customers-all'] });
+      await queryClient.invalidateQueries({ queryKey: ['walk-in-customers-today'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-customer-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-walkin-customers'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update booking status');
@@ -77,9 +86,18 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
   const recordPaymentMutation = useMutation({
     mutationFn: ({ bookingId, amount, method, note }: { bookingId: string; amount: number; method: string; note: string }) => 
       transactionService.recordManualPayment({ bookingId, amount, method, note }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Payment recorded successfully!');
-      queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings', user?.id, selectedDate, statusFilter, showSalonView], exact: true });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings-all'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-bookings-today'] });
+      await queryClient.invalidateQueries({ queryKey: ['walk-in-customers-all'] });
+      await queryClient.invalidateQueries({ queryKey: ['walk-in-customers-today'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-customer-bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-walkin-customers'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      await queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
       setShowPaymentModal(null);
       setPaymentData({ amount: '', method: 'cash', note: '' });
     },
@@ -96,9 +114,21 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
     e.preventDefault();
     if (!showPaymentModal) return;
 
+    // Validate amount
+    const amount = parseFloat(paymentData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid amount greater than 0');
+      return;
+    }
+
+    if (!paymentData.method) {
+      toast.error('Please select a payment method');
+      return;
+    }
+
     recordPaymentMutation.mutate({
       bookingId: showPaymentModal,
-      amount: parseFloat(paymentData.amount),
+      amount,
       method: paymentData.method,
       note: paymentData.note,
     });
@@ -373,59 +403,92 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Record Payment
             </h3>
-            <form onSubmit={handlePaymentSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Amount (RWF)
-                </label>
-                <input
-                  type="number"
-                  value={paymentData.amount}
-                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Payment Method
-                </label>
-                <select
-                  value={paymentData.method}
-                  onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as 'cash' | 'airtel' })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="airtel">Airtel Money</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Notes (Optional)
-                </label>
-                <textarea
-                  value={paymentData.note}
-                  onChange={(e) => setPaymentData({ ...paymentData, note: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  rows={3}
-                />
-              </div>
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowPaymentModal(null)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
-                >
-                  Record Payment
-                </button>
-              </div>
-            </form>
+            {(() => {
+              const booking = bookings.find(b => b._id === showPaymentModal);
+              return (
+                <>
+                  {booking && (
+                    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Booking Details</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{booking.clientId?.name || 'Unknown'}</p>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-gray-600 dark:text-gray-400">Total: </span>
+                          <span className="font-bold text-gray-900 dark:text-white">{booking.amountTotal} RWF</span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600 dark:text-gray-400">Paid: </span>
+                          <span className="font-bold text-green-600 dark:text-green-400">{booking.depositPaid} RWF</span>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-gray-600 dark:text-gray-400">Balance: </span>
+                          <span className="font-bold text-orange-600 dark:text-orange-400">{booking.balanceRemaining} RWF</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Amount (RWF)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="100"
+                        value={paymentData.amount}
+                        onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                        placeholder="Enter amount"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        required
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Remaining balance: {booking?.balanceRemaining} RWF
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Payment Method
+                      </label>
+                      <select
+                        value={paymentData.method}
+                        onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as 'cash' | 'airtel' })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="cash">Cash</option>
+                        <option value="airtel">Airtel Money</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Notes (Optional)
+                      </label>
+                      <textarea
+                        value={paymentData.note}
+                        onChange={(e) => setPaymentData({ ...paymentData, note: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setShowPaymentModal(null)}
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
+                      >
+                        Record Payment
+                      </button>
+                    </div>
+                  </form>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}

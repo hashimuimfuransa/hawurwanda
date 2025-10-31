@@ -4,9 +4,138 @@ import { validateRequest } from '../middlewares/validation';
 import { Transaction } from '../models/Transaction';
 import { Booking } from '../models/Booking';
 import { Notification } from '../models/Notification';
+import StaffEarnings from '../models/StaffEarnings';
+import { User } from '../models/User';
+import WalkInCustomer from '../models/WalkInCustomer';
 import Joi from 'joi';
 
 const router = express.Router();
+
+// Helper function to update staff earnings after payment
+const updateStaffEarningsAfterPayment = async (bookingId: string, transactionDate: Date) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking || !booking.barberId || booking.status !== 'completed') {
+      return;
+    }
+
+    const startOfDay = new Date(transactionDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(transactionDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const staff = await User.findById(booking.barberId);
+    if (!staff) return;
+
+    const completedBookings = await Booking.find({
+      barberId: booking.barberId,
+      status: 'completed',
+      timeSlot: { $gte: startOfDay, $lte: endOfDay },
+    }).populate('serviceId', 'title price');
+
+    const completedWalkIns = await WalkInCustomer.find({
+      barberId: booking.barberId,
+      status: 'completed',
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
+
+    const commissionRate = 0.7;
+    let totalEarnings = 0;
+    let bookingEarnings = 0;
+    let walkInEarnings = 0;
+    const paymentMethodBreakdown = { cash: 0, airtel: 0 };
+    const serviceMap = new Map();
+
+    completedBookings.forEach((book: any) => {
+      const servicePrice = book.serviceId?.price || 0;
+      const earnings = servicePrice * commissionRate;
+      bookingEarnings += earnings;
+      totalEarnings += earnings;
+
+      if (book.paymentMethod === 'cash') {
+        paymentMethodBreakdown.cash += servicePrice;
+      } else {
+        paymentMethodBreakdown.airtel += servicePrice;
+      }
+
+      const serviceId = book.serviceId?._id.toString();
+      const serviceName = book.serviceId?.title || 'Unknown Service';
+      if (serviceMap.has(serviceId)) {
+        const existing = serviceMap.get(serviceId);
+        serviceMap.set(serviceId, {
+          ...existing,
+          count: existing.count + 1,
+          totalAmount: existing.totalAmount + servicePrice,
+          commission: existing.commission + earnings,
+        });
+      } else {
+        serviceMap.set(serviceId, {
+          serviceId: book.serviceId?._id,
+          serviceName,
+          count: 1,
+          totalAmount: servicePrice,
+          commission: earnings,
+        });
+      }
+    });
+
+    completedWalkIns.forEach((walkIn: any) => {
+      const servicePrice = walkIn.amount || 0;
+      const earnings = servicePrice * commissionRate;
+      walkInEarnings += earnings;
+      totalEarnings += earnings;
+
+      if (walkIn.paymentMethod === 'cash') {
+        paymentMethodBreakdown.cash += servicePrice;
+      } else {
+        paymentMethodBreakdown.airtel += servicePrice;
+      }
+
+      const serviceId = walkIn.serviceId?.toString();
+      const serviceName = walkIn.serviceName || 'Walk-in Service';
+      if (serviceMap.has(serviceId)) {
+        const existing = serviceMap.get(serviceId);
+        serviceMap.set(serviceId, {
+          ...existing,
+          count: existing.count + 1,
+          totalAmount: existing.totalAmount + servicePrice,
+          commission: existing.commission + earnings,
+        });
+      } else {
+        serviceMap.set(serviceId, {
+          serviceId: walkIn.serviceId,
+          serviceName,
+          count: 1,
+          totalAmount: servicePrice,
+          commission: earnings,
+        });
+      }
+    });
+
+    const services = Array.from(serviceMap.values());
+
+    await StaffEarnings.findOneAndUpdate(
+      { staffId: booking.barberId, date: startOfDay },
+      {
+        staffId: booking.barberId,
+        salonId: booking.salonId,
+        date: startOfDay,
+        totalEarnings,
+        commissionRate,
+        commissionAmount: totalEarnings,
+        bookingEarnings,
+        walkInEarnings,
+        totalBookings: completedBookings.length,
+        totalWalkIns: completedWalkIns.length,
+        paymentMethodBreakdown,
+        services,
+      },
+      { upsert: true, new: true }
+    );
+  } catch (error) {
+    console.error('Update staff earnings error:', error);
+  }
+};
 
 // Validation schemas
 const confirmAirtelSchema = Joi.object({
@@ -61,6 +190,15 @@ router.post('/airtel/confirm', validateRequest(confirmAirtelSchema), async (req,
         });
 
         await notification.save();
+
+        // Update staff earnings if booking is completed
+        if (booking.status === 'completed') {
+          try {
+            await updateStaffEarningsAfterPayment(booking._id.toString(), new Date());
+          } catch (earningError) {
+            console.error('Failed to update staff earnings:', earningError);
+          }
+        }
       }
     }
 
@@ -83,8 +221,8 @@ router.post('/manual', authenticateToken, validateRequest(manualPaymentSchema), 
 
     // Check if user has permission to record payment
     const canRecordPayment = 
-      booking.barberId.toString() === req.user!._id.toString() ||
-      booking.salonId.toString() === req.user!.salonId?.toString() ||
+      (booking.barberId && booking.barberId.toString() === req.user!._id.toString()) ||
+      (booking.salonId && booking.salonId.toString() === req.user!.salonId?.toString()) ||
       req.user!.role === 'admin' ||
       req.user!.role === 'superadmin';
 
@@ -93,7 +231,9 @@ router.post('/manual', authenticateToken, validateRequest(manualPaymentSchema), 
     }
 
     // Create transaction
+    const transactionId = `TXN${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     const transaction = new Transaction({
+      transactionId,
       bookingId,
       barberId: booking.barberId,
       salonId: booking.salonId,
@@ -125,6 +265,15 @@ router.post('/manual', authenticateToken, validateRequest(manualPaymentSchema), 
     });
 
     await notification.save();
+
+    // Update staff earnings if booking is completed
+    if (booking.status === 'completed') {
+      try {
+        await updateStaffEarningsAfterPayment(bookingId, new Date());
+      } catch (earningError) {
+        console.error('Failed to update staff earnings:', earningError);
+      }
+    }
 
     res.json({
       message: 'Payment recorded successfully',
@@ -222,7 +371,7 @@ router.get('/booking/:bookingId/summary', authenticateToken, async (req: AuthReq
     // Check if user has access to this booking
     const hasAccess = 
       booking.clientId.toString() === req.user!._id.toString() ||
-      booking.barberId.toString() === req.user!._id.toString() ||
+      (booking.barberId && booking.barberId.toString() === req.user!._id.toString()) ||
       booking.salonId.toString() === req.user!.salonId?.toString() ||
       req.user!.role === 'admin' ||
       req.user!.role === 'superadmin';

@@ -56,6 +56,8 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
     onSuccess: () => {
       toast.success('Walk-in customer updated successfully!');
       queryClient.invalidateQueries({ queryKey: ['walk-in-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update walk-in customer');
@@ -68,6 +70,8 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
     onSuccess: () => {
       toast.success('Walk-in customer deleted successfully!');
       queryClient.invalidateQueries({ queryKey: ['walk-in-customers'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete walk-in customer');

@@ -80,7 +80,8 @@ const DashboardStaff: React.FC = () => {
     onSuccess: () => {
       toast.success('Booking status updated!');
       queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['staff-earnings'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update booking');

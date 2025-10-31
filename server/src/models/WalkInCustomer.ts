@@ -103,8 +103,8 @@ walkInCustomerSchema.index({ barberId: 1 });
 walkInCustomerSchema.index({ salonId: 1 });
 walkInCustomerSchema.index({ createdAt: -1 });
 
-// Generate walk-in ID before saving
-walkInCustomerSchema.pre('save', async function(next) {
+// Generate walk-in ID before validation so required rule passes
+walkInCustomerSchema.pre('validate', async function(next) {
   if (!this.walkInId) {
     const count = await mongoose.model('WalkInCustomer').countDocuments();
     this.walkInId = `WI${String(count + 1).padStart(6, '0')}`;
