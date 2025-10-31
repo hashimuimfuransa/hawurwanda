@@ -90,6 +90,11 @@ function App() {
               <DashboardStaff />
             </AuthGuard>
           } />
+          <Route path="/dashboard/staff/digital-card" element={
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+              <DashboardStaff />
+            </AuthGuard>
+          } />
           <Route path="/dashboard/staff/notifications" element={
             <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
               <DashboardStaff />

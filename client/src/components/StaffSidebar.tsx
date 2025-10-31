@@ -10,7 +10,8 @@ import {
   Bell, 
   Settings,
   LogOut,
-  Home
+  Home,
+  QrCode
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
@@ -31,6 +32,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
     { name: 'Walk-ins', href: '/dashboard/staff/walkins', icon: UserPlus, current: location.pathname === '/dashboard/staff/walkins' },
     { name: 'Earnings', href: '/dashboard/staff/earnings', icon: BarChart3, current: location.pathname === '/dashboard/staff/earnings' },
     { name: 'Schedule', href: '/dashboard/staff/schedule', icon: Clock, current: location.pathname === '/dashboard/staff/schedule' },
+    { name: 'Digital Card', href: '/dashboard/staff/digital-card', icon: QrCode, current: location.pathname === '/dashboard/staff/digital-card' },
     { name: 'Notifications', href: '/dashboard/staff/notifications', icon: Bell, current: location.pathname === '/dashboard/staff/notifications' },
     { name: 'Settings', href: '/dashboard/staff/settings', icon: Settings, current: location.pathname === '/dashboard/staff/settings' },
   ];

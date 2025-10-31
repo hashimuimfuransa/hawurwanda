@@ -26,7 +26,9 @@ import {
   BarChart3,
   UserPlus,
   ClipboardList,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -36,6 +38,9 @@ const DashboardStaff: React.FC = () => {
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showWalkInForm, setShowWalkInForm] = useState(false);
+  const [staffQrDownloading, setStaffQrDownloading] = useState(false);
+  const staffFrontCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const staffBackCanvasRef = React.useRef<HTMLCanvasElement>(null);
 
   // Get staff's bookings (including pending ones)
   const { data: bookings, isLoading: bookingsLoading, error: bookingsError } = useQuery({
@@ -58,6 +63,330 @@ const DashboardStaff: React.FC = () => {
     queryFn: () => salonService.getSalon(user!.salonId),
     enabled: !!user && !!user.salonId,
   });
+
+  const salonData = React.useMemo(() => salon?.data?.salon || salon?.data, [salon]);
+
+  const staffProfileUrl = React.useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const origin = window.location.origin;
+    if (user?._id) return `${origin}/staff/${user._id}`;
+    return origin;
+  }, [user?._id]);
+
+  const staffQrUrl = React.useMemo(() => {
+    if (!staffProfileUrl) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(staffProfileUrl)}`;
+  }, [staffProfileUrl]);
+
+  const downloadQrImage = React.useCallback(async (url: string, filename: string, setLoading: (value: boolean) => void) => {
+    try {
+      setLoading(true);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('REQUEST_FAILED');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('QR code downloaded');
+    } catch (_error) {
+      toast.error('Unable to download QR code');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadImage = React.useCallback((src: string) => {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      if (!src) {
+        reject(new Error('EMPTY'));
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('LOAD_ERROR'));
+      img.src = src;
+    });
+  }, []);
+
+  const getImage = React.useCallback(async (src?: string | null) => {
+    if (!src) return null;
+    try {
+      return await loadImage(src);
+    } catch (_error) {
+      return null;
+    }
+  }, [loadImage]);
+
+  const drawWrappedText = React.useCallback(
+    (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+      if (!text) return;
+      const words = text.split(' ');
+      let line = '';
+      let currentY = y;
+      words.forEach((word, index) => {
+        const testLine = line ? `${line} ${word}` : word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line) {
+          ctx.fillText(line, x, currentY, maxWidth);
+          line = word;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+        if (index === words.length - 1) {
+          ctx.fillText(line, x, currentY, maxWidth);
+        }
+      });
+    },
+    []
+  );
+
+  const drawRoundedRect = React.useCallback(
+    (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    },
+    []
+  );
+
+  const handleDownloadCanvas = React.useCallback((canvas: HTMLCanvasElement | null, filename: string) => {
+    if (!canvas) return;
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Card downloaded');
+    } catch (_error) {
+      toast.error('Unable to download card');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    let raf: number | null = null;
+
+    const draw = async () => {
+      const frontCanvas = staffFrontCanvasRef.current;
+      const backCanvas = staffBackCanvasRef.current;
+      if (!frontCanvas || !backCanvas) {
+        raf = window.requestAnimationFrame(draw);
+        return;
+      }
+      const width = 460;
+      const height = 300;
+      const ratio = window.devicePixelRatio || 1;
+      const frontCtx = frontCanvas.getContext('2d');
+      const backCtx = backCanvas.getContext('2d');
+      if (!frontCtx || !backCtx) return;
+      const [profileImage, salonLogo, qrImage] = await Promise.all([
+        getImage(user?.profilePhoto),
+        getImage(salonData?.logo),
+        getImage(staffQrUrl),
+      ]);
+      if (cancelled) return;
+      const shortUrl = staffProfileUrl ? staffProfileUrl.replace(/^https?:\/\//, '') : '';
+
+      frontCanvas.width = width * ratio;
+      frontCanvas.height = height * ratio;
+      frontCanvas.style.width = `${width}px`;
+      frontCanvas.style.height = `${height}px`;
+      frontCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      frontCtx.clearRect(0, 0, width, height);
+
+      const frontGradient = frontCtx.createLinearGradient(0, 0, width, height);
+      frontGradient.addColorStop(0, '#020617');
+      frontGradient.addColorStop(0.55, '#1d4ed8');
+      frontGradient.addColorStop(1, '#7c3aed');
+      frontCtx.fillStyle = frontGradient;
+      frontCtx.fillRect(0, 0, width, height);
+
+      frontCtx.fillStyle = 'rgba(255,255,255,0.12)';
+      frontCtx.beginPath();
+      frontCtx.ellipse(width * 0.84, height * 0.24, 150, 90, 0.4, 0, Math.PI * 2);
+      frontCtx.fill();
+      frontCtx.beginPath();
+      frontCtx.ellipse(width * 0.28, height * 0.82, 130, 75, -0.5, 0, Math.PI * 2);
+      frontCtx.fill();
+
+      frontCtx.fillStyle = '#ffffff';
+      frontCtx.textAlign = 'left';
+      frontCtx.textBaseline = 'alphabetic';
+      frontCtx.font = '600 32px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText(user?.name || 'Staff Member', 36, 96, width - 220);
+      frontCtx.font = '500 18px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText(user?.role?.replace(/_/g, ' ').toUpperCase() || 'ROLE', 36, 132, width - 240);
+      frontCtx.fillStyle = 'rgba(226,232,240,0.82)';
+      frontCtx.font = '400 16px "Poppins","Helvetica",sans-serif';
+      drawWrappedText(frontCtx, salonData?.tagline || 'Dedicated to enhancing your signature style.', 36, 170, width - 240, 22);
+
+      const avatarX = width - 132;
+      const avatarY = 112;
+      frontCtx.save();
+      frontCtx.beginPath();
+      frontCtx.arc(avatarX, avatarY, 62, 0, Math.PI * 2);
+      frontCtx.fillStyle = 'rgba(255,255,255,0.24)';
+      frontCtx.fill();
+      frontCtx.restore();
+      frontCtx.save();
+      frontCtx.beginPath();
+      frontCtx.arc(avatarX, avatarY, 54, 0, Math.PI * 2);
+      frontCtx.closePath();
+      frontCtx.clip();
+      if (profileImage) {
+        frontCtx.drawImage(profileImage, avatarX - 54, avatarY - 54, 108, 108);
+      } else {
+        frontCtx.fillStyle = '#1d4ed8';
+        frontCtx.fillRect(avatarX - 54, avatarY - 54, 108, 108);
+        frontCtx.fillStyle = '#ffffff';
+        frontCtx.font = '700 44px "Poppins","Helvetica",sans-serif';
+        frontCtx.textAlign = 'center';
+        frontCtx.textBaseline = 'middle';
+        frontCtx.fillText(user?.name?.charAt(0).toUpperCase() || 'S', avatarX, avatarY);
+        frontCtx.textAlign = 'left';
+        frontCtx.textBaseline = 'alphabetic';
+      }
+      frontCtx.restore();
+
+      frontCtx.fillStyle = 'rgba(15,23,42,0.42)';
+      drawRoundedRect(frontCtx, 36, height - 96, width - 72, 60, 18);
+      frontCtx.fill();
+      frontCtx.fillStyle = '#ffffff';
+      frontCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText('Salon', 56, height - 62, width - 112);
+      frontCtx.font = '500 16px "Poppins","Helvetica",sans-serif';
+      drawWrappedText(frontCtx, salonData?.name || 'Hawu Rwanda Salon', 56, height - 36, width - 112, 22);
+
+      backCanvas.width = width * ratio;
+      backCanvas.height = height * ratio;
+      backCanvas.style.width = `${width}px`;
+      backCanvas.style.height = `${height}px`;
+      backCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      backCtx.clearRect(0, 0, width, height);
+
+      const backGradient = backCtx.createLinearGradient(0, 0, width, height);
+      backGradient.addColorStop(0, '#f9fafb');
+      backGradient.addColorStop(1, '#e8edff');
+      backCtx.fillStyle = backGradient;
+      backCtx.fillRect(0, 0, width, height);
+
+      backCtx.fillStyle = 'rgba(99,102,241,0.12)';
+      backCtx.beginPath();
+      backCtx.ellipse(width * 0.24, height * 0.22, 120, 72, 0.2, 0, Math.PI * 2);
+      backCtx.fill();
+      backCtx.beginPath();
+      backCtx.ellipse(width * 0.78, height * 0.86, 130, 84, -0.45, 0, Math.PI * 2);
+      backCtx.fill();
+
+      const headerHeight = 92;
+      backCtx.fillStyle = '#1f2937';
+      backCtx.font = '700 26px "Poppins","Helvetica",sans-serif';
+      backCtx.textAlign = 'left';
+      backCtx.fillText(user?.name || 'Staff Member', 36, 60, width - 72);
+      backCtx.fillStyle = '#475569';
+      backCtx.font = '500 16px "Poppins","Helvetica",sans-serif';
+      backCtx.fillText(user?.role ? user.role.replace(/_/g, ' ').toUpperCase() : 'ROLE', 36, 88, width - 72);
+
+      if (salonLogo) {
+        const logoSize = 80;
+        backCtx.save();
+        drawRoundedRect(backCtx, width - logoSize - 36, 36, logoSize, logoSize, 18);
+        backCtx.clip();
+        backCtx.drawImage(salonLogo, width - logoSize - 36, 36, logoSize, logoSize);
+        backCtx.restore();
+      } else if (salonData?.name) {
+        backCtx.fillStyle = 'rgba(148,163,184,0.4)';
+        drawRoundedRect(backCtx, width - 140, 36, 104, 60, 16);
+        backCtx.fill();
+        backCtx.fillStyle = '#1f2937';
+        backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
+        backCtx.textAlign = 'center';
+        backCtx.textBaseline = 'middle';
+        backCtx.fillText(salonData.name.slice(0, 12), width - 140 + 52, 66);
+        backCtx.textAlign = 'left';
+        backCtx.textBaseline = 'alphabetic';
+      }
+
+      const qrSize = 160;
+      const qrX = width / 2 - qrSize / 2;
+      const qrY = headerHeight + 28;
+      if (qrImage) {
+        backCtx.save();
+        backCtx.shadowColor = 'rgba(15,23,42,0.22)';
+        backCtx.shadowBlur = 24;
+        backCtx.shadowOffsetY = 12;
+        backCtx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+        backCtx.restore();
+      } else {
+        backCtx.fillStyle = 'rgba(255,255,255,0.7)';
+        backCtx.fillRect(qrX, qrY, qrSize, qrSize);
+        backCtx.strokeStyle = 'rgba(148,163,184,0.8)';
+        backCtx.lineWidth = 2;
+        backCtx.strokeRect(qrX + 6, qrY + 6, qrSize - 12, qrSize - 12);
+        backCtx.fillStyle = 'rgba(51,65,85,0.8)';
+        backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
+        backCtx.textAlign = 'center';
+        backCtx.textBaseline = 'middle';
+        backCtx.fillText('QR unavailable', width / 2, qrY + qrSize / 2);
+        backCtx.textAlign = 'left';
+        backCtx.textBaseline = 'alphabetic';
+      }
+
+      backCtx.textAlign = 'center';
+      backCtx.fillStyle = '#1f2937';
+      backCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
+      backCtx.fillText('Scan to view profile & book appointments', width / 2, qrY + qrSize + 48, width - 72);
+      backCtx.textAlign = 'left';
+
+      let infoY = height - 112;
+      backCtx.fillStyle = '#1f2937';
+      backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
+      if (user.phone) {
+        backCtx.fillText(`Phone: ${user.phone}`, 36, infoY, width - 72);
+        infoY += 26;
+      }
+      if (user.email) {
+        backCtx.fillText(`Email: ${user.email}`, 36, infoY, width - 72);
+        infoY += 26;
+      }
+      if (salonData?.name) {
+        backCtx.fillText(`Salon: ${salonData.name}`, 36, infoY, width - 72);
+        infoY += 26;
+      }
+      if (shortUrl) {
+        backCtx.fillStyle = '#4338ca';
+        backCtx.font = '600 15px "Poppins","Helvetica",sans-serif';
+        backCtx.fillText(shortUrl, 36, infoY, width - 72);
+      }
+    };
+    draw();
+
+    return () => {
+      cancelled = true;
+      if (raf) {
+        window.cancelAnimationFrame(raf);
+      }
+    };
+  }, [drawRoundedRect, drawWrappedText, getImage, salonData?.logo, salonData?.name, salonData?.tagline, staffProfileUrl, staffQrUrl, user?.email, user?.name, user?.phone, user?.profilePhoto, user?.role]);
 
   // Get notifications
   const { data: notificationsData } = useQuery({
@@ -297,6 +626,88 @@ const DashboardStaff: React.FC = () => {
           </div>
         </div>
       )}
+
+    </div>
+  );
+
+  const renderDigitalCard = () => (
+    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 sm:p-6">
+      <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
+        <QrCode className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
+        Digital Profile Card
+      </h2>
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5">
+        <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl text-white p-5 shadow-xl">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center space-x-3">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center overflow-hidden">
+                {user?.profilePhoto ? (
+                  <img src={user.profilePhoto} alt={user.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl font-bold">{user.name?.charAt(0).toUpperCase()}</span>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-blue-200 uppercase tracking-wider">Staff Member</p>
+                <h3 className="text-xl font-bold">{user.name}</h3>
+                <p className="text-xs text-blue-200 capitalize">{user.role?.replace(/_/g, ' ')}</p>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
+              <QrCode className="h-5 w-5 text-white" />
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl p-3 shadow-inner">
+            {staffQrUrl ? (
+              <img src={staffQrUrl} alt="Staff QR" className="w-full rounded-xl bg-white" />
+            ) : (
+              <div className="h-48 flex items-center justify-center text-slate-500">QR unavailable</div>
+            )}
+          </div>
+          <button
+            onClick={() => staffQrUrl && downloadQrImage(staffQrUrl, 'staff-profile-qr.png', setStaffQrDownloading)}
+            disabled={!staffQrUrl || staffQrDownloading}
+            className="mt-5 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+          >
+            {staffQrDownloading ? (
+              <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin mr-3" />
+            ) : (
+              <Download className="h-5 w-5 mr-3" />
+            )}
+            Download QR Code
+          </button>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => handleDownloadCanvas(staffFrontCanvasRef.current, 'staff-card-front.png')}
+              className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 via-sky-500 to-blue-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              <Download className="h-5 w-5 mr-2" />
+              Download Front
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDownloadCanvas(staffBackCanvasRef.current, 'staff-card-back.png')}
+              className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              <Download className="h-5 w-5 mr-2" />
+              Download Back
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-200 dark:border-gray-700 p-5 shadow-inner">
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Card Preview</h4>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
+              <canvas ref={staffFrontCanvasRef} className="w-full h-auto" />
+            </div>
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
+              <canvas ref={staffBackCanvasRef} className="w-full h-auto" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -425,6 +836,7 @@ const DashboardStaff: React.FC = () => {
     if (path.includes('/customers')) return renderCustomers();
     if (path.includes('/earnings')) return renderEarnings();
     if (path.includes('/schedule')) return renderSchedule();
+    if (path.includes('/digital-card')) return renderDigitalCard();
     if (path.includes('/notifications')) return renderNotifications();
     if (path.includes('/settings')) return renderSettings();
     return renderOverview();

@@ -48,7 +48,9 @@ import {
   Medal,
   TrendingUp as TrendingUpIcon,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  QrCode,
+  Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -63,6 +65,9 @@ const DashboardOwner: React.FC = () => {
   const [bookingSort, setBookingSort] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [earningsPeriod, setEarningsPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month');
+  const [ownerQrDownloading, setOwnerQrDownloading] = useState(false);
+  const ownerFrontCanvasRef = React.useRef<HTMLCanvasElement>(null);
+  const ownerBackCanvasRef = React.useRef<HTMLCanvasElement>(null);
 
   const earningsPeriodOptions: { value: 'day' | 'week' | 'month' | 'year'; label: string }[] = [
     { value: 'day', label: 'Day' },
@@ -165,6 +170,8 @@ const DashboardOwner: React.FC = () => {
       setActiveTab('services');
     } else if (path.includes('/earnings')) {
       setActiveTab('earnings');
+    } else if (path.includes('/digital-card')) {
+      setActiveTab('digital-card');
     } else if (path.includes('/analytics')) {
       setActiveTab('analytics');
     } else {
@@ -176,6 +183,8 @@ const DashboardOwner: React.FC = () => {
   const handleTabChange = (tab: string) => {
     if (tab === 'overview') {
       navigate('/dashboard/owner');
+    } else if (tab === 'digital-card') {
+      navigate('/dashboard/owner/digital-card');
     } else {
       navigate(`/dashboard/owner/${tab}`);
     }
@@ -205,6 +214,483 @@ const DashboardOwner: React.FC = () => {
 
   // Extract salon from response (API returns { salon: {...} })
   const salon = salonResponse?.data?.salon;
+
+  const ownerProfileUrl = React.useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    const origin = window.location.origin;
+    if (salon?._id) return `${origin}/salons/${salon._id}`;
+    if (user?._id) return `${origin}/profile`;
+    return origin;
+  }, [salon?._id, user?._id]);
+
+  const ownerQrUrl = React.useMemo(() => {
+    if (!ownerProfileUrl) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(ownerProfileUrl)}`;
+  }, [ownerProfileUrl]);
+
+  const downloadQrImage = React.useCallback(async (url: string, filename: string, setLoading: (value: boolean) => void) => {
+    try {
+      setLoading(true);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('REQUEST_FAILED');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('QR code downloaded');
+    } catch (_error) {
+      toast.error('Unable to download QR code');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadImage = React.useCallback((src: string) => {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
+      if (!src) {
+        reject(new Error('EMPTY'));
+        return;
+      }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('LOAD_ERROR'));
+      img.src = src;
+    });
+  }, []);
+
+  const getImage = React.useCallback(async (src?: string | null) => {
+    if (!src) return null;
+    try {
+      return await loadImage(src);
+    } catch (_error) {
+      return null;
+    }
+  }, [loadImage]);
+
+  const drawWrappedText = React.useCallback(
+    (ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+      if (!text) return;
+      const words = text.split(' ');
+      let line = '';
+      let currentY = y;
+      words.forEach((word, index) => {
+        const testLine = line ? `${line} ${word}` : word;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line) {
+          ctx.fillText(line, x, currentY, maxWidth);
+          line = word;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+        if (index === words.length - 1) {
+          ctx.fillText(line, x, currentY, maxWidth);
+        }
+      });
+    },
+    []
+  );
+
+  const drawRoundedRect = React.useCallback(
+    (ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) => {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    },
+    []
+  );
+
+  const handleDownloadCanvas = React.useCallback((canvas: HTMLCanvasElement | null, filename: string) => {
+    if (!canvas) return;
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = dataUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Card downloaded');
+    } catch (_error) {
+      toast.error('Unable to download card');
+    }
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    let raf: number | null = null;
+
+    const draw = async () => {
+      const frontCanvas = ownerFrontCanvasRef.current;
+      const backCanvas = ownerBackCanvasRef.current;
+      if (!frontCanvas || !backCanvas) {
+        raf = window.requestAnimationFrame(draw);
+        return;
+      }
+      const width = 480;
+      const height = 320;
+      const ratio = window.devicePixelRatio || 1;
+      const frontCtx = frontCanvas.getContext('2d');
+      const backCtx = backCanvas.getContext('2d');
+      if (!frontCtx || !backCtx) return;
+      const [logoImage, profileImage, qrImage] = await Promise.all([
+        getImage(salon?.logo),
+        getImage(user?.profilePhoto),
+        getImage(ownerQrUrl),
+      ]);
+      if (cancelled) return;
+      const shortUrl = ownerProfileUrl ? ownerProfileUrl.replace(/^https?:\/\//, '') : '';
+      const displayImage = logoImage || profileImage;
+
+      frontCanvas.width = width * ratio;
+      frontCanvas.height = height * ratio;
+      frontCanvas.style.width = `${width}px`;
+      frontCanvas.style.height = `${height}px`;
+      frontCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      frontCtx.clearRect(0, 0, width, height);
+
+      const frontGradient = frontCtx.createLinearGradient(0, 0, width, height);
+      frontGradient.addColorStop(0, '#0f172a');
+      frontGradient.addColorStop(0.45, '#1e3a8a');
+      frontGradient.addColorStop(1, '#7c3aed');
+      frontCtx.fillStyle = frontGradient;
+      frontCtx.fillRect(0, 0, width, height);
+
+      frontCtx.fillStyle = 'rgba(255,255,255,0.14)';
+      frontCtx.beginPath();
+      frontCtx.ellipse(width * 0.82, height * 0.24, 160, 100, 0.5, 0, Math.PI * 2);
+      frontCtx.fill();
+      frontCtx.beginPath();
+      frontCtx.ellipse(width * 0.26, height * 0.84, 140, 80, -0.6, 0, Math.PI * 2);
+      frontCtx.fill();
+      frontCtx.beginPath();
+      drawRoundedRect(frontCtx, 32, 32, width - 64, height - 64, 36);
+      frontCtx.strokeStyle = 'rgba(255,255,255,0.28)';
+      frontCtx.lineWidth = 2;
+      frontCtx.stroke();
+
+      frontCtx.fillStyle = '#ffffff';
+      frontCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
+      frontCtx.textAlign = 'left';
+      frontCtx.textBaseline = 'alphabetic';
+      frontCtx.fillText('Salon Owner', 36, 64, width - 200);
+      frontCtx.font = '700 34px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText(user?.name || 'Salon Owner', 36, 114, width - 220);
+      frontCtx.font = '500 20px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText(salon?.name || 'Salon Name', 36, 156, width - 220);
+      frontCtx.fillStyle = 'rgba(226,232,240,0.9)';
+      frontCtx.font = '400 16px "Poppins","Helvetica",sans-serif';
+      drawWrappedText(frontCtx, salon?.tagline || 'Experience signature beauty crafted for you.', 36, 192, width - 240, 24);
+
+      const logoX = width - 110;
+      const logoY = 104;
+      frontCtx.save();
+      frontCtx.beginPath();
+      frontCtx.arc(logoX, logoY, 62, 0, Math.PI * 2);
+      frontCtx.fillStyle = 'rgba(255,255,255,0.22)';
+      frontCtx.fill();
+      frontCtx.restore();
+      frontCtx.save();
+      frontCtx.beginPath();
+      frontCtx.arc(logoX, logoY, 54, 0, Math.PI * 2);
+      frontCtx.closePath();
+      frontCtx.clip();
+      if (displayImage) {
+        frontCtx.drawImage(displayImage, logoX - 54, logoY - 54, 108, 108);
+      } else {
+        frontCtx.fillStyle = '#1e3a8a';
+        frontCtx.fillRect(logoX - 54, logoY - 54, 108, 108);
+        frontCtx.fillStyle = '#ffffff';
+        frontCtx.font = '700 42px "Poppins","Helvetica",sans-serif';
+        frontCtx.textAlign = 'center';
+        frontCtx.textBaseline = 'middle';
+        frontCtx.fillText(
+          salon?.name?.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || 'S',
+          logoX,
+          logoY
+        );
+        frontCtx.textAlign = 'left';
+        frontCtx.textBaseline = 'alphabetic';
+      }
+      frontCtx.restore();
+
+      frontCtx.save();
+      frontCtx.globalAlpha = 0.32;
+      frontCtx.fillStyle = '#0f172a';
+      const urlHeight = 50;
+      const urlY = height - urlHeight - 36;
+      frontCtx.beginPath();
+      frontCtx.moveTo(36 + 20, urlY);
+      frontCtx.lineTo(width - 36 - 20, urlY);
+      frontCtx.quadraticCurveTo(width - 36, urlY, width - 36, urlY + 20);
+      frontCtx.lineTo(width - 36, urlY + urlHeight);
+      frontCtx.quadraticCurveTo(width - 36, urlY + urlHeight + 20, width - 36 - 20, urlY + urlHeight + 20);
+      frontCtx.lineTo(36 + 20, urlY + urlHeight + 20);
+      frontCtx.quadraticCurveTo(36, urlY + urlHeight + 20, 36, urlY + urlHeight);
+      frontCtx.lineTo(36, urlY + 20);
+      frontCtx.quadraticCurveTo(36, urlY, 36 + 20, urlY);
+      frontCtx.closePath();
+      frontCtx.fill();
+      frontCtx.restore();
+
+      frontCtx.fillStyle = '#ffffff';
+      frontCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
+      frontCtx.fillText('Digital Access', 56, height - 52);
+      frontCtx.font = '500 14px "Poppins","Helvetica",sans-serif';
+      drawWrappedText(frontCtx, shortUrl || 'salonhub.hawu.rw', 56, height - 28, width - 112, 20);
+
+      backCanvas.width = width * ratio;
+      backCanvas.height = height * ratio;
+      backCanvas.style.width = `${width}px`;
+      backCanvas.style.height = `${height}px`;
+      backCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      backCtx.clearRect(0, 0, width, height);
+
+      const backGradient = backCtx.createLinearGradient(0, 0, width, height);
+      backGradient.addColorStop(0, '#f8fafc');
+      backGradient.addColorStop(1, '#e0e7ff');
+      backCtx.fillStyle = backGradient;
+      backCtx.fillRect(0, 0, width, height);
+
+      backCtx.fillStyle = 'rgba(79,70,229,0.08)';
+      backCtx.beginPath();
+      backCtx.ellipse(width * 0.2, height * 0.22, 120, 72, 0, 0, Math.PI * 2);
+      backCtx.fill();
+      backCtx.beginPath();
+      backCtx.ellipse(width * 0.82, height * 0.8, 140, 90, -0.3, 0, Math.PI * 2);
+      backCtx.fill();
+
+      if (displayImage) {
+        backCtx.save();
+        drawRoundedRect(backCtx, width - 132, 32, 100, 100, 20);
+        backCtx.clip();
+        backCtx.drawImage(displayImage, width - 132, 32, 100, 100);
+        backCtx.restore();
+      }
+
+      backCtx.fillStyle = '#0f172a';
+      backCtx.font = '700 26px "Poppins","Helvetica",sans-serif';
+      backCtx.textAlign = 'left';
+      backCtx.textBaseline = 'alphabetic';
+      backCtx.fillText(salon?.name || 'Salon Name', 36, 68, width - 72);
+      backCtx.font = '500 18px "Poppins","Helvetica",sans-serif';
+      backCtx.fillStyle = '#1f2937';
+      backCtx.fillText(user?.name || 'Salon Owner', 36, 102, width - 72);
+      backCtx.fillStyle = '#475569';
+      backCtx.font = '500 14px "Poppins","Helvetica",sans-serif';
+      backCtx.fillText('Owner & Lead Stylist', 36, 126, width - 72);
+
+      if (qrImage) {
+        const qrSize = 170;
+        const qrX = width / 2 - qrSize / 2;
+        const qrY = 136;
+        backCtx.save();
+        backCtx.shadowColor = 'rgba(15,23,42,0.18)';
+        backCtx.shadowBlur = 26;
+        backCtx.shadowOffsetY = 12;
+        backCtx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+        backCtx.restore();
+      } else {
+        const qrSize = 170;
+        const qrX = width / 2 - qrSize / 2;
+        const qrY = 136;
+        backCtx.fillStyle = 'rgba(255,255,255,0.7)';
+        backCtx.fillRect(qrX, qrY, qrSize, qrSize);
+        backCtx.strokeStyle = 'rgba(148,163,184,0.8)';
+        backCtx.lineWidth = 2;
+        backCtx.strokeRect(qrX + 6, qrY + 6, qrSize - 12, qrSize - 12);
+        backCtx.fillStyle = 'rgba(51,65,85,0.8)';
+        backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
+        backCtx.textAlign = 'center';
+        backCtx.textBaseline = 'middle';
+        backCtx.fillText('QR unavailable', width / 2, qrY + qrSize / 2);
+        backCtx.textAlign = 'left';
+        backCtx.textBaseline = 'alphabetic';
+      }
+
+      backCtx.textAlign = 'center';
+      backCtx.fillStyle = '#1f2937';
+      backCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
+      backCtx.fillText('Scan for quick bookings', width / 2, 120);
+      backCtx.textAlign = 'left';
+
+      let contactY = height - 112;
+      backCtx.fillStyle = '#1f2937';
+      backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
+      if (salon?.phone) {
+        backCtx.fillText(`Phone: ${salon.phone}`, 36, contactY, width - 72);
+        contactY += 26;
+      }
+      if (salon?.email) {
+        backCtx.fillText(`Email: ${salon.email}`, 36, contactY, width - 72);
+        contactY += 26;
+      }
+      if (salon?.address) {
+        backCtx.fillText(`Address: ${salon.address}`, 36, contactY, width - 72);
+        contactY += 26;
+      }
+      if (shortUrl) {
+        backCtx.fillStyle = '#4338ca';
+        backCtx.font = '600 15px "Poppins","Helvetica",sans-serif';
+        backCtx.fillText(shortUrl, 36, contactY, width - 72);
+      }
+    };
+    draw();
+
+    return () => {
+      cancelled = true;
+      if (raf) {
+        window.cancelAnimationFrame(raf);
+      }
+    };
+  }, [getImage, drawRoundedRect, drawWrappedText, ownerProfileUrl, ownerQrUrl, salon?.address, salon?.email, salon?.logo, salon?.name, salon?.phone, salon?.tagline, user?.name, user?.profilePhoto]);
+
+  const renderDigitalCard = () => {
+    if (!salon && !user) {
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200/60 shadow-lg p-6 text-center">
+          <p className="text-slate-600">Complete your profile to generate a digital card.</p>
+        </div>
+      );
+    }
+
+    const ownerAvatar = user?.profilePhoto || salon?.logo || '';
+    const ownerInitial = user?.name?.charAt(0).toUpperCase() || 'S';
+
+    return (
+      <div className="grid grid-cols-1 xl:grid-cols-[400px_1fr] gap-6">
+        <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl text-white p-6 xl:p-8 shadow-2xl">
+          <div className="flex justify-between items-start mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 rounded-2xl bg-white/15 border border-white/30 flex items-center justify-center overflow-hidden">
+                {ownerAvatar ? (
+                  <img src={ownerAvatar} alt="Owner" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl font-bold">{ownerInitial}</span>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-blue-200">Salon Owner</p>
+                <h2 className="text-2xl font-bold mt-1">{user?.name || 'Salon Owner'}</h2>
+              </div>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
+              <QrCode className="h-6 w-6 text-white" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-4 shadow-inner">
+            {ownerQrUrl ? (
+              <img src={ownerQrUrl} alt="Salon QR" className="w-full rounded-xl bg-white" />
+            ) : (
+              <div className="h-64 flex items-center justify-center text-slate-500">QR unavailable</div>
+            )}
+          </div>
+
+          <div className="mt-6 space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-blue-200">Salon</span>
+              <span className="font-semibold">{salon?.name || 'Not set'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-blue-200">Owner</span>
+              <span className="font-semibold">{user?.name || 'Not set'}</span>
+            </div>
+            {salon?.address && (
+              <div className="flex items-center justify-between">
+                <span className="text-blue-200">Address</span>
+                <span className="font-semibold text-right ml-3">{salon.address}</span>
+              </div>
+            )}
+            {salon?.phone && (
+              <div className="flex items-center justify-between">
+                <span className="text-blue-200">Phone</span>
+                <span className="font-semibold">{salon.phone}</span>
+              </div>
+            )}
+            {salon?.email && (
+              <div className="flex items-center justify-between">
+                <span className="text-blue-200">Email</span>
+                <span className="font-semibold text-right ml-3">{salon.email}</span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => ownerQrUrl && downloadQrImage(ownerQrUrl, 'salon-owner-qr.png', setOwnerQrDownloading)}
+            disabled={!ownerQrUrl || ownerQrDownloading}
+            className="mt-6 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-white text-slate-900 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
+          >
+            {ownerQrDownloading ? (
+              <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-900 rounded-full animate-spin mr-3" />
+            ) : (
+              <Download className="h-5 w-5 mr-3" />
+            )}
+            Download QR Code
+          </button>
+        </div>
+
+        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl p-6 xl:p-10">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">Print-friendly Card</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-sm text-slate-500 mb-3">Front</p>
+              <div className="rounded-3xl overflow-hidden shadow-lg">
+                <canvas ref={ownerFrontCanvasRef} className="w-full h-auto" />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDownloadCanvas(ownerFrontCanvasRef.current, 'salon-owner-card-front.png')}
+                className="mt-4 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                <Download className="h-5 w-5 mr-2" />
+                Download Front
+              </button>
+            </div>
+
+            <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
+              <p className="text-sm text-slate-500 mb-3">Back</p>
+              <div className="rounded-3xl overflow-hidden shadow-lg">
+                <canvas ref={ownerBackCanvasRef} className="w-full h-auto" />
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDownloadCanvas(ownerBackCanvasRef.current, 'salon-owner-card-back.png')}
+                className="mt-4 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                <Download className="h-5 w-5 mr-2" />
+                Download Back
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <button
+              onClick={() => window.print()}
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+            >
+              Print Card
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Manual refresh function
   const handleRefreshStatus = async () => {
@@ -1365,6 +1851,7 @@ const DashboardOwner: React.FC = () => {
     { id: 'services', label: 'Services', icon: Package, badge: undefined },
     { id: 'leaderboard', label: 'Leaderboard', icon: Award, badge: undefined },
     { id: 'earnings', label: 'Earnings', icon: DollarSign, badge: undefined },
+    { id: 'digital-card', label: 'Digital Card', icon: QrCode, badge: undefined },
     { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp, badge: undefined },
     { id: 'settings', label: 'Settings', icon: Settings, badge: undefined },
@@ -3394,6 +3881,7 @@ const DashboardOwner: React.FC = () => {
         {activeTab === 'earnings' && renderEarnings()}
         {activeTab === 'notifications' && renderNotifications()}
         {activeTab === 'analytics' && renderAnalytics()}
+        {activeTab === 'digital-card' && renderDigitalCard()}
         {activeTab === 'settings' && renderSettings()}
       </div>
     );
