@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Calendar, Clock, CreditCard, User } from 'lucide-react';
+import { Calendar, Clock, CreditCard, User, ChevronDown } from 'lucide-react';
 import { useTranslationStore } from '../stores/translationStore';
 import toast from 'react-hot-toast';
 
@@ -49,6 +49,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError] = useState<string>('');
   const [bookingError, setBookingError] = useState<string>('');
+  const [showNotes, setShowNotes] = useState(false);
 
   const {
     register,
@@ -352,17 +353,24 @@ const BookingForm: React.FC<BookingFormProps> = ({
             </div>
           )}
 
-          {/* Notes */}
+          {/* Notes - Collapsible */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Additional Notes (Optional)
-            </label>
-            <textarea
-              {...register('notes')}
-              rows={3}
-              className="input"
-              placeholder="Any special requests or notes..."
-            />
+            <button
+              type="button"
+              onClick={() => setShowNotes(!showNotes)}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors"
+            >
+              <span className="text-sm font-medium text-gray-700">Additional Notes (Optional)</span>
+              <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform ${showNotes ? 'rotate-180' : ''}`} />
+            </button>
+            {showNotes && (
+              <textarea
+                {...register('notes')}
+                rows={3}
+                className="input mt-2"
+                placeholder="Any special requests or notes..."
+              />
+            )}
           </div>
 
           {/* Submit Button */}

@@ -17,21 +17,7 @@ interface QuickBookingProps {
 const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
   const [selectedService, setSelectedService] = useState<string>('');
   const [selectedBarber, setSelectedBarber] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedTime, setSelectedTime] = useState<string>('');
   const [showBookingSteps, setShowBookingSteps] = useState<boolean>(false);
-
-  // Get today's date for minimum date
-  const today = new Date().toISOString().split('T')[0];
-  
-  // Generate time slots (9 AM to 6 PM)
-  const timeSlots = [];
-  for (let hour = 9; hour <= 18; hour++) {
-    timeSlots.push(`${hour.toString().padStart(2, '0')}:00`);
-    if (hour < 18) {
-      timeSlots.push(`${hour.toString().padStart(2, '0')}:30`);
-    }
-  }
 
   // Get selected service details
   const selectedServiceDetails = salon.services?.find(service => service._id === selectedService);
@@ -52,8 +38,7 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
   };
 
   const handleQuickBook = () => {
-    if (selectedService && selectedDate && selectedTime) {
-      // Navigate to booking page with pre-filled data
+    if (selectedService) {
       const bookingUrl = `/booking/${salon._id}${selectedBarber ? `/${selectedBarber}` : ''}${selectedService ? `/${selectedService}` : ''}`;
       window.location.href = bookingUrl;
     } else {
@@ -61,7 +46,7 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
     }
   };
 
-  const isBookingReady = selectedService && selectedDate && selectedTime && (availableStaff.length === 0 || selectedBarber || availableStaff.length > 0);
+  const isBookingReady = selectedService && (availableStaff.length === 0 || selectedBarber || availableStaff.length > 0);
 
   return (
     <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl p-6 border border-indigo-200 dark:border-indigo-800">
@@ -156,55 +141,6 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
           </div>
         )}
 
-        {/* Date Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select Date
-          </label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            min={today}
-            disabled={!selectedService}
-            className={`w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              !selectedService ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          />
-          {!selectedService && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Please select a service first
-            </p>
-          )}
-        </div>
-
-        {/* Time Selection */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Select Time
-          </label>
-          <select
-            value={selectedTime}
-            onChange={(e) => setSelectedTime(e.target.value)}
-            disabled={!selectedService || !selectedDate}
-            className={`w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-              !selectedService || !selectedDate ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <option value="">Choose time...</option>
-            {timeSlots.map((time) => (
-              <option key={time} value={time}>
-                {time}
-              </option>
-            ))}
-          </select>
-          {(!selectedService || !selectedDate) && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Please select a service and date first
-            </p>
-          )}
-        </div>
-
         {/* Quick Book Button */}
         <button
           onClick={handleQuickBook}
@@ -218,15 +154,13 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
           {isBookingReady ? (
             <>
               <Calendar className="h-5 w-5 mr-2" />
-              Book {selectedServiceDetails?.title} - {selectedTime}
+              Continue to Booking
               <ArrowRight className="h-5 w-5 ml-2" />
             </>
           ) : (
             <>
               <Calendar className="h-5 w-5 mr-2" />
-              {!selectedService ? 'Select a service first' : 
-               !selectedDate ? 'Select date & time' : 
-               'Complete your selection'}
+              Select a service first
             </>
           )}
         </button>
@@ -371,11 +305,11 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
                   <div className="flex-1">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Pick Date & Time</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      Select your preferred date and available time slot for your appointment.
+                      On the booking form, select your preferred date and available time slot.
                     </p>
                     <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
                       <div className="flex items-center text-purple-700 dark:text-purple-300 text-sm">
-                        <Clock className="h-4 w-4 mr-2" />
+                        <Calendar className="h-4 w-4 mr-2" />
                         <span>Available slots are shown in real-time</span>
                       </div>
                     </div>
@@ -432,18 +366,6 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
                         <span><strong>Stylist:</strong> {salon.barbers?.find(b => b._id === selectedBarber)?.name}</span>
                       </div>
                     )}
-                    {selectedDate && (
-                      <div className="flex items-center text-green-700 dark:text-green-300">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span><strong>Date:</strong> {new Date(selectedDate).toLocaleDateString()}</span>
-                      </div>
-                    )}
-                    {selectedTime && (
-                      <div className="flex items-center text-green-700 dark:text-green-300">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span><strong>Time:</strong> {selectedTime}</span>
-                      </div>
-                    )}
                   </div>
                   <p className="text-xs text-green-600 dark:text-green-400 mt-2">
                     Your selections will be pre-filled in the booking form
@@ -451,21 +373,19 @@ const QuickBooking: React.FC<QuickBookingProps> = ({ salon, onBookNow }) => {
                 </div>
               )}
 
-              {/* Missing Requirements Warning */}
-              {!selectedService && (
-                <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <h5 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-2 flex items-center">
-                    <Circle className="h-4 w-4 mr-2" />
-                    Quick Start Available
-                  </h5>
-                  <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
-                    You can start the booking process now and select your service, stylist, date, and time in the booking form.
-                  </p>
-                  <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                    Or use the quick booking form above to pre-select your preferences
-                  </p>
-                </div>
-              )}
+              {/* Quick Start Info */}
+              <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h5 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center">
+                  <Zap className="h-4 w-4 mr-2" />
+                  How Quick Booking Works
+                </h5>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                  Select your service and stylist here, then complete your booking with date and time selection in the next step.
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  This 2-step process makes booking faster and more convenient!
+                </p>
+              </div>
 
               {/* Quick Tips */}
               <div className="mt-6 bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-lg p-4">

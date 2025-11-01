@@ -208,8 +208,9 @@ const DashboardStaff: React.FC = () => {
 
       frontCanvas.width = width * ratio;
       frontCanvas.height = height * ratio;
-      frontCanvas.style.width = `${width}px`;
-      frontCanvas.style.height = `${height}px`;
+      frontCanvas.style.width = '100%';
+      frontCanvas.style.maxWidth = '30rem';
+      frontCanvas.style.height = 'auto';
       frontCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       frontCtx.clearRect(0, 0, width, height);
 
@@ -278,8 +279,9 @@ const DashboardStaff: React.FC = () => {
 
       backCanvas.width = width * ratio;
       backCanvas.height = height * ratio;
-      backCanvas.style.width = `${width}px`;
-      backCanvas.style.height = `${height}px`;
+      backCanvas.style.width = '100%';
+      backCanvas.style.maxWidth = '30rem';
+      backCanvas.style.height = 'auto';
       backCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       backCtx.clearRect(0, 0, width, height);
 
@@ -326,9 +328,9 @@ const DashboardStaff: React.FC = () => {
         backCtx.textBaseline = 'alphabetic';
       }
 
-      const qrSize = 160;
-      const qrX = width / 2 - qrSize / 2;
-      const qrY = headerHeight + 28;
+      const qrSize = 148;
+      const qrX = width - qrSize - 48;
+      const qrY = headerHeight + 24;
       if (qrImage) {
         backCtx.save();
         backCtx.shadowColor = 'rgba(15,23,42,0.22)';
@@ -346,36 +348,38 @@ const DashboardStaff: React.FC = () => {
         backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
         backCtx.textAlign = 'center';
         backCtx.textBaseline = 'middle';
-        backCtx.fillText('QR unavailable', width / 2, qrY + qrSize / 2);
+        backCtx.fillText('QR unavailable', qrX + qrSize / 2, qrY + qrSize / 2);
         backCtx.textAlign = 'left';
         backCtx.textBaseline = 'alphabetic';
       }
 
       backCtx.textAlign = 'center';
       backCtx.fillStyle = '#1f2937';
-      backCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
-      backCtx.fillText('Scan to view profile & book appointments', width / 2, qrY + qrSize + 48, width - 72);
+      backCtx.font = '600 14px "Poppins","Helvetica",sans-serif';
+      backCtx.fillText('Scan to view profile &', qrX + qrSize / 2, qrY + qrSize + 18, width - 72);
+      backCtx.fillText('book appointments', qrX + qrSize / 2, qrY + qrSize + 36, width - 72);
       backCtx.textAlign = 'left';
 
-      let infoY = height - 112;
+      let infoY = headerHeight + 36;
+      const infoWidth = qrX - 48;
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
       if (user.phone) {
-        backCtx.fillText(`Phone: ${user.phone}`, 36, infoY, width - 72);
-        infoY += 26;
+        backCtx.fillText(`Phone: ${user.phone}`, 36, infoY, infoWidth);
+        infoY += 28;
       }
       if (user.email) {
-        backCtx.fillText(`Email: ${user.email}`, 36, infoY, width - 72);
-        infoY += 26;
+        backCtx.fillText(`Email: ${user.email}`, 36, infoY, infoWidth);
+        infoY += 28;
       }
       if (salonData?.name) {
-        backCtx.fillText(`Salon: ${salonData.name}`, 36, infoY, width - 72);
-        infoY += 26;
+        backCtx.fillText(`Salon: ${salonData.name}`, 36, infoY, infoWidth);
+        infoY += 28;
       }
       if (shortUrl) {
         backCtx.fillStyle = '#4338ca';
         backCtx.font = '600 15px "Poppins","Helvetica",sans-serif';
-        backCtx.fillText(shortUrl, 36, infoY, width - 72);
+        backCtx.fillText(shortUrl, 36, infoY, infoWidth);
       }
     };
     draw();
@@ -698,12 +702,16 @@ const DashboardStaff: React.FC = () => {
 
         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-200 dark:border-gray-700 p-5 shadow-inner">
           <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Card Preview</h4>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
-              <canvas ref={staffFrontCanvasRef} className="w-full h-auto" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-white p-4 flex justify-center">
+              <div className="relative w-full max-w-[30rem] mx-auto">
+                <canvas ref={staffFrontCanvasRef} className="w-full h-auto" />
+              </div>
             </div>
-            <div className="rounded-3xl overflow-hidden shadow-lg bg-white">
-              <canvas ref={staffBackCanvasRef} className="w-full h-auto" />
+            <div className="rounded-3xl overflow-hidden shadow-lg bg-white p-4 flex justify-center">
+              <div className="relative w-full max-w-[30rem] mx-auto">
+                <canvas ref={staffBackCanvasRef} className="w-full h-auto" />
+              </div>
             </div>
           </div>
         </div>

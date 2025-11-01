@@ -39,6 +39,26 @@ const Navbar: React.FC = () => {
     { to: '/contact', label: t('contact', language) }
   ];
 
+  const getDashboardPath = () => {
+    if (!user) return '/login';
+    const normalizedRole = (user.role as string | undefined)?.toLowerCase?.();
+    const roleDashboardMap: Record<string, string> = {
+      client: '/profile',
+      barber: '/dashboard/staff',
+      hairstylist: '/dashboard/staff',
+      nail_technician: '/dashboard/staff',
+      massage_therapist: '/dashboard/staff',
+      esthetician: '/dashboard/staff',
+      receptionist: '/dashboard/staff',
+      manager: '/dashboard/staff',
+      owner: '/dashboard/owner',
+      admin: '/admin',
+      superadmin: '/superadmin'
+    };
+    if (!normalizedRole) return '/profile';
+    return roleDashboardMap[normalizedRole] || '/profile';
+  };
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -104,7 +124,7 @@ const Navbar: React.FC = () => {
 
             {user ? (
               <Link 
-                to="/profile" 
+                to={getDashboardPath()} 
                 className="px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600 transition-all duration-300"
               >
                 <span className="hidden sm:inline">{t('dashboard', language)}</span>

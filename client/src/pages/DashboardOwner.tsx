@@ -359,8 +359,9 @@ const DashboardOwner: React.FC = () => {
 
       frontCanvas.width = width * ratio;
       frontCanvas.height = height * ratio;
-      frontCanvas.style.width = `${width}px`;
-      frontCanvas.style.height = `${height}px`;
+      frontCanvas.style.width = '100%';
+      frontCanvas.style.maxWidth = '30rem';
+      frontCanvas.style.height = 'auto';
       frontCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       frontCtx.clearRect(0, 0, width, height);
 
@@ -429,35 +430,11 @@ const DashboardOwner: React.FC = () => {
       }
       frontCtx.restore();
 
-      frontCtx.save();
-      frontCtx.globalAlpha = 0.32;
-      frontCtx.fillStyle = '#0f172a';
-      const urlHeight = 50;
-      const urlY = height - urlHeight - 36;
-      frontCtx.beginPath();
-      frontCtx.moveTo(36 + 20, urlY);
-      frontCtx.lineTo(width - 36 - 20, urlY);
-      frontCtx.quadraticCurveTo(width - 36, urlY, width - 36, urlY + 20);
-      frontCtx.lineTo(width - 36, urlY + urlHeight);
-      frontCtx.quadraticCurveTo(width - 36, urlY + urlHeight + 20, width - 36 - 20, urlY + urlHeight + 20);
-      frontCtx.lineTo(36 + 20, urlY + urlHeight + 20);
-      frontCtx.quadraticCurveTo(36, urlY + urlHeight + 20, 36, urlY + urlHeight);
-      frontCtx.lineTo(36, urlY + 20);
-      frontCtx.quadraticCurveTo(36, urlY, 36 + 20, urlY);
-      frontCtx.closePath();
-      frontCtx.fill();
-      frontCtx.restore();
-
-      frontCtx.fillStyle = '#ffffff';
-      frontCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
-      frontCtx.fillText('Digital Access', 56, height - 52);
-      frontCtx.font = '500 14px "Poppins","Helvetica",sans-serif';
-      drawWrappedText(frontCtx, shortUrl || 'salonhub.hawu.rw', 56, height - 28, width - 112, 20);
-
       backCanvas.width = width * ratio;
       backCanvas.height = height * ratio;
-      backCanvas.style.width = `${width}px`;
-      backCanvas.style.height = `${height}px`;
+      backCanvas.style.width = '100%';
+      backCanvas.style.maxWidth = '30rem';
+      backCanvas.style.height = 'auto';
       backCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
       backCtx.clearRect(0, 0, width, height);
 
@@ -495,10 +472,11 @@ const DashboardOwner: React.FC = () => {
       backCtx.font = '500 14px "Poppins","Helvetica",sans-serif';
       backCtx.fillText('Owner & Lead Stylist', 36, 126, width - 72);
 
+      const qrSize = 148;
+      const qrX = width - qrSize - 48;
+      const qrY = 152;
+
       if (qrImage) {
-        const qrSize = 170;
-        const qrX = width / 2 - qrSize / 2;
-        const qrY = 136;
         backCtx.save();
         backCtx.shadowColor = 'rgba(15,23,42,0.18)';
         backCtx.shadowBlur = 26;
@@ -506,9 +484,6 @@ const DashboardOwner: React.FC = () => {
         backCtx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
         backCtx.restore();
       } else {
-        const qrSize = 170;
-        const qrX = width / 2 - qrSize / 2;
-        const qrY = 136;
         backCtx.fillStyle = 'rgba(255,255,255,0.7)';
         backCtx.fillRect(qrX, qrY, qrSize, qrSize);
         backCtx.strokeStyle = 'rgba(148,163,184,0.8)';
@@ -518,7 +493,7 @@ const DashboardOwner: React.FC = () => {
         backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
         backCtx.textAlign = 'center';
         backCtx.textBaseline = 'middle';
-        backCtx.fillText('QR unavailable', width / 2, qrY + qrSize / 2);
+        backCtx.fillText('QR unavailable', qrX + qrSize / 2, qrY + qrSize / 2);
         backCtx.textAlign = 'left';
         backCtx.textBaseline = 'alphabetic';
       }
@@ -526,28 +501,29 @@ const DashboardOwner: React.FC = () => {
       backCtx.textAlign = 'center';
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
-      backCtx.fillText('Scan for quick bookings', width / 2, 120);
+      backCtx.fillText('Scan for quick bookings', qrX + qrSize / 2, qrY - 24);
       backCtx.textAlign = 'left';
 
-      let contactY = height - 112;
+      let contactY = 168;
+      const contactWidth = qrX - 48;
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
       if (salon?.phone) {
-        backCtx.fillText(`Phone: ${salon.phone}`, 36, contactY, width - 72);
-        contactY += 26;
+        backCtx.fillText(`Phone: ${salon.phone}`, 36, contactY, contactWidth);
+        contactY += 28;
       }
       if (salon?.email) {
-        backCtx.fillText(`Email: ${salon.email}`, 36, contactY, width - 72);
-        contactY += 26;
+        backCtx.fillText(`Email: ${salon.email}`, 36, contactY, contactWidth);
+        contactY += 28;
       }
       if (salon?.address) {
-        backCtx.fillText(`Address: ${salon.address}`, 36, contactY, width - 72);
-        contactY += 26;
+        backCtx.fillText(`Address: ${salon.address}`, 36, contactY, contactWidth);
+        contactY += 28;
       }
       if (shortUrl) {
         backCtx.fillStyle = '#4338ca';
         backCtx.font = '600 15px "Poppins","Helvetica",sans-serif';
-        backCtx.fillText(shortUrl, 36, contactY, width - 72);
+        backCtx.fillText(shortUrl, 36, contactY, contactWidth);
       }
     };
     draw();
@@ -647,11 +623,13 @@ const DashboardOwner: React.FC = () => {
 
         <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl p-6 xl:p-10">
           <h3 className="text-xl font-bold text-slate-900 mb-6">Print-friendly Card</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
               <p className="text-sm text-slate-500 mb-3">Front</p>
-              <div className="rounded-3xl overflow-hidden shadow-lg">
-                <canvas ref={ownerFrontCanvasRef} className="w-full h-auto" />
+              <div className="rounded-3xl overflow-hidden shadow-lg bg-slate-900/5 p-4 flex justify-center">
+                <div className="relative w-full max-w-[30rem] mx-auto">
+                  <canvas ref={ownerFrontCanvasRef} className="w-full h-auto" />
+                </div>
               </div>
               <button
                 type="button"
@@ -665,8 +643,10 @@ const DashboardOwner: React.FC = () => {
 
             <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
               <p className="text-sm text-slate-500 mb-3">Back</p>
-              <div className="rounded-3xl overflow-hidden shadow-lg">
-                <canvas ref={ownerBackCanvasRef} className="w-full h-auto" />
+              <div className="rounded-3xl overflow-hidden shadow-lg bg-slate-900/5 p-4 flex justify-center">
+                <div className="relative w-full max-w-[30rem] mx-auto">
+                  <canvas ref={ownerBackCanvasRef} className="w-full h-auto" />
+                </div>
               </div>
               <button
                 type="button"

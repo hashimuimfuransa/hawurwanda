@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { Loader2 } from 'lucide-react';
@@ -17,6 +17,8 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const normalizedRole = useMemo(() => (user?.role as string | undefined)?.toLowerCase?.() ?? '', [user]);
+  const normalizedRequiredRoles = useMemo(() => requiredRoles.map((role) => role.toLowerCase()), [requiredRoles]);
 
   useEffect(() => {
     // Don't redirect if still loading
@@ -34,7 +36,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
     }
 
     // If specific roles are required, check if user has the required role
-    if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+    if (normalizedRequiredRoles.length > 0 && !normalizedRequiredRoles.includes(normalizedRole)) {
       // Redirect to appropriate dashboard based on user role
       const roleDashboardMap: Record<string, string> = {
         'client': '/profile',
@@ -50,11 +52,11 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
         'superadmin': '/superadmin'
       };
 
-      const userDashboard = roleDashboardMap[user.role] || '/profile';
+      const userDashboard = roleDashboardMap[normalizedRole] || '/profile';
       navigate(userDashboard, { replace: true });
       return;
     }
-  }, [user, isLoading, requiredRoles, navigate, location, redirectTo]);
+  }, [user, isLoading, normalizedRequiredRoles, navigate, location, redirectTo, normalizedRole]);
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -77,7 +79,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({
   }
 
   // If user doesn't have required role, don't render children (redirect will happen)
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
+  if (normalizedRequiredRoles.length > 0 && !normalizedRequiredRoles.includes(normalizedRole)) {
     return null;
   }
 
