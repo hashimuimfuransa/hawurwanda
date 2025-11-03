@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslationStore } from '../stores/translationStore';
 import { useThemeStore } from '../stores/themeStore';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import GoogleMap from '../components/GoogleMap';
 import { getAllDistricts, getAllSectors, getDistrictsByProvince } from '../data/rwandaLocations';
 
@@ -452,7 +451,6 @@ const SalonList: React.FC = () => {
           )}
         </div>
       </div>
-      <Footer />
     </div>
   );
 };

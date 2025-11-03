@@ -751,7 +751,7 @@ const Home: React.FC = () => {
 
           <div className="mt-16 text-center">
             <Link
-              to="/news"
+              to="/publications"
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 px-8 py-4 text-sm font-semibold uppercase tracking-[0.28em] text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600"
             >
               {t('viewAllNews', language)}
@@ -855,125 +855,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Footer Section */}
-      <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-16 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* HAWU Info */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 via-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                  <Scissors className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">HAWU</span>
-              </div>
-              <p className="text-gray-300 leading-relaxed">
-                {t('empoweringHairdressers', language)}
-              </p>
-              <div className="flex space-x-4">
-                {[
-                  { icon: Facebook, href: "#" },
-                  { icon: Twitter, href: "#" },
-                  { icon: Instagram, href: "#" },
-                  { icon: Youtube, href: "#" }
-                ].map((social, index) => (
-                  <a key={index} href={social.href} className="w-10 h-10 bg-white dark:bg-gray-800/10 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:bg-emerald-500 transition-all duration-300 transform hover:scale-110">
-                    <social.icon className="h-5 w-5" />
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Links */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">{t('quickLinks', language)}</h3>
-              <ul className="space-y-3">
-                {[
-                  { to: "/about", label: t('about', language) },
-                  { to: "/programs", label: t('programs', language) },
-                  { to: "/news", label: t('newsEvents', language) },
-                  { to: "/contact", label: t('contact', language) }
-                ].map((link, index) => (
-                  <li key={index}>
-                    <Link to={link.to} className="text-gray-300 hover:text-emerald-400 transition-colors duration-200 flex items-center group">
-                      <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Resources */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">{t('resources', language)}</h3>
-              <ul className="space-y-3">
-                {[
-                  { to: "/publications", label: t('publications', language) },
-                  { to: "/training", label: t('trainingMaterials', language) },
-                  { to: "/guidelines", label: t('guidelines', language) },
-                  { to: "/forms", label: t('forms', language) }
-                ].map((link, index) => (
-                  <li key={index}>
-                    <Link to={link.to} className="text-gray-300 hover:text-emerald-400 transition-colors duration-200 flex items-center group">
-                      <ChevronRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Connect */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-white">{t('connect', language)}</h3>
-            <div className="space-y-4">
-                {[
-                  { icon: Mail, text: "info@hawurwanda.com", href: "mailto:info@hawurwanda.com" },
-                  { icon: Phone, text: "+250 788 224 343", href: "tel:+250788224343" },
-                  { icon: Phone, text: "+250 788 462 363", href: "tel:+250788462363" },
-                  { icon: MapPin, text: "Kigali, Rwanda", href: null }
-                ].map((contact, index) => (
-                  <div key={index} className="flex items-center space-x-3 group">
-                    <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center group-hover:bg-emerald-500 transition-colors duration-200">
-                      <contact.icon className="h-4 w-4 text-emerald-400" />
-                </div>
-                    {contact.href ? (
-                      <a href={contact.href} className="text-gray-300 hover:text-emerald-400 transition-colors duration-200">
-                        {contact.text}
-                      </a>
-                    ) : (
-                      <span className="text-gray-300">{contact.text}</span>
-                    )}
-                </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Bar */}
-          <div className="border-t border-gray-700 mt-12 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400 text-sm">
-                {t('rightsReserved', language)}
-              </p>
-              <div className="flex space-x-6 mt-4 md:mt-0">
-                <Link to="/privacy" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors duration-200">
-                  {t('privacyPolicy', language)}
-                </Link>
-                <Link to="/terms" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors duration-200">
-                  {t('termsOfService', language)}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
 
       {/* Floating Action Button */}
       <div className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50">
