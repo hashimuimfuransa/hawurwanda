@@ -161,7 +161,7 @@ const SalonPage: React.FC = () => {
                       <Star className="h-5 w-5 text-yellow-400 fill-current mr-2" />
                     </div>
                     <span className="text-lg font-semibold">4.8</span>
-                    <span className="text-sm ml-2">(24 reviews)</span>
+                    <span className="text-sm ml-2">(24 {t('reviews', language)})</span>
                   </div>
 
                   <div className="flex items-center text-gray-600 dark:text-gray-300 mb-4">
@@ -193,11 +193,11 @@ const SalonPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 lg:mb-6">
                   <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                     <div className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">{salon.barbers?.length || 0}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">Staff</div>
+                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">{t('staffCount', language)}</div>
                   </div>
                   <div className="text-center p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
                     <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">{salon.services?.length || 0}</div>
-                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">{t('services', language)}</div>
+                    <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 font-medium">{t('servicesCount', language)}</div>
                   </div>
                 </div>
 
@@ -227,7 +227,7 @@ const SalonPage: React.FC = () => {
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 sm:mr-4">
                         <Sparkles className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                       </div>
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Our Services</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{t('ourServices', language)}</h2>
                     </div>
                     <button
                       onClick={() => {
@@ -240,8 +240,8 @@ const SalonPage: React.FC = () => {
                       className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center justify-center text-sm sm:text-base"
                     >
                       <Calendar className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                      <span className="hidden sm:inline">Book Appointment</span>
-                      <span className="sm:hidden">Book</span>
+                      <span className="hidden sm:inline">{t('bookAppointmentBtn', language)}</span>
+                      <span className="sm:hidden">{t('bookNow', language)}</span>
                     </button>
                   </div>
                   <div className="space-y-3 sm:space-y-4">

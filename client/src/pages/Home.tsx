@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useTranslationStore } from '../stores/translationStore';
-import ProgramCards from '../components/ProgramCards';
-import ProgramSupportHighlights from '../components/ProgramSupportHighlights';
 import { 
   GraduationCap, 
   Megaphone, 
@@ -18,7 +16,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Users,
   Award,
   Scissors,
   ChevronRight,
@@ -34,10 +31,10 @@ import {
   Star,
   TrendingUp,
   Shield,
-  Zap,
-  Globe,
   CheckCircle,
-  Sparkles
+  Sparkles,
+  Store,
+  Wand2
 } from 'lucide-react';
 
 const Home: React.FC = () => {
@@ -90,7 +87,7 @@ const Home: React.FC = () => {
 
   const updates = [
     {
-      category: 'event',
+      category: t('event', language),
       date: 'March 15, 2024',
       title: t('annualGeneralMeeting', language),
       description: t('annualGeneralMeetingDesc', language),
@@ -98,7 +95,7 @@ const Home: React.FC = () => {
       color: 'from-blue-500 to-purple-600'
     },
     {
-      category: 'news',
+      category: t('news', language),
       date: 'February 28, 2024',
       title: t('trainingGraduationParty', language),
       description: t('trainingGraduationPartyDesc', language),
@@ -106,7 +103,7 @@ const Home: React.FC = () => {
       color: 'from-green-500 to-teal-600'
     },
     {
-      category: 'certification',
+      category: t('certification', language),
       date: 'February 10, 2024',
       title: t('certificationProgramLaunch', language),
       description: t('certificationProgramLaunchDesc', language),
@@ -115,65 +112,30 @@ const Home: React.FC = () => {
     }
   ];
 
-  const stats = [
-    { number: '8000+', label: t('activeMembers', language), icon: Users, color: 'text-blue-600' },
-    { number: '30', label: t('districtsCovered', language), icon: Globe, color: 'text-green-600' },
-    { number: '7+', label: t('yearsOfService', language), icon: Award, color: 'text-purple-600' }
-  ];
-
-
-
   const testimonials = [
     {
       name: 'Marie Mukamana',
       role: t('salonOwner', language),
       location: 'Kigali',
-      content: 'HAWU has transformed my business. The training programs and support have helped me grow from a small salon to a thriving business with 5 employees.',
+      content: t('testimonialMarie', language),
       rating: 5,
-      image: '👩‍💼'
+      icon: Store
     },
     {
       name: 'Jean Baptiste',
       role: t('professionalBarber', language),
       location: 'Huye',
-      content: 'The union has been my voice in advocating for better working conditions. Thanks to HAWU, I now have health insurance and fair wages.',
+      content: t('testimonialJean', language),
       rating: 5,
-      image: '👨‍💼'
+      icon: Scissors
     },
     {
       name: 'Grace Uwimana',
       role: t('beautyTherapist', language),
       location: 'Musanze',
-      content: 'Being part of HAWU has opened so many opportunities. The networking events and training sessions have been invaluable for my career growth.',
+      content: t('testimonialGrace', language),
       rating: 5,
-      image: '👩‍🎨'
-    }
-  ];
-
-  const features = [
-    {
-      title: t('digitalPlatform', language),
-      description: t('digitalPlatformDesc', language),
-      icon: Globe,
-      color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      title: t('mobileApp', language),
-      description: t('mobileAppDesc', language),
-      icon: '📱',
-      color: 'from-purple-500 to-pink-500'
-    },
-    {
-      title: t('support247', language),
-      description: t('support247Desc', language),
-      icon: '🛡️',
-      color: 'from-green-500 to-emerald-500'
-    },
-    {
-      title: t('trainingHub', language),
-      description: t('trainingHubDesc', language),
-      icon: '🎓',
-      color: 'from-orange-500 to-red-500'
+      icon: Wand2
     }
   ];
 
@@ -378,7 +340,7 @@ const Home: React.FC = () => {
             <div className="space-y-10">
               <div className="inline-flex items-center px-6 py-3 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-lg shadow-emerald-500/10 backdrop-blur">
                 <Sparkles className="w-4 h-4 text-emerald-500 mr-2" />
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.28em] text-slate-600 dark:text-slate-200">Affiliated to CESTRAR</span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.28em] text-slate-600 dark:text-slate-200">{t('affiliatedToCestrar', language)}</span>
               </div>
 
               <div className="space-y-6">
@@ -412,7 +374,7 @@ const Home: React.FC = () => {
               <div className="flex flex-wrap gap-4 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-300">
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  <span>8000+ Members</span>
+                  <span>{t('membersCount', language)}</span>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <Shield className="h-5 w-5 text-sky-500" />
@@ -420,7 +382,7 @@ const Home: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <Award className="h-5 w-5 text-indigo-500" />
-                  <span>7+ Years</span>
+                  <span>{t('yearsCount', language)}</span>
                 </div>
               </div>
             </div>
@@ -444,8 +406,8 @@ const Home: React.FC = () => {
                   </div>
 
                   <div className="absolute top-6 right-6 flex flex-col gap-3">
-                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-emerald-500 shadow-md shadow-emerald-500/20">8000+</div>
-                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-sky-500 shadow-md shadow-sky-500/20">30 Districts</div>
+                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-emerald-500 shadow-md shadow-emerald-500/20">{t('membersCountShort', language)}</div>
+                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-sky-500 shadow-md shadow-sky-500/20">{t('districtsCount', language)}</div>
                   </div>
                 </div>
               </div>
@@ -457,50 +419,6 @@ const Home: React.FC = () => {
                 <Heart className="h-6 w-6 text-white" />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-emerald-50/80 to-sky-50/80 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
-          <div className="absolute inset-y-0 left-1/2 w-[120%] -translate-x-1/2 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.16),_transparent_60%)]"></div>
-          <div className="absolute -top-24 -right-24 h-64 w-64 bg-emerald-400/20 blur-3xl rounded-full"></div>
-          <div className="absolute bottom-0 left-0 h-72 w-72 bg-indigo-400/15 blur-3xl rounded-full"></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('statsTitle', language)}
-            </span>
-            <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('statsSubtitle', language)}
-            </h2>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2"
-              >
-                <div className="absolute inset-x-8 -top-32 h-40 bg-gradient-to-br from-emerald-400/20 via-sky-400/15 to-indigo-400/0 blur-3xl"></div>
-                <div className="relative flex items-center justify-between">
-                  <div className="space-y-3">
-                    <div className="text-5xl font-extrabold text-slate-900 dark:text-white">
-                      {stat.number}
-                    </div>
-                    <div className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-300">
-                      {stat.label}
-                    </div>
-                  </div>
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 via-sky-500 to-indigo-500 text-white shadow-lg shadow-emerald-500/30">
-                    <stat.icon className={`h-8 w-8 ${stat.color}`} />
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -599,140 +517,122 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Comprehensive Programs Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-30" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0f2fe' fill-opacity='0.2'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-        }}></div>
-        
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50/80 to-emerald-50/80 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
+          <div className="absolute -top-24 right-16 h-64 w-64 bg-blue-400/15 blur-3xl rounded-full"></div>
+          <div className="absolute bottom-0 left-0 h-72 w-72 bg-emerald-400/10 blur-3xl rounded-full"></div>
+        </div>
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-100 to-blue-100 dark:from-emerald-900 dark:to-blue-900 text-emerald-800 dark:text-emerald-200 rounded-full text-sm font-semibold mb-6 shadow-lg">
-              <Zap className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400" />
-              {t('programsTitle', language)}
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-xs font-semibold uppercase tracking-[0.32em] text-white shadow-sm">
+              {t('ourProgrammesLabel', language)}
+            </span>
+            <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
+              {t('empoweringOurMembers', language)}
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
+              {t('empoweringOurMembersDesc', language)}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg shadow-green-500/30 flex-shrink-0">
+                  <span className="text-2xl">🎓</span>
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('skillsDevelopment', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('skillsDevelopmentDesc', language)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-              {t('programsSupportTitle', language)}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto">
-              {t('programsIntro', language)}
-            </p>
-          </div>
 
-          <ProgramCards />
-
-          <div className="mt-16 text-center">
-            <h3 className="text-3xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              {t('programsSupportSubtitle', language)}
-            </h3>
-            <ProgramSupportHighlights className="mt-12" />
-          </div>
-        </div>
-      </section>
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-emerald-50/70 to-sky-50/70 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
-          <div className="absolute inset-y-0 left-1/2 w-[120%] -translate-x-1/2 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.16),_transparent_60%)]"></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('memberStories', language)}
-            </span>
-            <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('whatOurMembersSay', language)}
-            </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('whatOurMembersSayDesc', language)}
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
-            {testimonials.map((testimonial, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-[2.25rem] border border-white/60 dark:border-slate-800/70 bg-white/85 dark:bg-slate-900/80 p-8 shadow-[0_40px_100px_-65px_rgba(15,23,42,0.9)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2"
-              >
-                <div className="absolute inset-x-8 -top-24 h-40 bg-gradient-to-br from-emerald-400/20 via-sky-400/15 to-indigo-400/0 blur-3xl"></div>
-                <div className="relative flex items-center gap-4">
-                  <div className="h-16 w-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 via-sky-500 to-indigo-500 text-3xl text-white shadow-lg shadow-emerald-500/30">
-                    {testimonial.image}
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                      {testimonial.name}
-                    </h3>
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-500">
-                      {testimonial.role}
-                    </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {testimonial.location}
-                    </p>
-                  </div>
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-800 dark:bg-slate-700 text-white shadow-lg shadow-slate-800/30 flex-shrink-0">
+                  <Megaphone className="h-6 w-6" />
                 </div>
-
-                <div className="mt-6 flex gap-2">
-                  {[...Array(testimonial.rating)].map((_, starIndex) => (
-                    <Star key={starIndex} className="h-5 w-5 text-amber-400 fill-current" />
-                  ))}
-                </div>
-
-                <p className="mt-6 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                  “{testimonial.content}”
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-emerald-50/70 to-indigo-50/70 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
-          <div className="absolute inset-y-0 right-1/2 w-[120%] translate-x-1/2 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_65%)]"></div>
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('modernFeatures', language)}
-            </span>
-            <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('whyChooseHawu', language)}
-            </h2>
-            <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('whyChooseHawuDesc', language)}
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="group relative overflow-hidden rounded-[2.25rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/75 p-8 shadow-[0_40px_100px_-70px_rgba(15,23,42,0.95)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2"
-              >
-                <div className="absolute inset-x-8 -top-24 h-40 bg-gradient-to-br from-emerald-400/15 via-sky-400/15 to-indigo-400/0 blur-3xl"></div>
-                <div className="relative flex flex-col items-center text-center gap-6">
-                  <div className={`flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br ${feature.color} text-white shadow-lg shadow-emerald-500/25`}> 
-                    {typeof feature.icon === 'string' ? (
-                      <span className="text-3xl">{feature.icon}</span>
-                    ) : (
-                      <feature.icon className="h-10 w-10" />
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('advocacyRepresentation', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('advocacyRepresentationDesc', language)}
+                  </p>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-lg shadow-purple-500/30 flex-shrink-0">
+                  <Handshake className="h-6 w-6" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('collectiveBargaining', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('collectiveBarganiningDesc', language)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-red-400 to-red-600 text-white shadow-lg shadow-red-500/30 flex-shrink-0">
+                  <Heart className="h-6 w-6" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('memberWelfare', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('memberWelfareDesc', language)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 text-white shadow-lg shadow-orange-500/30 flex-shrink-0">
+                  <Briefcase className="h-6 w-6" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('businessSupport', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('businessSupportDesc', language)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[2rem] border border-white/60 dark:border-slate-800/70 bg-white/80 dark:bg-slate-900/70 p-8 shadow-[0_30px_80px_-60px_rgba(15,23,42,0.85)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-2">
+              <div className="relative flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-lg shadow-blue-500/30 flex-shrink-0">
+                  <Scale className="h-6 w-6" />
+                </div>
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('genderEquality', language)}
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300">
+                    {t('genderEqualityDesc', language)}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -747,13 +647,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              Partnerships
+              {t('partnerships', language)}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              Strategic Partnerships
+              {t('strategicPartnerships', language)}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              Working with national institutions to unlock new opportunities for our members across Rwanda
+              {t('partnershipsDesc', language)}
             </p>
           </div>
 
@@ -795,13 +695,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              Latest News
+              {t('latestNews', language)}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              Stay Updated
+              {t('stayUpdated', language)}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              Latest news, events, and opportunities shaping the future of Rwanda’s hair and beauty industry
+              {t('latestNewsDesc', language)}
             </p>
           </div>
 
@@ -841,7 +741,7 @@ const Home: React.FC = () => {
                     to={`/news/${index}`}
                     className="mt-6 inline-flex items-center text-emerald-500 font-semibold text-sm sm:text-base transition-colors duration-200 hover:text-emerald-400"
                   >
-                    Read More
+                    {t('readMore', language)}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Link>
                 </div>
@@ -854,45 +754,10 @@ const Home: React.FC = () => {
               to="/news"
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 px-8 py-4 text-sm font-semibold uppercase tracking-[0.28em] text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600"
             >
-              View All News
+              {t('viewAllNews', language)}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Link>
           </div>
-        </div>
-      </section>
-
-      <section className="relative py-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-emerald-50/75 to-indigo-50/70 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
-          <div className="absolute inset-y-0 left-1/2 w-[120%] -translate-x-1/2 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.14),_transparent_60%)]"></div>
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center justify-center rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 px-6 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-            <Mail className="mr-3 h-4 w-4 text-emerald-400" />
-            {t('stayConnected', language)}
-          </div>
-          <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-            {t('joinOurCommunity', language)}
-          </h2>
-          <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-            {t('joinOurCommunityDesc', language)}
-          </p>
-
-          <div className="mt-12 flex flex-col sm:flex-row items-center gap-4 max-w-lg mx-auto">
-            <input
-              type="email"
-              placeholder={t('enterEmailAddress', language)}
-              className="w-full sm:flex-1 rounded-full border border-white/80 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/70 px-6 py-4 text-sm sm:text-base text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-emerald-400/40"
-            />
-            <button className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 px-8 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600">
-              {t('subscribe', language)}
-            </button>
-          </div>
-
-          <p className="mt-4 text-xs font-medium uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
-            {t('privacyNotice', language)}
-          </p>
         </div>
       </section>
 
@@ -932,6 +797,65 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      {/* Member Stories / Testimonials Section */}
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-white via-emerald-50/70 to-sky-50/70 dark:from-slate-950 dark:via-slate-900/90 dark:to-slate-950"></div>
+          <div className="absolute inset-y-0 left-1/2 w-[120%] -translate-x-1/2 bg-[radial-gradient(circle_at_top,_rgba(250,204,21,0.16),_transparent_60%)]"></div>
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
+              {t('memberStories', language)}
+            </span>
+            <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
+              {t('whatOurMembersSay', language)}
+            </h2>
+            <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
+              {t('whatOurMembersSayDesc', language)}
+            </p>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className="group relative overflow-hidden rounded-[2.25rem] border border-white/60 dark:border-slate-800/70 bg-white/85 dark:bg-slate-900/80 p-8 shadow-[0_40px_100px_-65px_rgba(15,23,42,0.9)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className="absolute inset-x-8 -top-24 h-40 bg-gradient-to-br from-emerald-400/20 via-sky-400/15 to-indigo-400/0 blur-3xl"></div>
+                <div className="relative flex items-center gap-4">
+                  <div className="h-16 w-16 flex items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 via-sky-500 to-indigo-500 text-white shadow-lg shadow-emerald-500/30">
+                    <testimonial.icon className="h-8 w-8" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {testimonial.name}
+                    </h3>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-500">
+                      {testimonial.role}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {testimonial.location}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex gap-2">
+                  {[...Array(testimonial.rating)].map((_, starIndex) => (
+                    <Star key={starIndex} className="h-5 w-5 text-amber-400 fill-current" />
+                  ))}
+                </div>
+
+                <p className="mt-6 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                  “{testimonial.content}”
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer Section */}
       <footer className="bg-gradient-to-br from-gray-900 to-gray-800 text-white py-16 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{
@@ -949,7 +873,7 @@ const Home: React.FC = () => {
                 <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">HAWU</span>
               </div>
               <p className="text-gray-300 leading-relaxed">
-                Empowering hair dressers and allied workers across Rwanda through advocacy, training, and collective representation.
+                {t('empoweringHairdressers', language)}
               </p>
               <div className="flex space-x-4">
                 {[
@@ -1036,14 +960,14 @@ const Home: React.FC = () => {
           <div className="border-t border-gray-700 mt-12 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-400 text-sm">
-                © 2024 HAWU Rwanda. All rights reserved.
+                {t('rightsReserved', language)}
               </p>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link to="/privacy" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors duration-200">
-                  Privacy Policy
+                  {t('privacyPolicy', language)}
                 </Link>
                 <Link to="/terms" className="text-gray-400 hover:text-emerald-400 text-sm transition-colors duration-200">
-                  Terms of Service
+                  {t('termsOfService', language)}
                 </Link>
               </div>
             </div>
@@ -1088,3 +1012,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

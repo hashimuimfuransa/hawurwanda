@@ -106,17 +106,17 @@ const SalonList: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 mt-6 sm:mt-8">
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.length}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">Salons</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('salonCount', language)}</div>
                 </div>
                 <div className="hidden sm:block w-px h-12 bg-white/30"></div>
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.filter(s => s.verified).length}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">Verified</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('verifiedCount', language)}</div>
                 </div>
                 <div className="hidden sm:block w-px h-12 bg-white/30"></div>
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.reduce((sum, s) => sum + (s.barbers?.length || 0), 0)}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">Stylists</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('stylistsCount', language)}</div>
                 </div>
               </div>
             </div>
@@ -129,7 +129,7 @@ const SalonList: React.FC = () => {
           <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 rounded-3xl shadow-2xl mb-8 overflow-hidden">
             <div className="p-4 sm:p-6 lg:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Find Your Perfect Salon</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('findYourPerfectSalon', language)}</h2>
                 <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-xl p-1 w-full sm:w-auto">
                   <button
                     onClick={() => setViewMode('grid')}
@@ -140,7 +140,7 @@ const SalonList: React.FC = () => {
                     }`}
                   >
                     <Grid className="h-4 w-4" />
-                    <span className="text-sm sm:text-base">Grid</span>
+                    <span className="text-sm sm:text-base">{t('gridView', language)}</span>
                   </button>
                   <button
                     onClick={() => setViewMode('map')}
@@ -151,7 +151,7 @@ const SalonList: React.FC = () => {
                     }`}
                   >
                     <Map className="h-4 w-4" />
-                    <span className="text-sm sm:text-base">Map</span>
+                    <span className="text-sm sm:text-base">{t('mapView', language)}</span>
                   </button>
                 </div>
               </div>
@@ -181,7 +181,7 @@ const SalonList: React.FC = () => {
                     }}
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 shadow-sm text-sm sm:text-base"
                   >
-                    <option value="">All Provinces</option>
+                    <option value="">{t('allProvinces', language)}</option>
                     {provinces.map((p) => (
                       <option key={p} value={p}>{p}</option>
                     ))}
@@ -199,7 +199,7 @@ const SalonList: React.FC = () => {
                     }}
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 shadow-sm text-sm sm:text-base"
                   >
-                    <option value="">All Districts</option>
+                    <option value="">{t('allDistricts', language)}</option>
                     {availableDistricts.map((d) => (
                       <option key={d} value={d}>{d}</option>
                     ))}
@@ -215,7 +215,7 @@ const SalonList: React.FC = () => {
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 shadow-sm text-sm sm:text-base"
                     disabled={!district}
                   >
-                    <option value="">All Sectors</option>
+                    <option value="">{t('allSectors', language)}</option>
                     {availableSectors.map((s) => (
                       <option key={s} value={s}>{s}</option>
                     ))}
