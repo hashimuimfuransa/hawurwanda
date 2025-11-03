@@ -111,14 +111,14 @@ const StaffDashboardSummary: React.FC = () => {
               <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-blue-100 text-xs sm:text-sm font-medium">Total Bookings</div>
+              <div className="text-blue-100 text-xs sm:text-sm font-medium">Ubusabe Bwose</div>
               <div className="text-lg sm:text-2xl font-bold">{totalBookings}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-blue-100 text-xs">
             <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Appointments overall</span>
-            <span className="sm:hidden">All</span>
+            <span className="hidden sm:inline">Ubusabe Bwose</span>
+            <span className="sm:hidden">Byose</span>
           </div>
         </div>
 
@@ -129,14 +129,14 @@ const StaffDashboardSummary: React.FC = () => {
               <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-green-100 text-xs sm:text-sm font-medium">Completed</div>
+              <div className="text-green-100 text-xs sm:text-sm font-medium">Byarangiye</div>
               <div className="text-lg sm:text-2xl font-bold">{completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-green-100 text-xs">
             <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Services completed</span>
-            <span className="sm:hidden">Done</span>
+            <span className="hidden sm:inline">Serivisi Zarangiye</span>
+            <span className="sm:hidden">Byarangiye</span>
           </div>
         </div>
 
@@ -147,14 +147,14 @@ const StaffDashboardSummary: React.FC = () => {
               <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-yellow-100 text-xs sm:text-sm font-medium">Pending</div>
+              <div className="text-yellow-100 text-xs sm:text-sm font-medium">Bitegerejwe</div>
               <div className="text-lg sm:text-2xl font-bold">{todayPendingBookings.length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-yellow-100 text-xs">
             <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Awaiting confirmation</span>
-            <span className="sm:hidden">Waiting</span>
+            <span className="hidden sm:inline">Bitegerejwe Kwemezwa</span>
+            <span className="sm:hidden">Kwinjira</span>
           </div>
         </div>
 
@@ -165,13 +165,13 @@ const StaffDashboardSummary: React.FC = () => {
               <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-purple-100 text-xs sm:text-sm font-medium">Revenue</div>
+              <div className="text-purple-100 text-xs sm:text-sm font-medium">Inyungu</div>
               <div className="text-lg sm:text-2xl font-bold">{todayRevenue.toLocaleString()}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-purple-100 text-xs">
             <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">RWF earned today</span>
+            <span className="hidden sm:inline">Amafaranga RWF yinjijwe uyu munsi</span>
             <span className="sm:hidden">RWF</span>
           </div>
         </div>

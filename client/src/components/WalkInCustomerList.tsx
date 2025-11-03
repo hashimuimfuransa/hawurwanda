@@ -120,11 +120,11 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                Walk-in Customers
+                Abakiriya Baza Ku Isonga
                 <Sparkles className="h-4 w-4 text-purple-500" />
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Manage your walk-in customer services
+                Cunga serivisi z'abakiriya baza ku isonga
               </p>
             </div>
           </div>
@@ -148,10 +148,10 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none"
               >
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all">Imiterere Yose</option>
+                <option value="pending">Bitegerejwe</option>
+                <option value="completed">Byarangiye</option>
+                <option value="cancelled">Byahagaritswe</option>
               </select>
             </div>
           </div>
@@ -169,14 +169,14 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
               </div>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              No walk-in customers found
+              Nta bakiriya baza ku isonga babonetse
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-              Walk-in customers will appear here when added. Start by adding your first walk-in customer!
+              Abakiriya baza ku isonga bazagaragara hano iyo bongeyewe. Tangira wongeraho umukiriya wa mbere uje ku isonga!
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <AlertCircle className="h-4 w-4" />
-              <span>Try adjusting your date or status filters</span>
+              <span>Gerageza guhindura muyunguruzi w'itariki cyangwa imiterere</span>
             </div>
           </div>
         ) : (
@@ -282,7 +282,7 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
                           className="flex-1 sm:flex-none px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
                         >
                           <XCircle className="h-4 w-4" />
-                          <span className="hidden sm:inline">Cancel</span>
+                          <span className="hidden sm:inline">Hagarika</span>
                         </button>
                         
                         <button
@@ -290,7 +290,7 @@ const WalkInCustomerList: React.FC<WalkInCustomerListProps> = ({ showSalonView =
                           className="flex-1 sm:flex-none px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2"
                         >
                           <Trash2 className="h-4 w-4" />
-                          <span className="hidden sm:inline">Delete</span>
+                          <span className="hidden sm:inline">Siba</span>
                         </button>
                       </div>
                     </div>

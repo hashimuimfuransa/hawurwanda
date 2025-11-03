@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
+import { useTranslationStore } from '../stores/translationStore';
 import toast from 'react-hot-toast';
 import {
   User,
@@ -33,6 +34,7 @@ interface RegisterForm {
 const Register: React.FC = () => {
   const { register: registerUser } = useAuthStore();
   const { isDarkMode } = useThemeStore();
+  const { language, t } = useTranslationStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,28 +50,28 @@ const Register: React.FC = () => {
   const password = watch('password');
 
   const highlights = [
-    { id: 'members', value: '8K+', label: 'Active members' },
-    { id: 'partners', value: '120+', label: 'Partner salons' },
-    { id: 'districts', value: '30', label: 'Districts served' }
+    { id: 'members', value: '8K+', labelKey: 'activeMembers' },
+    { id: 'partners', value: '120+', labelKey: 'partnerSalons' },
+    { id: 'districts', value: '30', labelKey: 'districtsServed' }
   ];
 
   const benefits = [
     {
       id: 'training',
-      title: 'Professional training',
-      description: 'Access workshops, certifications, and mentors tailored to your craft.',
+      titleKey: 'professionalTraining',
+      descriptionKey: 'professionalTrainingDesc',
       icon: CheckCircle
     },
     {
       id: 'community',
-      title: 'Premium community',
-      description: 'Connect with salon owners, creative leaders, and nationwide partners.',
+      titleKey: 'premiumCommunity',
+      descriptionKey: 'premiumCommunityDesc',
       icon: Users
     },
     {
       id: 'support',
-      title: 'All-round support',
-      description: 'Unlock guidance on finance, legal matters, and wellbeing whenever you need it.',
+      titleKey: 'allRoundSupport',
+      descriptionKey: 'allRoundSupportDesc',
       icon: ShieldCheck
     }
   ];
@@ -77,18 +79,18 @@ const Register: React.FC = () => {
   const steps = [
     {
       id: 'profile',
-      title: 'Complete your profile',
-      description: 'Share who you are, your contact details, and your professional focus.'
+      titleKey: 'completeProfile',
+      descriptionKey: 'completeProfileDesc'
     },
     {
       id: 'choose',
-      title: 'Choose your role',
-      description: 'Select the membership that matches how you contribute to the industry.'
+      titleKey: 'chooseRole',
+      descriptionKey: 'chooseRoleDesc'
     },
     {
       id: 'launch',
-      title: 'Activate your account',
-      description: 'Start exploring programs, events, and tailored growth opportunities.'
+      titleKey: 'activateAccount',
+      descriptionKey: 'activateAccountDesc'
     }
   ];
 
@@ -97,7 +99,7 @@ const Register: React.FC = () => {
     try {
       const { confirmPassword, ...userData } = data;
       await registerUser(userData);
-      toast.success('Registration successful!');
+      toast.success(t('registrationSuccessful', language));
       if (data.role === 'owner') {
         navigate('/dashboard/owner');
       } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(data.role)) {
@@ -131,14 +133,14 @@ const Register: React.FC = () => {
           <div className="order-2 space-y-10 lg:order-1">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-6 py-3 text-xs font-semibold uppercase tracking-[0.32em] text-slate-600 shadow-lg shadow-emerald-500/10 backdrop-blur dark:bg-slate-900/70 dark:text-slate-200">
               <Sparkles className="h-4 w-4 text-emerald-500" />
-              HAWU Collective
+              {t('hawuCollective', language)}
             </div>
             <div className="space-y-5">
               <h1 className="text-4xl font-extrabold leading-tight text-slate-900 sm:text-5xl md:text-6xl dark:text-slate-100">
-                Build your future with HAWU
+                {t('buildYourFuture', language)}
               </h1>
               <p className="text-lg text-slate-600 sm:text-xl dark:text-slate-300">
-                Join Rwanda’s vibrant network of stylists, barbers, therapists, and beauty entrepreneurs. Unlock mentorship, resources, and opportunities designed for your next leap.
+                {t('joinRwandaNetwork', language)}
               </p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -146,14 +148,14 @@ const Register: React.FC = () => {
                 <div key={item.id} className="rounded-2xl border border-white/50 bg-white/75 px-6 py-5 text-center shadow-xl shadow-emerald-500/10 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/70">
                   <p className="text-3xl font-bold text-slate-900 dark:text-white">{item.value}</p>
                   <p className="mt-2 text-xs font-semibold uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
-                    {item.label}
+                    {t(item.labelKey, language)}
                   </p>
                 </div>
               ))}
             </div>
             <div className="rounded-3xl border border-white/50 bg-white/80 p-8 shadow-xl shadow-emerald-500/10 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/70">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-300">
-                Why join HAWU
+                {t('whyJoinHawu', language)}
               </h3>
               <div className="mt-6 grid gap-6">
                 {benefits.map((item) => {
@@ -164,8 +166,8 @@ const Register: React.FC = () => {
                         <Icon className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{item.title}</p>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
+                        <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{t(item.titleKey, language)}</p>
+                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t(item.descriptionKey, language)}</p>
                       </div>
                     </div>
                   );
@@ -174,7 +176,7 @@ const Register: React.FC = () => {
             </div>
             <div className="rounded-3xl border border-white/50 bg-white/80 p-8 shadow-xl shadow-emerald-500/10 backdrop-blur dark:border-slate-800/70 dark:bg-slate-900/70">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-300">
-                How registration works
+                {t('howRegistrationWorks', language)}
               </h3>
               <div className="mt-6 space-y-5">
                 {steps.map((step, index) => (
@@ -183,8 +185,8 @@ const Register: React.FC = () => {
                       <Star className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{index + 1}. {step.title}</p>
-                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+                      <p className="text-base font-semibold text-slate-900 dark:text-slate-100">{index + 1}. {t(step.titleKey, language)}</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t(step.descriptionKey, language)}</p>
                     </div>
                   </div>
                 ))}
@@ -200,17 +202,17 @@ const Register: React.FC = () => {
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100/70 px-4 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-200">
                   <Sparkles className="h-4 w-4" />
-                  Create your account
+                  {t('createAccountMsg', language)}
                 </div>
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Register to unlock member benefits</h2>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Fill in your details to access tailored programs, events, and exclusive partner perks.</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('registerToUnlock', language)}</h2>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">{t('fillInDetails', language)}</p>
                 </div>
               </div>
               <form className="space-y-7" onSubmit={handleSubmit(onSubmit)}>
                 <div>
                   <label htmlFor="name" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Full name
+                    {t('fullName', language)}
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -218,12 +220,12 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register('name', {
-                        required: 'Name is required',
-                        minLength: { value: 2, message: 'Name must be at least 2 characters' },
+                        required: t('nameRequired', language),
+                        minLength: { value: 2, message: t('nameMinLength', language) },
                       })}
                       type="text"
                       className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      placeholder="Enter your full name"
+                      placeholder={t('enterFullName', language)}
                     />
                   </div>
                   {errors.name && (
@@ -235,7 +237,7 @@ const Register: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Email address
+                    {t('emailAddress', language)}
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -243,15 +245,15 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register('email', {
-                        required: 'Email is required',
+                        required: t('emailRequired', language),
                         pattern: {
                           value: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
-                          message: 'Please enter a valid email',
+                          message: t('invalidEmailFormat', language),
                         },
                       })}
                       type="email"
                       className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      placeholder="Enter your email address"
+                      placeholder={t('enterEmail', language)}
                     />
                   </div>
                   {errors.email && (
@@ -263,7 +265,7 @@ const Register: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="phone" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Phone number
+                    {t('phoneNumber', language)}
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -271,15 +273,15 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register('phone', {
-                        required: 'Phone number is required',
+                        required: t('phoneRequired', language),
                         pattern: {
                           value: /^(\+250|250|0)?[0-9]{9}$/,
-                          message: 'Please enter a valid Rwandan phone number',
+                          message: t('invalidPhoneNumber', language),
                         },
                       })}
                       type="tel"
                       className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-4 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      placeholder="Enter your phone number (+250...)"
+                      placeholder={t('enterPhoneNumber', language)}
                     />
                   </div>
                   {errors.phone && (
@@ -291,23 +293,23 @@ const Register: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="role" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Account type
+                    {t('accountType', language)}
                   </label>
                   <select
-                    {...register('role', { required: 'Please select an account type' })}
+                    {...register('role', { required: t('roleRequired', language) })}
                     defaultValue=""
                     className="w-full rounded-2xl border border-slate-200 bg-white py-4 px-4 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                   >
-                    <option value="" disabled>Select account type</option>
-                    <option value="client">Client · Book appointments</option>
-                    <option value="barber">Barber · Offer grooming services</option>
-                    <option value="hairstylist">Hair Stylist · Craft signature looks</option>
-                    <option value="nail_technician">Nail Technician · Elevate nail artistry</option>
-                    <option value="massage_therapist">Massage Therapist · Deliver wellness care</option>
-                    <option value="esthetician">Esthetician · Lead skincare journeys</option>
-                    <option value="receptionist">Receptionist · Orchestrate the salon experience</option>
-                    <option value="manager">Manager · Drive daily operations</option>
-                    <option value="owner">Salon Owner · Build and scale your brand</option>
+                    <option value="" disabled>{t('selectAccountType', language)}</option>
+                    <option value="client">{t('client', language)}</option>
+                    <option value="barber">{t('barber', language)}</option>
+                    <option value="hairstylist">{t('hairstylist', language)}</option>
+                    <option value="nail_technician">{t('nailTechnician', language)}</option>
+                    <option value="massage_therapist">{t('massageTherapist', language)}</option>
+                    <option value="esthetician">{t('esthetician', language)}</option>
+                    <option value="receptionist">{t('receptionist', language)}</option>
+                    <option value="manager">{t('manager', language)}</option>
+                    <option value="owner">{t('salonOwner', language)}</option>
                   </select>
                   {errors.role && (
                     <p className="mt-2 flex items-center text-sm text-red-500">
@@ -318,7 +320,7 @@ const Register: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Password
+                    {t('password', language)}
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -326,8 +328,8 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register('password', {
-                        required: 'Password is required',
-                        minLength: { value: 6, message: 'Password must be at least 6 characters' },
+                        required: t('passwordRequired', language),
+                        minLength: { value: 6, message: t('passwordMinLength', language) },
                       })}
                       type={showPassword ? 'text' : 'password'}
                       className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-12 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
@@ -354,7 +356,7 @@ const Register: React.FC = () => {
                 </div>
                 <div>
                   <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Confirm password
+                    {t('confirmPassword', language)}
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -362,12 +364,12 @@ const Register: React.FC = () => {
                     </div>
                     <input
                       {...register('confirmPassword', {
-                        required: 'Please confirm your password',
-                        validate: (value) => value === password || 'Passwords do not match',
+                        required: t('confirmPasswordRequired', language),
+                        validate: (value) => value === password || t('passwordsDoNotMatch', language),
                       })}
                       type={showConfirmPassword ? 'text' : 'password'}
                       className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-12 pr-12 text-slate-900 outline-none transition focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                      placeholder="Confirm your password"
+                      placeholder={t('confirmPasswordPlaceholder', language)}
                     />
                     <button
                       type="button"
@@ -396,23 +398,23 @@ const Register: React.FC = () => {
                   {isLoading ? (
                     <div className="flex items-center">
                       <div className="mr-2 h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
-                      Creating account...
+                      {t('creatingAccount', language)}
                     </div>
                   ) : (
                     <>
-                      Create account
+                      {t('createAccount', language)}
                       <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                     </>
                   )}
                 </button>
                 <div className="space-y-4 text-center">
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    By continuing you agree to uphold HAWU community standards and professional guidelines.
+                    {t('agreeToCommunityStandards', language)}
                   </p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
-                    Already have an account?{' '}
+                    {t('alreadyHaveAccount', language)}{' '}
                     <Link to="/login" className="font-semibold text-emerald-600 transition hover:text-emerald-500 dark:text-emerald-300">
-                      Sign in here
+                      {t('signInHere', language)}
                     </Link>
                   </p>
                 </div>

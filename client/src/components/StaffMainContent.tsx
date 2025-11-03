@@ -19,9 +19,11 @@ import {
   Calendar,
   Clock,
   DollarSign,
-  MessageSquare
+  MessageSquare,
+  Globe
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslationStore } from '../stores/translationStore';
 
 interface StaffMainContentProps {
   children: React.ReactNode;
@@ -39,6 +41,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
   salon
 }) => {
   const { user, logout } = useAuthStore();
+  const { language, toggleLanguage, t } = useTranslationStore();
   const navigate = useNavigate();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationMenuOpen, setNotificationMenuOpen] = useState(false);
@@ -186,7 +189,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                 </div>
                 <input
                   type="text"
-                  placeholder="Search..."
+                  placeholder="Shakisha..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-48 lg:w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl leading-5 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm transition-all duration-200"
@@ -224,7 +227,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                   <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-xl py-2 z-50 border border-gray-200 dark:border-gray-700 max-h-96 overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Amamenyesha</h3>
                         <span className="text-sm text-gray-500 dark:text-gray-400">{unreadCount} unread</span>
                       </div>
                     </div>
@@ -294,6 +297,16 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                 </>
               )}
             </div>
+
+            {/* Language Toggle Button */}
+            <button
+              onClick={() => toggleLanguage()}
+              className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg transition-all duration-200 whitespace-nowrap font-medium text-sm"
+              title={t('languageToggle')}
+            >
+              <Globe className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">{language === 'en' ? 'EN' : 'RW'}</span>
+            </button>
 
             {/* User Menu */}
             <div className="relative" ref={userMenuRef}>

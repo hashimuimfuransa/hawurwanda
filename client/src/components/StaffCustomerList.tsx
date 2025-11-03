@@ -205,11 +205,11 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
             </div>
             <div className="min-w-0">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 truncate">
-                Customer List
+                Urutonde rw'Abakiriya
                 <Sparkles className="h-4 w-4 text-blue-500 flex-shrink-0" />
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                Manage all customers assigned to you
+                Cunga abakiriya bose wahawwe
               </p>
             </div>
           </div>
@@ -220,7 +220,7 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search customers..."
+                placeholder="Shakisha abakiriya..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-full text-sm"
@@ -245,11 +245,11 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none text-xs sm:text-sm w-full"
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="all">Imiterere Yose</option>
+                  <option value="pending">Bitegerejwe</option>
+                  <option value="confirmed">Byemejwe</option>
+                  <option value="completed">Byarangiye</option>
+                  <option value="cancelled">Byahagaritswe</option>
                 </select>
               </div>
 
@@ -260,9 +260,9 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
                   onChange={(e) => setServiceStatusFilter(e.target.value)}
                   className="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none text-xs sm:text-sm w-full"
                 >
-                  <option value="all">All Customers</option>
-                  <option value="served">Served</option>
-                  <option value="not-served">Not Served</option>
+                  <option value="all">Abakiriya Bose</option>
+                  <option value="served">Basabwe</option>
+                  <option value="not-served">Ntibasabwe</option>
                 </select>
               </div>
             </div>
@@ -275,7 +275,7 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
         <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Customers</p>
+              <p className="text-blue-100 text-xs sm:text-sm font-medium">Abakiriya Bose</p>
               <p className="text-lg sm:text-2xl font-bold">{allCustomers.length}</p>
             </div>
             <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-200 flex-shrink-0" />
@@ -285,7 +285,7 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
         <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-green-100 text-xs sm:text-sm font-medium">Served</p>
+              <p className="text-green-100 text-xs sm:text-sm font-medium">Basabwe</p>
               <p className="text-lg sm:text-2xl font-bold">{allCustomers.filter(c => c.isServed).length}</p>
             </div>
             <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-200 flex-shrink-0" />
@@ -295,7 +295,7 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
         <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-white">
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-yellow-100 text-xs sm:text-sm font-medium">Not Served</p>
+              <p className="text-yellow-100 text-xs sm:text-sm font-medium">Ntibasabwe</p>
               <p className="text-lg sm:text-2xl font-bold">{allCustomers.filter(c => !c.isServed).length}</p>
             </div>
             <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-200 flex-shrink-0" />

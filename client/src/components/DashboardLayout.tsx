@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { 
   Menu,
   X,
@@ -9,7 +10,8 @@ import {
   User,
   LogOut,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Globe
 } from 'lucide-react';
 
 interface SidebarItem {
@@ -41,6 +43,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   onNotificationClick
 }) => {
   const { user, logout } = useAuthStore();
+  const { language, toggleLanguage, t } = useTranslationStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -281,6 +284,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 <Settings className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-600" />
                                 Preferences
                               </button>
+                              <button
+                                onClick={() => {
+                                  toggleLanguage();
+                                  setUserMenuOpen(false);
+                                }}
+                                className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                              >
+                                <Globe className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-600" />
+                                {t('languageToggle')} ({language === 'en' ? 'EN' : 'RW'})
+                              </button>
                               <hr className="my-2 border-slate-100" />
                               <button
                                 onClick={() => {
@@ -383,6 +396,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         >
                           <Settings className="h-4 w-4 mr-4 text-slate-400 group-hover:text-blue-600" />
                           Preferences
+                        </button>
+                        <button
+                          onClick={toggleLanguage}
+                          className="flex items-center w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                        >
+                          <Globe className="h-4 w-4 mr-4 text-slate-400 group-hover:text-blue-600" />
+                          {t('languageToggle')} ({language === 'en' ? 'EN' : 'RW'})
                         </button>
                         <hr className="my-3 border-slate-100" />
                         <button

@@ -26,15 +26,15 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
   const location = useLocation();
 
   const navigation = [
-    { name: 'Overview', href: '/dashboard/staff', icon: LayoutDashboard, current: location.pathname === '/dashboard/staff' },
-    { name: 'Bookings', href: '/dashboard/staff/bookings', icon: Calendar, current: location.pathname === '/dashboard/staff/bookings' },
-    { name: 'Customers', href: '/dashboard/staff/customers', icon: Users, current: location.pathname === '/dashboard/staff/customers' },
-    { name: 'Walk-ins', href: '/dashboard/staff/walkins', icon: UserPlus, current: location.pathname === '/dashboard/staff/walkins' },
-    { name: 'Earnings', href: '/dashboard/staff/earnings', icon: BarChart3, current: location.pathname === '/dashboard/staff/earnings' },
-    { name: 'Schedule', href: '/dashboard/staff/schedule', icon: Clock, current: location.pathname === '/dashboard/staff/schedule' },
-    { name: 'Digital Card', href: '/dashboard/staff/digital-card', icon: QrCode, current: location.pathname === '/dashboard/staff/digital-card' },
-    { name: 'Notifications', href: '/dashboard/staff/notifications', icon: Bell, current: location.pathname === '/dashboard/staff/notifications' },
-    { name: 'Settings', href: '/dashboard/staff/settings', icon: Settings, current: location.pathname === '/dashboard/staff/settings' },
+    { name: 'Inshamake', href: '/dashboard/staff', icon: LayoutDashboard, current: location.pathname === '/dashboard/staff' },
+    { name: 'Ubusabe', href: '/dashboard/staff/bookings', icon: Calendar, current: location.pathname === '/dashboard/staff/bookings' },
+    { name: 'Abakiriya', href: '/dashboard/staff/customers', icon: Users, current: location.pathname === '/dashboard/staff/customers' },
+    { name: 'Abaza ku Isonga', href: '/dashboard/staff/walkins', icon: UserPlus, current: location.pathname === '/dashboard/staff/walkins' },
+    { name: 'Amafaranga', href: '/dashboard/staff/earnings', icon: BarChart3, current: location.pathname === '/dashboard/staff/earnings' },
+    { name: 'Igenamigambi', href: '/dashboard/staff/schedule', icon: Clock, current: location.pathname === '/dashboard/staff/schedule' },
+    { name: 'Ikarita ya Dijitali', href: '/dashboard/staff/digital-card', icon: QrCode, current: location.pathname === '/dashboard/staff/digital-card' },
+    { name: 'Amamenyesha', href: '/dashboard/staff/notifications', icon: Bell, current: location.pathname === '/dashboard/staff/notifications' },
+    { name: 'Igenamiterere', href: '/dashboard/staff/settings', icon: Settings, current: location.pathname === '/dashboard/staff/settings' },
   ];
 
   const handleLogout = () => {
@@ -63,7 +63,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Home className="w-6 h-6 text-white" />
               </div>
-              <span className="ml-3 text-xl font-bold text-white">Staff Portal</span>
+              <span className="ml-3 text-xl font-bold text-white">Urubuga rw'Abakozi</span>
             </div>
             <button
               onClick={onClose}
@@ -129,7 +129,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
               className="group flex items-center w-full px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-red-600 hover:text-white transition-all duration-200"
             >
               <LogOut className="mr-4 h-5 w-5 text-slate-400 group-hover:text-white" />
-              Sign out
+              Sohoka
             </button>
           </div>
         </div>

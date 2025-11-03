@@ -92,9 +92,9 @@ const DashboardStaff: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-      toast.success('QR code downloaded');
+      toast.success('Kode ya QR yamanutse');
     } catch (_error) {
-      toast.error('Unable to download QR code');
+      toast.error('Ntibishoboka kumanura kode ya QR');
     } finally {
       setLoading(false);
     }
@@ -175,9 +175,9 @@ const DashboardStaff: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('Card downloaded');
+      toast.success('Ikarita yamanutse');
     } catch (_error) {
-      toast.error('Unable to download card');
+      toast.error('Ntibishoboka kumanura ikarita');
     }
   }, []);
 
@@ -233,7 +233,7 @@ const DashboardStaff: React.FC = () => {
       frontCtx.textAlign = 'left';
       frontCtx.textBaseline = 'alphabetic';
       frontCtx.font = '600 32px "Poppins","Helvetica",sans-serif';
-      frontCtx.fillText(user?.name || 'Staff Member', 36, 96, width - 220);
+      frontCtx.fillText(user?.name || 'Umukozi', 36, 96, width - 220);
       frontCtx.font = '500 18px "Poppins","Helvetica",sans-serif';
       frontCtx.fillText(user?.role?.replace(/_/g, ' ').toUpperCase() || 'ROLE', 36, 132, width - 240);
       frontCtx.fillStyle = 'rgba(226,232,240,0.82)';
@@ -273,7 +273,7 @@ const DashboardStaff: React.FC = () => {
       frontCtx.fill();
       frontCtx.fillStyle = '#ffffff';
       frontCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
-      frontCtx.fillText('Salon', 56, height - 62, width - 112);
+      frontCtx.fillText('Isaloni', 56, height - 62, width - 112);
       frontCtx.font = '500 16px "Poppins","Helvetica",sans-serif';
       drawWrappedText(frontCtx, salonData?.name || 'Hawu Rwanda Salon', 56, height - 36, width - 112, 22);
 
@@ -303,7 +303,7 @@ const DashboardStaff: React.FC = () => {
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '700 26px "Poppins","Helvetica",sans-serif';
       backCtx.textAlign = 'left';
-      backCtx.fillText(user?.name || 'Staff Member', 36, 60, width - 72);
+      backCtx.fillText(user?.name || 'Umukozi', 36, 60, width - 72);
       backCtx.fillStyle = '#475569';
       backCtx.font = '500 16px "Poppins","Helvetica",sans-serif';
       backCtx.fillText(user?.role ? user.role.replace(/_/g, ' ').toUpperCase() : 'ROLE', 36, 88, width - 72);
@@ -348,7 +348,7 @@ const DashboardStaff: React.FC = () => {
         backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
         backCtx.textAlign = 'center';
         backCtx.textBaseline = 'middle';
-        backCtx.fillText('QR unavailable', qrX + qrSize / 2, qrY + qrSize / 2);
+        backCtx.fillText('QR ntiboneka', qrX + qrSize / 2, qrY + qrSize / 2);
         backCtx.textAlign = 'left';
         backCtx.textBaseline = 'alphabetic';
       }
@@ -356,8 +356,8 @@ const DashboardStaff: React.FC = () => {
       backCtx.textAlign = 'center';
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '600 14px "Poppins","Helvetica",sans-serif';
-      backCtx.fillText('Scan to view profile &', qrX + qrSize / 2, qrY + qrSize + 18, width - 72);
-      backCtx.fillText('book appointments', qrX + qrSize / 2, qrY + qrSize + 36, width - 72);
+      backCtx.fillText('Sikana kureba profayili &', qrX + qrSize / 2, qrY + qrSize + 18, width - 72);
+      backCtx.fillText('gufata amafunguro', qrX + qrSize / 2, qrY + qrSize + 36, width - 72);
       backCtx.textAlign = 'left';
 
       let infoY = headerHeight + 36;
@@ -365,15 +365,15 @@ const DashboardStaff: React.FC = () => {
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
       if (user.phone) {
-        backCtx.fillText(`Phone: ${user.phone}`, 36, infoY, infoWidth);
+        backCtx.fillText(`Telefoni: ${user.phone}`, 36, infoY, infoWidth);
         infoY += 28;
       }
       if (user.email) {
-        backCtx.fillText(`Email: ${user.email}`, 36, infoY, infoWidth);
+        backCtx.fillText(`Imeyili: ${user.email}`, 36, infoY, infoWidth);
         infoY += 28;
       }
       if (salonData?.name) {
-        backCtx.fillText(`Salon: ${salonData.name}`, 36, infoY, infoWidth);
+        backCtx.fillText(`Isaloni: ${salonData.name}`, 36, infoY, infoWidth);
         infoY += 28;
       }
       if (shortUrl) {
@@ -411,13 +411,13 @@ const DashboardStaff: React.FC = () => {
     mutationFn: ({ bookingId, status, notes }: { bookingId: string; status: string; notes?: string }) =>
       bookingService.updateBookingStatus(bookingId, status, notes),
     onSuccess: () => {
-      toast.success('Booking status updated!');
+      toast.success('Imiterere y\'ubwishingizi yavuguruwe!');
       queryClient.invalidateQueries({ queryKey: ['staff-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
       queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update booking');
+      toast.error(error.response?.data?.message || 'Ntibishobotse kuvugurura ubwishingizi');
     },
   });
 
@@ -431,11 +431,11 @@ const DashboardStaff: React.FC = () => {
       }
     },
     onSuccess: () => {
-      toast.success('Availability updated!');
+      toast.success('Ubushobozi bwavuguruwe!');
       queryClient.invalidateQueries({ queryKey: ['staff-availability'] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update availability');
+      toast.error(error.response?.data?.message || 'Ntibishobotse kuvugurura ubushobozi');
     },
   });
 
@@ -461,7 +461,7 @@ const DashboardStaff: React.FC = () => {
   };
 
   const handlePaymentRecord = async (bookingId: string) => {
-    toast('Payment recording feature coming soon!');
+    toast('Igikorwa cyo kwandika ubwishyu kizaza vuba!');
   };
 
   const handleBlockSlot = (slot: string) => {
@@ -477,7 +477,7 @@ const DashboardStaff: React.FC = () => {
       <div className="min-h-screen py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center py-20">
-            <p className="text-red-600">Access denied. Staff members only.</p>
+            <p className="text-red-600">Ntibishoboka kwinjira. Abakozi gusa.</p>
           </div>
         </div>
       </div>
@@ -536,7 +536,7 @@ const DashboardStaff: React.FC = () => {
       {/* Error State */}
       {bookingsError && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-          <p className="text-red-600 dark:text-red-400">Error loading bookings: {bookingsError.message}</p>
+          <p className="text-red-600 dark:text-red-400">Ikosa mu gutangiza ubwishingizi: {bookingsError.message}</p>
         </div>
       )}
 
@@ -545,7 +545,7 @@ const DashboardStaff: React.FC = () => {
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-600">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
             <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
-            Today's Bookings
+            Ubusabe bw'Uyu Munsi
           </h2>
         </div>
         <div className="p-4 sm:p-6">
@@ -554,8 +554,8 @@ const DashboardStaff: React.FC = () => {
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                 <Calendar className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500" />
               </div>
-              <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg font-medium">No bookings for today</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">You have {allBookings.length} total bookings</p>
+              <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg font-medium">Nta busabe bw'uyu munsi</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Ufite ubusabe {allBookings.length} bwose</p>
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4">
@@ -578,7 +578,7 @@ const DashboardStaff: React.FC = () => {
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-600">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
             <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 mr-2 sm:mr-3" />
-            Upcoming Bookings
+            Ubusabe Buzaza
           </h2>
         </div>
         <div className="p-4 sm:p-6">
@@ -587,8 +587,8 @@ const DashboardStaff: React.FC = () => {
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
                 <Clock className="h-8 w-8 sm:h-10 sm:w-10 text-purple-500" />
               </div>
-              <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg font-medium">No upcoming bookings</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Check back later for new appointments</p>
+              <p className="text-gray-600 dark:text-gray-300 text-base sm:text-lg font-medium">Nta mafunguro azaza</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Garuka nyuma kureba amafunguro mashya</p>
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4">
@@ -612,7 +612,7 @@ const DashboardStaff: React.FC = () => {
           <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-200 dark:border-gray-600">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
               <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 mr-2 sm:mr-3" />
-              Pending Bookings
+              Ubusabe Bwitegereje
             </h2>
           </div>
           <div className="p-4 sm:p-6">
@@ -638,7 +638,7 @@ const DashboardStaff: React.FC = () => {
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-4 sm:p-6">
       <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center">
         <QrCode className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 mr-2 sm:mr-3" />
-        Digital Profile Card
+        Ikarita y'Profayili ya Dijitali
       </h2>
       <div className="mt-4 grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-5">
         <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-3xl text-white p-5 shadow-xl">
@@ -652,7 +652,7 @@ const DashboardStaff: React.FC = () => {
                 )}
               </div>
               <div>
-                <p className="text-xs text-blue-200 uppercase tracking-wider">Staff Member</p>
+                <p className="text-xs text-blue-200 uppercase tracking-wider">Umukozi</p>
                 <h3 className="text-xl font-bold">{user.name}</h3>
                 <p className="text-xs text-blue-200 capitalize">{user.role?.replace(/_/g, ' ')}</p>
               </div>
@@ -663,9 +663,9 @@ const DashboardStaff: React.FC = () => {
           </div>
           <div className="bg-white rounded-2xl p-3 shadow-inner">
             {staffQrUrl ? (
-              <img src={staffQrUrl} alt="Staff QR" className="w-full rounded-xl bg-white" />
+              <img src={staffQrUrl} alt="Kode ya QR y'Umukozi" className="w-full rounded-xl bg-white" />
             ) : (
-              <div className="h-48 flex items-center justify-center text-slate-500">QR unavailable</div>
+              <div className="h-48 flex items-center justify-center text-slate-500">QR ntiboneka</div>
             )}
           </div>
           <button
@@ -678,7 +678,7 @@ const DashboardStaff: React.FC = () => {
             ) : (
               <Download className="h-5 w-5 mr-3" />
             )}
-            Download QR Code
+            Manura Kode ya QR
           </button>
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
@@ -687,7 +687,7 @@ const DashboardStaff: React.FC = () => {
               className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 via-sky-500 to-blue-500 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               <Download className="h-5 w-5 mr-2" />
-              Download Front
+              Manura Imbere
             </button>
             <button
               type="button"
@@ -695,13 +695,13 @@ const DashboardStaff: React.FC = () => {
               className="inline-flex items-center justify-center px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               <Download className="h-5 w-5 mr-2" />
-              Download Back
+              Manura Inyuma
             </button>
           </div>
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-gray-200 dark:border-gray-700 p-5 shadow-inner">
-          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Card Preview</h4>
+          <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Igaragaza Ikarita</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-3xl overflow-hidden shadow-lg bg-white p-4 flex justify-center">
               <div className="relative w-full max-w-[30rem] mx-auto">
@@ -726,13 +726,13 @@ const DashboardStaff: React.FC = () => {
   const renderWalkIns = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-gray-900">Walk-in Customers</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Abakiriya Baza Ku Isonga</h2>
         <button
           onClick={() => setShowWalkInForm(true)}
           className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors flex items-center"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Add Walk-in Customer
+          Ongeraho Umukiriya Uje Ku Isonga
         </button>
       </div>
       <WalkInCustomerList />
@@ -750,14 +750,14 @@ const DashboardStaff: React.FC = () => {
   const renderSchedule = () => (
     <div className="bg-white rounded-lg shadow">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Manage Schedule</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Gucunga Igenamigambi</h2>
       </div>
       <div className="p-6">
         <div className="text-center py-8">
           <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Schedule management coming soon!</p>
+          <p className="text-gray-600">Gucunga igenamigambi kizaza vuba!</p>
           <p className="text-sm text-gray-500 mt-2">
-            You'll be able to block/unblock time slots and manage your availability.
+            Uzashobora gufunga/gufungura amasaha n'gucunga ubushobozi bwawe.
           </p>
         </div>
       </div>
@@ -768,13 +768,13 @@ const DashboardStaff: React.FC = () => {
     <div className="bg-white rounded-lg shadow">
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Amamenyesha</h2>
           {notificationsData?.data?.notifications?.filter((n: any) => !n.read).length > 0 && (
             <button
               onClick={() => markAllNotificationsReadMutation.mutate()}
               className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
             >
-              Mark all read
+              Soma yose
             </button>
           )}
         </div>
@@ -783,9 +783,9 @@ const DashboardStaff: React.FC = () => {
         {notificationsData?.data?.notifications?.length === 0 ? (
           <div className="text-center py-12">
             <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No notifications yet</p>
+            <p className="text-gray-600">Nta menyesha na kimwe</p>
             <p className="text-sm text-gray-500 mt-2">
-              You'll receive notifications about bookings, payments, and updates here.
+              Uzahabwa amamenyesha ajyanye n'amafunguro, kwishyura, n'amavugurura hano.
             </p>
           </div>
         ) : (
@@ -823,14 +823,14 @@ const DashboardStaff: React.FC = () => {
   const renderSettings = () => (
     <div className="bg-white rounded-lg shadow">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-lg font-semibold text-gray-900">Staff Settings</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Igenamiterere ry'Abakozi</h2>
       </div>
       <div className="p-6">
         <div className="text-center py-8">
           <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">Settings panel coming soon!</p>
+          <p className="text-gray-600">Igenamiterere rizaza vuba!</p>
           <p className="text-sm text-gray-500 mt-2">
-            You'll be able to update your profile, services, and preferences.
+            Uzashobora kuvugurura profayili yawe, serivisi, n'ibyo ukunda.
           </p>
         </div>
       </div>
@@ -858,8 +858,8 @@ const DashboardStaff: React.FC = () => {
       {/* Main Content */}
       <StaffMainContent 
         onMenuClick={() => setSidebarOpen(true)}
-        title="Staff Dashboard"
-        subtitle={`Welcome back, ${user.name}!`}
+        title="Ikibaho cy'Abakozi"
+        subtitle={`Murakaza neza, ${user.name}!`}
         salon={salon?.data}
       >
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">

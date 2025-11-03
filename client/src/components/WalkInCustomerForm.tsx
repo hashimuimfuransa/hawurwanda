@@ -37,7 +37,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
   const createWalkInMutation = useMutation({
     mutationFn: walkInCustomerService.createWalkIn,
     onSuccess: () => {
-      toast.success('Walk-in customer added successfully!');
+      toast.success('Umukiriya uje ku isonga yongeyewe neza!');
       queryClient.invalidateQueries({ queryKey: ['walk-in-customers'] });
       queryClient.invalidateQueries({ queryKey: ['staff-earnings-summary'] });
       queryClient.invalidateQueries({ queryKey: ['staff-earnings-today'] });
@@ -52,7 +52,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
     e.preventDefault();
     
     if (!formData.clientName || !formData.clientPhone || !formData.serviceId || !formData.amount) {
-      toast.error('Please fill in all required fields');
+      toast.error('Andika ibisabwa byose');
       return;
     }
 
@@ -61,12 +61,12 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
     const amountValue = parseFloat(formData.amount);
 
     if (!/^((\+250)|250|0)?[0-9]{9}$/.test(normalizedPhone)) {
-      toast.error('Please enter a valid Rwandan phone number');
+      toast.error('Andika numero ya telefone yemewe ya Rwanda');
       return;
     }
 
     if (Number.isNaN(amountValue) || amountValue < 0) {
-      toast.error('Please enter a valid amount');
+      toast.error('Andika amafaranga yemewe');
       return;
     }
 
@@ -102,7 +102,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Add Walk-in Customer</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Ongeraho Umukiriya Uje Ku Isonga</h2>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -116,14 +116,14 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <User className="h-4 w-4 inline mr-2" />
-              Client Name *
+              Izina ry'Umukiriya *
             </label>
             <input
               type="text"
               value={formData.clientName}
               onChange={(e) => setFormData(prev => ({ ...prev, clientName: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter client name"
+              placeholder="Andika izina ry'umukiriya"
               required
             />
           </div>
@@ -132,7 +132,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Phone className="h-4 w-4 inline mr-2" />
-              Phone Number *
+              Numero ya Telefone *
             </label>
             <input
               type="tel"
@@ -148,7 +148,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Mail className="h-4 w-4 inline mr-2" />
-              Email (Optional)
+              Imeyili (Bitari ngombwa)
             </label>
             <input
               type="email"
@@ -162,7 +162,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           {/* Service Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Service *
+              Serivisi *
             </label>
             <select
               value={formData.serviceId}
@@ -170,7 +170,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
-              <option value="">Select a service</option>
+              <option value="">Hitamo serivisi</option>
               {salonData?.data?.services?.map((service: any) => (
                 <option key={service._id} value={service._id}>
                   {service.name} - {service.price} RWF
@@ -183,7 +183,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <DollarSign className="h-4 w-4 inline mr-2" />
-              Amount (RWF) *
+              Amafaranga (RWF) *
             </label>
             <input
               type="number"
@@ -201,7 +201,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <CreditCard className="h-4 w-4 inline mr-2" />
-              Payment Method *
+              Uburyo bwo Kwishyura *
             </label>
             <div className="flex space-x-4">
               <label className="flex items-center">
@@ -212,7 +212,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
                   onChange={(e) => setFormData(prev => ({ ...prev, paymentMethod: e.target.value as 'cash' | 'airtel' }))}
                   className="mr-2"
                 />
-                Cash
+                Amafaranga
               </label>
               <label className="flex items-center">
                 <input
@@ -230,14 +230,14 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
           {/* Notes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Notes
+              Ibisobanuro
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               rows={3}
-              placeholder="Any additional notes..."
+              placeholder="Ibisobanuro byinshi..."
               maxLength={300}
             />
           </div>
@@ -249,7 +249,7 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
               onClick={onClose}
               className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
             >
-              Cancel
+              Hagarika
             </button>
             <button
               type="submit"
@@ -259,12 +259,12 @@ const WalkInCustomerForm: React.FC<WalkInCustomerFormProps> = ({ onClose }) => {
               {createWalkInMutation.isPending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Adding...
+                  Yongeramo...
                 </>
               ) : (
                 <>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Customer
+                  Ongeraho Umukiriya
                 </>
               )}
             </button>

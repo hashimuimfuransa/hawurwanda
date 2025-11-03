@@ -96,10 +96,10 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
   }
 
   const periods = [
-    { key: 'today', label: 'Today', icon: Zap },
-    { key: 'week', label: 'Week', icon: Calendar },
-    { key: 'month', label: 'Month', icon: BarChart3 },
-    { key: 'year', label: 'Year', icon: Target }
+    { key: 'today', label: 'Uyu Munsi', icon: Zap },
+    { key: 'week', label: 'Iyi Cyumweru', icon: Calendar },
+    { key: 'month', label: 'Uku Kwezi', icon: BarChart3 },
+    { key: 'year', label: 'Uyu Mwaka', icon: Target }
   ] as const;
 
   return (
@@ -113,11 +113,11 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                Earnings Summary
+                Inshamake y'Amafaranga
                 <Sparkles className="h-4 w-4 text-green-500" />
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Track your performance and earnings
+                Kurikirana imikorere yawe n'amafaranga
               </p>
             </div>
           </div>
@@ -161,7 +161,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-green-100 text-sm font-medium mb-1">Total Earnings</p>
+                  <p className="text-green-100 text-sm font-medium mb-1">Amafaranga Yose</p>
                   <p className="text-2xl font-bold">{summary.totalEarnings.toLocaleString()} RWF</p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-blue-100 text-sm font-medium mb-1">Commission</p>
+                  <p className="text-blue-100 text-sm font-medium mb-1">Komisiyo</p>
                   <p className="text-2xl font-bold">{summary.totalCommission.toLocaleString()} RWF</p>
                 </div>
               </div>
@@ -203,7 +203,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-green-100 text-sm font-medium mb-1">Completed Services</p>
+                  <p className="text-green-100 text-sm font-medium mb-1">Serivisi Zarangiye</p>
                   <p className="text-2xl font-bold">{totalCompletedServices}</p>
                 </div>
               </div>
@@ -224,7 +224,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-purple-100 text-sm font-medium mb-1">Total Customers</p>
+                  <p className="text-purple-100 text-sm font-medium mb-1">Abakiriya Bose</p>
                   <p className="text-2xl font-bold">{completedCustomers}</p>
                 </div>
               </div>
@@ -245,7 +245,7 @@ const EarningsSummary: React.FC<EarningsSummaryProps> = ({ staffId }) => {
                   </div>
                 </div>
                 <div>
-                  <p className="text-indigo-100 text-sm font-medium mb-1">Earnings from Completed</p>
+                  <p className="text-indigo-100 text-sm font-medium mb-1">Amafaranga y'Abakoze</p>
                   <p className="text-2xl font-bold">{totalEarningsFromCompleted.toLocaleString()} RWF</p>
                 </div>
               </div>

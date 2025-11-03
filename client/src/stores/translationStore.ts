@@ -19,7 +19,7 @@ interface TranslationState {
 export const useTranslationStore = create<TranslationState>()(
   persist(
     (set, get) => ({
-      language: 'rw',
+      language: 'rw', // Default language is Kinyarwanda
       setLanguage: (lang: Language) => set({ language: lang }),
       toggleLanguage: () => {
         const currentLang = get().language;

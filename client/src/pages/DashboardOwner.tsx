@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
@@ -77,10 +77,10 @@ const DashboardOwner: React.FC = () => {
   ];
 
   const earningsPeriodLabels: Record<'day' | 'week' | 'month' | 'year', string> = {
-    day: 'Today',
-    week: 'This Week',
-    month: 'This Month',
-    year: 'This Year',
+    day: 'Uyu Munsi',
+    week: 'Iyi Cyumweru',
+    month: 'Uku Kwezi',
+    year: 'Uyu Mwaka',
   };
 
   type NormalizedEarningRecord = {
@@ -242,9 +242,9 @@ const DashboardOwner: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(blobUrl);
-      toast.success('QR code downloaded');
+      toast.success('Kode ya QR yamanuwe');
     } catch (_error) {
-      toast.error('Unable to download QR code');
+      toast.error('Ntibishoboka kumanura kode ya QR');
     } finally {
       setLoading(false);
     }
@@ -325,9 +325,9 @@ const DashboardOwner: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success('Card downloaded');
+      toast.success('Ikarita yamanuwe');
     } catch (_error) {
-      toast.error('Unable to download card');
+      toast.error('Ntibishoboka kumanura ikarita');
     }
   }, []);
 
@@ -389,14 +389,14 @@ const DashboardOwner: React.FC = () => {
       frontCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
       frontCtx.textAlign = 'left';
       frontCtx.textBaseline = 'alphabetic';
-      frontCtx.fillText('Salon Owner', 36, 64, width - 200);
+      frontCtx.fillText('Nyir\'ubwoko', 36, 64, width - 200);
       frontCtx.font = '700 34px "Poppins","Helvetica",sans-serif';
-      frontCtx.fillText(user?.name || 'Salon Owner', 36, 114, width - 220);
+      frontCtx.fillText(user?.name || 'Nyir\'ubwoko', 36, 114, width - 220);
       frontCtx.font = '500 20px "Poppins","Helvetica",sans-serif';
-      frontCtx.fillText(salon?.name || 'Salon Name', 36, 156, width - 220);
+      frontCtx.fillText(salon?.name || 'Izina ry\'ubwoko', 36, 156, width - 220);
       frontCtx.fillStyle = 'rgba(226,232,240,0.9)';
       frontCtx.font = '400 16px "Poppins","Helvetica",sans-serif';
-      drawWrappedText(frontCtx, salon?.tagline || 'Experience signature beauty crafted for you.', 36, 192, width - 240, 24);
+      drawWrappedText(frontCtx, salon?.tagline || 'Hagurira ubwiza bw\'umwimerere bwashyizweho umukono.', 36, 192, width - 240, 24);
 
       const logoX = width - 110;
       const logoY = 104;
@@ -464,13 +464,13 @@ const DashboardOwner: React.FC = () => {
       backCtx.font = '700 26px "Poppins","Helvetica",sans-serif';
       backCtx.textAlign = 'left';
       backCtx.textBaseline = 'alphabetic';
-      backCtx.fillText(salon?.name || 'Salon Name', 36, 68, width - 72);
+      backCtx.fillText(salon?.name || 'Izina ry\'ubwoko', 36, 68, width - 72);
       backCtx.font = '500 18px "Poppins","Helvetica",sans-serif';
       backCtx.fillStyle = '#1f2937';
-      backCtx.fillText(user?.name || 'Salon Owner', 36, 102, width - 72);
+      backCtx.fillText(user?.name || 'Nyir\'ubwoko', 36, 102, width - 72);
       backCtx.fillStyle = '#475569';
       backCtx.font = '500 14px "Poppins","Helvetica",sans-serif';
-      backCtx.fillText('Owner & Lead Stylist', 36, 126, width - 72);
+      backCtx.fillText('Nyir\'ubwoko & Umuhanzi w\'Imbere', 36, 126, width - 72);
 
       const qrSize = 148;
       const qrX = width - qrSize - 48;
@@ -493,7 +493,7 @@ const DashboardOwner: React.FC = () => {
         backCtx.font = '600 16px "Poppins","Helvetica",sans-serif';
         backCtx.textAlign = 'center';
         backCtx.textBaseline = 'middle';
-        backCtx.fillText('QR unavailable', qrX + qrSize / 2, qrY + qrSize / 2);
+        backCtx.fillText('QR ntiboneka', qrX + qrSize / 2, qrY + qrSize / 2);
         backCtx.textAlign = 'left';
         backCtx.textBaseline = 'alphabetic';
       }
@@ -501,7 +501,7 @@ const DashboardOwner: React.FC = () => {
       backCtx.textAlign = 'center';
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '600 18px "Poppins","Helvetica",sans-serif';
-      backCtx.fillText('Scan for quick bookings', qrX + qrSize / 2, qrY - 24);
+      backCtx.fillText('Sikana kubusabe bw\'ibanze', qrX + qrSize / 2, qrY - 24);
       backCtx.textAlign = 'left';
 
       let contactY = 168;
@@ -509,15 +509,15 @@ const DashboardOwner: React.FC = () => {
       backCtx.fillStyle = '#1f2937';
       backCtx.font = '500 15px "Poppins","Helvetica",sans-serif';
       if (salon?.phone) {
-        backCtx.fillText(`Phone: ${salon.phone}`, 36, contactY, contactWidth);
+        backCtx.fillText(`Telefoni: ${salon.phone}`, 36, contactY, contactWidth);
         contactY += 28;
       }
       if (salon?.email) {
-        backCtx.fillText(`Email: ${salon.email}`, 36, contactY, contactWidth);
+        backCtx.fillText(`Imeyili: ${salon.email}`, 36, contactY, contactWidth);
         contactY += 28;
       }
       if (salon?.address) {
-        backCtx.fillText(`Address: ${salon.address}`, 36, contactY, contactWidth);
+        backCtx.fillText(`Aderesi: ${salon.address}`, 36, contactY, contactWidth);
         contactY += 28;
       }
       if (shortUrl) {
@@ -540,7 +540,7 @@ const DashboardOwner: React.FC = () => {
     if (!salon && !user) {
       return (
         <div className="bg-white rounded-2xl border border-slate-200/60 shadow-lg p-6 text-center">
-          <p className="text-slate-600">Complete your profile to generate a digital card.</p>
+          <p className="text-slate-600">Uzuzeko profayili yawe kugirango ukore ikarita ya dijitali.</p>
         </div>
       );
     }
@@ -561,8 +561,8 @@ const DashboardOwner: React.FC = () => {
                 )}
               </div>
               <div>
-                <p className="text-sm text-blue-200">Salon Owner</p>
-                <h2 className="text-2xl font-bold mt-1">{user?.name || 'Salon Owner'}</h2>
+                <p className="text-sm text-blue-200">Nyir'ubwoko</p>
+                <h2 className="text-2xl font-bold mt-1">{user?.name || 'Nyir\'ubwoko'}</h2>
               </div>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
@@ -574,34 +574,34 @@ const DashboardOwner: React.FC = () => {
             {ownerQrUrl ? (
               <img src={ownerQrUrl} alt="Salon QR" className="w-full rounded-xl bg-white" />
             ) : (
-              <div className="h-64 flex items-center justify-center text-slate-500">QR unavailable</div>
+              <div className="h-64 flex items-center justify-center text-slate-500">QR ntiboneka</div>
             )}
           </div>
 
           <div className="mt-6 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-blue-200">Salon</span>
-              <span className="font-semibold">{salon?.name || 'Not set'}</span>
+              <span className="text-blue-200">Ubwoko</span>
+              <span className="font-semibold">{salon?.name || 'Ntishyizwe'}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-blue-200">Owner</span>
-              <span className="font-semibold">{user?.name || 'Not set'}</span>
+              <span className="text-blue-200">Nyir'ubwoko</span>
+              <span className="font-semibold">{user?.name || 'Ntishyizwe'}</span>
             </div>
             {salon?.address && (
               <div className="flex items-center justify-between">
-                <span className="text-blue-200">Address</span>
+                <span className="text-blue-200">Aderesi</span>
                 <span className="font-semibold text-right ml-3">{salon.address}</span>
               </div>
             )}
             {salon?.phone && (
               <div className="flex items-center justify-between">
-                <span className="text-blue-200">Phone</span>
+                <span className="text-blue-200">Telefoni</span>
                 <span className="font-semibold">{salon.phone}</span>
               </div>
             )}
             {salon?.email && (
               <div className="flex items-center justify-between">
-                <span className="text-blue-200">Email</span>
+                <span className="text-blue-200">Imeyili</span>
                 <span className="font-semibold text-right ml-3">{salon.email}</span>
               </div>
             )}
@@ -617,15 +617,15 @@ const DashboardOwner: React.FC = () => {
             ) : (
               <Download className="h-5 w-5 mr-3" />
             )}
-            Download QR Code
+            Kumanura Kode ya QR
           </button>
         </div>
 
         <div className="bg-white rounded-3xl border border-slate-200/60 shadow-xl p-6 xl:p-10">
-          <h3 className="text-xl font-bold text-slate-900 mb-6">Print-friendly Card</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-6">Ikarita yoroheje gucapa</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <p className="text-sm text-slate-500 mb-3">Front</p>
+              <p className="text-sm text-slate-500 mb-3">Imbere</p>
               <div className="rounded-3xl overflow-hidden shadow-lg bg-slate-900/5 p-4 flex justify-center">
                 <div className="relative w-full max-w-[30rem] mx-auto">
                   <canvas ref={ownerFrontCanvasRef} className="w-full h-auto" />
@@ -637,12 +637,12 @@ const DashboardOwner: React.FC = () => {
                 className="mt-4 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 <Download className="h-5 w-5 mr-2" />
-                Download Front
+                Kumanura Imbere
               </button>
             </div>
 
             <div className="border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <p className="text-sm text-slate-500 mb-3">Back</p>
+              <p className="text-sm text-slate-500 mb-3">Inyuma</p>
               <div className="rounded-3xl overflow-hidden shadow-lg bg-slate-900/5 p-4 flex justify-center">
                 <div className="relative w-full max-w-[30rem] mx-auto">
                   <canvas ref={ownerBackCanvasRef} className="w-full h-auto" />
@@ -654,7 +654,7 @@ const DashboardOwner: React.FC = () => {
                 className="mt-4 inline-flex items-center justify-center w-full px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 <Download className="h-5 w-5 mr-2" />
-                Download Back
+                Kumanura Inyuma
               </button>
             </div>
           </div>
@@ -664,7 +664,7 @@ const DashboardOwner: React.FC = () => {
               onClick={() => window.print()}
               className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all"
             >
-              Print Card
+              Capa Ikarita
             </button>
           </div>
         </div>
@@ -676,9 +676,9 @@ const DashboardOwner: React.FC = () => {
   const handleRefreshStatus = async () => {
     try {
       await refetchSalon();
-      toast.success('Status refreshed');
+      toast.success('Imiterere yavuguruwe');
     } catch (error) {
-      toast.error('Failed to refresh status');
+      toast.error('Ntibyashobotse kuvugurura imiterere');
     }
   };
 
@@ -1669,17 +1669,17 @@ const DashboardOwner: React.FC = () => {
             {isEditingBasic ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Salon Name*</label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Izina ry'Ubwoko*</label>
                   <input
                     type="text"
                     value={displayName}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Salon name"
+                    placeholder="Izina ry'ubwoko"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Phone*</label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Telefoni*</label>
                   <input
                     type="tel"
                     value={displayPhone}
@@ -1689,7 +1689,7 @@ const DashboardOwner: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Email*</label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Imeyili*</label>
                   <input
                     type="email"
                     value={displayEmail}
@@ -1699,23 +1699,23 @@ const DashboardOwner: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">Address*</label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Aderesi*</label>
                   <input
                     type="text"
                     value={displayAddress}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Street address"
+                    placeholder="Aderesi y'umuhanda"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2">District*</label>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Akarere*</label>
                   <input
                     type="text"
                     value={displayDistrict}
                     onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="District"
+                    placeholder="Akarere"
                   />
                 </div>
 
@@ -1727,12 +1727,12 @@ const DashboardOwner: React.FC = () => {
                     }}
                     className="px-4 py-2 text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors font-semibold"
                   >
-                    Cancel
+                    Hagarika
                   </button>
                   <button
                     onClick={() => {
                       if (!formData.name || !formData.phone || !formData.email || !formData.address || !formData.district) {
-                        toast.error('Please fill in all required fields');
+                        toast.error('Nyamuneka uzuze ibisabwa byose');
                         return;
                       }
                       updateSalonMutation.mutate(formData);
@@ -1740,31 +1740,31 @@ const DashboardOwner: React.FC = () => {
                     disabled={updateSalonMutation.isPending}
                     className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg hover:from-blue-700 hover:to-indigo-800 disabled:opacity-50 transition-all font-semibold"
                   >
-                    {updateSalonMutation.isPending ? 'Saving...' : 'Save Changes'}
+                    {updateSalonMutation.isPending ? 'Birimo kubika...' : 'Bika Amahinduka'}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Salon Name</p>
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Izina ry'Ubwoko</p>
                   <p className="text-lg font-semibold text-slate-900">{salon?.name}</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Phone</p>
-                  <p className="text-lg font-semibold text-slate-900">{salon?.phone || 'Not provided'}</p>
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Telefoni</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.phone || 'Ntishyizwe'}</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Email</p>
-                  <p className="text-lg font-semibold text-slate-900">{salon?.email || 'Not provided'}</p>
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Imeyili</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.email || 'Ntishyizwe'}</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Address</p>
-                  <p className="text-lg font-semibold text-slate-900">{salon?.address || 'Not provided'}</p>
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Aderesi</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.address || 'Ntishyizwe'}</p>
                 </div>
                 <div className="bg-slate-50 rounded-lg p-4">
-                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">District</p>
-                  <p className="text-lg font-semibold text-slate-900">{salon?.district || 'Not provided'}</p>
+                  <p className="text-xs text-slate-600 font-semibold uppercase mb-1">Akarere</p>
+                  <p className="text-lg font-semibold text-slate-900">{salon?.district || 'Ntishyizwe'}</p>
                 </div>
               </div>
             )}
@@ -1775,12 +1775,12 @@ const DashboardOwner: React.FC = () => {
         <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-2xl lg:rounded-3xl border border-blue-200/60 shadow-lg p-6 lg:p-8">
           <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center">
             <AlertCircle className="h-5 w-5 mr-2 text-blue-600" />
-            Need More Help?
+            Ukeneye Ubufasha Bwiyongere?
           </h3>
-          <p className="text-sm text-slate-700 mb-4">For additional changes or support, contact our team.</p>
+          <p className="text-sm text-slate-700 mb-4">Kubindi bihinduka cyangwa ubufasha, vugana n'itsinda ryacu.</p>
           <a href="mailto:support@hawurwanda.com" className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
             <Mail className="h-4 w-4 mr-2" />
-            Contact Support
+            Vugana n'Ubufasha
           </a>
         </div>
       </div>
@@ -1794,8 +1794,8 @@ const DashboardOwner: React.FC = () => {
           <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
             <XCircle className="h-10 w-10 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-3">Access Denied</h2>
-          <p className="text-slate-600">This page is for salon owners only.</p>
+          <h2 className="text-2xl font-bold text-slate-900 mb-3">Kwinjira Kwangawe</h2>
+          <p className="text-slate-600">Uru rupapuro ni rwa ba nyir'ubwoko gusa.</p>
         </div>
       </div>
     );
@@ -1824,17 +1824,17 @@ const DashboardOwner: React.FC = () => {
 
   // Define sidebar items early so they can be used in pending state
   const sidebarItems = [
-    { id: 'overview', label: 'Overview', icon: BarChart3, badge: undefined },
-    { id: 'bookings', label: 'Bookings', icon: Calendar, badge: pendingBookings.length || undefined },
-    { id: 'customers', label: 'Customers', icon: Users, badge: undefined },
-    { id: 'barbers', label: 'Team', icon: Users, badge: undefined },
-    { id: 'services', label: 'Services', icon: Package, badge: undefined },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Award, badge: undefined },
-    { id: 'earnings', label: 'Earnings', icon: DollarSign, badge: undefined },
-    { id: 'digital-card', label: 'Digital Card', icon: QrCode, badge: undefined },
-    { id: 'notifications', label: 'Notifications', icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp, badge: undefined },
-    { id: 'settings', label: 'Settings', icon: Settings, badge: undefined },
+    { id: 'overview', label: 'Incamake', icon: BarChart3, badge: undefined },
+    { id: 'bookings', label: 'Ubusabe', icon: Calendar, badge: pendingBookings.length || undefined },
+    { id: 'customers', label: 'Abakiriya', icon: Users, badge: undefined },
+    { id: 'barbers', label: 'Itsinda', icon: Users, badge: undefined },
+    { id: 'services', label: 'Serivisi', icon: Package, badge: undefined },
+    { id: 'leaderboard', label: 'Urutonde', icon: Award, badge: undefined },
+    { id: 'earnings', label: 'Inyungu', icon: DollarSign, badge: undefined },
+    { id: 'digital-card', label: 'Ikarita ya Dijitali', icon: QrCode, badge: undefined },
+    { id: 'notifications', label: 'Amatangazo', icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
+    { id: 'analytics', label: 'Ubusesenguzi', icon: TrendingUp, badge: undefined },
+    { id: 'settings', label: 'Igenamiterere', icon: Settings, badge: undefined },
   ];
 
   // Show pending approval state if salon exists but not verified
@@ -1852,7 +1852,7 @@ const DashboardOwner: React.FC = () => {
           headerActions={
             <div className="flex items-center space-x-2">
               <span className="hidden lg:inline-block text-sm text-slate-600">
-                Managing: <span className="font-semibold text-slate-900">{salon?.name}</span>
+                Kuyobora: <span className="font-semibold text-slate-900">{salon?.name}</span>
               </span>
             </div>
           }
@@ -1864,8 +1864,8 @@ const DashboardOwner: React.FC = () => {
 
     return (
       <DashboardLayout
-        title="Salon Owner"
-        subtitle="Owner Dashboard"
+        title="Nyir'ubwoko"
+        subtitle="Dashboard ya Nyir'ubwoko"
         sidebarItems={sidebarItems}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -1895,15 +1895,15 @@ const DashboardOwner: React.FC = () => {
                 {/* Status Badge */}
                 <div className="inline-flex items-center px-5 py-2.5 rounded-full bg-amber-100 text-amber-800 font-bold text-sm mb-6 shadow-lg border border-amber-200">
                   <span className="w-2 h-2 bg-amber-500 rounded-full mr-2.5 animate-pulse"></span>
-                  {getSalonStatus(salon) === 'pending' ? 'Pending Verification' : 'Under Review'}
+                  {getSalonStatus(salon) === 'pending' ? 'Igenzura Ririmo' : 'Mu Kugenzura'}
                 </div>
 
                 {/* Main Message */}
                 <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
-                  Your Salon is Under Review
+                  Ubwoko Bwawe Buri Mu Kugenzura
                 </h2>
                 <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-8 max-w-2xl mx-auto">
-                  Thank you for creating your salon profile! Our team is currently reviewing your submission to ensure quality and authenticity. This process typically takes 24-48 hours.
+                  Murakoze kuba waremye profayili y'ubwoko bwawe! Itsinda ryacu ririmo kugenzura ibyo watanze kugirango tube twizeye ubuziranenge n'ukuri. Iyi nzira igira amasaha 24-48.
                 </p>
 
                 {/* Salon Info Card */}
@@ -1940,20 +1940,20 @@ const DashboardOwner: React.FC = () => {
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-2xl border border-blue-200/60 p-6 mb-8 text-left">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <AlertCircle className="h-5 w-5 mr-2 text-blue-600" />
-                    What Happens Next?
+                    Ni Iki Kizakurikiraho?
                   </h3>
                   <ul className="space-y-3 text-sm text-slate-700">
                     <li className="flex items-start">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-xs mr-3 mt-0.5 flex-shrink-0">1</span>
-                      <span><strong>Verification:</strong> Our team reviews your salon details, location, and contact information</span>
+                      <span><strong>Igenzura:</strong> Itsinda ryacu rigenzura ibisobanuro by'ubwoko bwawe, ahantu n'amakuru yo kuvugana</span>
                     </li>
                     <li className="flex items-start">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-xs mr-3 mt-0.5 flex-shrink-0">2</span>
-                      <span><strong>Approval:</strong> Once verified, you'll receive an email notification and full access to your dashboard</span>
+                      <span><strong>Emenyesha:</strong> Nyuma yo kugenzura, uzahabwa ubutumwa bwa imeyili n'uburenganzira bwo kwinjira muri dashboard yawe</span>
                     </li>
                     <li className="flex items-start">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold text-xs mr-3 mt-0.5 flex-shrink-0">3</span>
-                      <span><strong>Go Live:</strong> Your salon will be visible to customers and ready to accept bookings</span>
+                      <span><strong>Tangira:</strong> Ubwoko bwawe buzagaragara ku bakiriya kandi buziteguye kwakira ubusabe</span>
                     </li>
                   </ul>
                 </div>
@@ -1965,27 +1965,27 @@ const DashboardOwner: React.FC = () => {
                     className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-green-700 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200"
                   >
                     <Activity className="h-5 w-5 mr-2" />
-                    <span>Refresh Status</span>
+                    <span>Vugurura Imiterere</span>
                   </button>
                   <button
                     onClick={() => handleTabChange('settings')}
                     className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
                   >
                     <Settings className="h-5 w-5 mr-2" />
-                    <span>Customize Salon Settings</span>
+                    <span>Hindura Igenamiterere ry'Ubwoko</span>
                   </button>
                   <button
                     onClick={handleWatchTour}
                     className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-white text-slate-700 font-semibold border border-slate-300 shadow-sm hover:border-slate-400 hover:bg-slate-50 transition-all duration-200"
                   >
                     <Video className="h-5 w-5 mr-2" />
-                    <span>Watch Tour</span>
+                    <span>Reba Urugendo</span>
                   </button>
                 </div>
 
                 {/* Help Text */}
                 <p className="text-sm text-slate-500 mt-8">
-                  Need help? Contact our support team at{' '}
+                  Ukeneye ubufasha? Vugana n'itsinda ryacu ry'ubufasha kuri{' '}
                   <a href="mailto:support@hawurwanda.com" className="text-blue-600 hover:text-blue-700 font-semibold hover:underline">
                     support@hawurwanda.com
                   </a>
@@ -2009,41 +2009,41 @@ const DashboardOwner: React.FC = () => {
                 <div className="w-full xl:w-1/2 text-center xl:text-left max-w-2xl">
                   <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100/60 text-blue-700 font-semibold text-sm mb-6 shadow-inner">
                     <Building2 className="h-4 w-4 mr-2" />
-                    Ready to launch your salon HQ?
+                    Witeguye gutangiza ikiraro cy'ubwoko bwawe?
                   </div>
                   <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4 tracking-tight">
-                    Create your salon hub and start managing everything in one place
+                    Kora ikiraro cy'ubwoko bwawe kandi utangire kuyobora byose ahantu hamwe
                   </h2>
                   <p className="text-base sm:text-lg text-slate-600 leading-relaxed mb-6">
-                    Design your digital salon, invite your barbers, publish services, and keep bookings under control. Your clients are waiting—let's make your brand shine.
+                    Tegura ubwoko bwawe bwa dijitali, hamagara abahanzi bawe, tangaza serivisi, kandi ujye ubika ubusabe mu buryo. Abakiriya bawe barategereje—reka dukore urumuri urw'ikimenyetso cyawe.
                   </p>
                   <ul className="grid sm:grid-cols-2 gap-4 mb-8 text-left">
                     <li className="flex items-start space-x-3">
                       <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
                       <div>
-                        <p className="font-semibold text-slate-800">Build your salon profile</p>
-                        <p className="text-sm text-slate-500">Add location, contact details, gallery, and brand story</p>
+                        <p className="font-semibold text-slate-800">Kora profayili y'ubwoko bwawe</p>
+                        <p className="text-sm text-slate-500">Ongeraho ahantu, amakuru yo kuvugana, ububiko bw'amafoto, n'inkuru y'ikimenyetso</p>
                       </div>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
                       <div>
-                        <p className="font-semibold text-slate-800">Publish your services</p>
-                        <p className="text-sm text-slate-500">Create categories, set pricing, and availability in minutes</p>
+                        <p className="font-semibold text-slate-800">Tangaza serivisi zawe</p>
+                        <p className="text-sm text-slate-500">Kora ibyiciro, shyiraho ibiciro, n'ububoneka mu minota</p>
                       </div>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
                       <div>
-                        <p className="font-semibold text-slate-800">Invite your team</p>
-                        <p className="text-sm text-slate-500">Give barbers their own dashboards and calendars</p>
+                        <p className="font-semibold text-slate-800">Hamagara itsinda ryawe</p>
+                        <p className="text-sm text-slate-500">Ha abahanzi dashboard zabo n'akalendariye</p>
                       </div>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">✓</span>
                       <div>
-                        <p className="font-semibold text-slate-800">Track growth in real time</p>
-                        <p className="text-sm text-slate-500">Monitor bookings, revenue trends, and team performance</p>
+                        <p className="font-semibold text-slate-800">Kurikirana iterambere mu gihe nyacyo</p>
+                        <p className="text-sm text-slate-500">Kurikirana ubusabe, imiterere y'inyungu, n'imikorere y'itsinda</p>
                       </div>
                     </li>
                   </ul>
@@ -2053,14 +2053,14 @@ const DashboardOwner: React.FC = () => {
                       className="inline-flex items-center justify-center px-5 sm:px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
                     >
                       <Plus className="h-5 w-5 mr-2" />
-                      <span>Create Your Salon Now</span>
+                      <span>Kora Ubwoko Bwawe Ubu None</span>
                     </button>
                     <button
                       onClick={handleWatchTour}
                       className="inline-flex items-center justify-center px-5 sm:px-6 py-3 rounded-xl bg-white text-blue-700 font-semibold border border-blue-200 shadow-sm hover:border-blue-300 hover:text-blue-800 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
                     >
                       <Video className="h-5 w-5 mr-2" />
-                      <span>Watch quick tour</span>
+                      <span>Reba urugendo rw'ibanze</span>
                     </button>
                   </div>
                 </div>
@@ -2068,40 +2068,40 @@ const DashboardOwner: React.FC = () => {
                   <div className="relative rounded-3xl bg-white/90 shadow-2xl shadow-blue-500/20 border border-slate-200/70 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-100/20 via-transparent to-indigo-200/20" />
                     <div className="relative p-6 sm:p-8">
-                      <h3 className="text-xl font-semibold text-slate-900 mb-4">Owner Workspace Preview</h3>
+                      <h3 className="text-xl font-semibold text-slate-900 mb-4">Igaragaza ry'Ahantu Hakorwamo Nyir'ubwoko</h3>
                       <div className="space-y-4">
                         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-md">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold text-slate-800">Salon Analytics</span>
-                            <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-600 text-xs font-medium">Live</div>
+                            <span className="font-semibold text-slate-800">Ubusesenguzi bw'Ubwoko</span>
+                            <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-600 text-xs font-medium">Bukora</div>
                           </div>
-                          <p className="text-sm text-slate-500">Track bookings, revenue and customer trends at a glance</p>
+                          <p className="text-sm text-slate-500">Kurikirana ubusabe, inyungu n'imiterere y'abakiriya mu jisho</p>
                           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                             <div className="rounded-xl bg-blue-50 text-blue-700 px-3 py-2">
                               <p className="font-semibold">+18%</p>
-                              <p className="text-xs">Monthly bookings</p>
+                              <p className="text-xs">Ubusabe bwa buri kwezi</p>
                             </div>
                             <div className="rounded-xl bg-emerald-50 text-emerald-700 px-3 py-2">
                               <p className="font-semibold">45</p>
-                              <p className="text-xs">Active clients</p>
+                              <p className="text-xs">Abakiriya bakora</p>
                             </div>
                           </div>
                         </div>
                         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-md">
-                          <span className="font-semibold text-slate-800">Team Planner</span>
-                          <p className="text-sm text-slate-500 mt-1">Assign shifts, approve leave, and sync calendars</p>
+                          <span className="font-semibold text-slate-800">Umuplani w'Itsinda</span>
+                          <p className="text-sm text-slate-500 mt-1">Gaba igihe cy'akazi, emera uruhushwa, kandi uhuzaho akalendariye</p>
                           <div className="mt-3 flex items-center space-x-2">
                             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-semibold">AN</div>
                             <div className="text-sm">
                               <p className="font-semibold text-slate-800">Anita Uwase</p>
-                              <p className="text-xs text-slate-500">Senior Stylist • 5 bookings today</p>
+                              <p className="text-xs text-slate-500">Umuhanzi w'Imbere • Ubusabe 5 uyu munsi</p>
                             </div>
                           </div>
                         </div>
                         <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-md">
-                          <span className="font-semibold text-slate-800">Smart Automations</span>
-                          <p className="text-sm text-slate-500 mt-1">Auto-confirm bookings, send SMS reminders, and reward loyal clients.</p>
-                          <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">Coming soon</div>
+                          <span className="font-semibold text-slate-800">Ubwenge bw'ikoranabuhanga</span>
+                          <p className="text-sm text-slate-500 mt-1">Kwemeza ubusabe mu buryo bwikora, kohereza ubutumwa bwo kwibuka, kandi ugorore abakiriya bagororotse.</p>
+                          <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold">Izoza vuba</div>
                         </div>
                       </div>
                     </div>
@@ -2218,9 +2218,9 @@ const DashboardOwner: React.FC = () => {
             <div>
               <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2 flex items-center">
                 <Zap className="h-6 w-6 mr-2 text-blue-600" />
-                Quick Actions
+                Ibikorwa Byihuse
               </h2>
-              <p className="text-sm lg:text-base text-slate-600">Navigate to key areas of your salon management</p>
+              <p className="text-sm lg:text-base text-slate-600">Jya ahantu h'ingirakamaro mu iyoborwa ry'ubwoko bwawe</p>
             </div>
           </div>
 
@@ -2242,8 +2242,8 @@ const DashboardOwner: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">View Bookings</h3>
-                <p className="text-sm text-blue-100">Manage appointments and schedules</p>
+                <h3 className="text-lg font-bold text-white mb-2">Reba Ubusabe</h3>
+                <p className="text-sm text-blue-100">Yobora amateraniro n'igishushanyo mbonera</p>
               </div>
             </button>
 
@@ -2262,8 +2262,8 @@ const DashboardOwner: React.FC = () => {
                     {(staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.length || 0}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Manage Team</h3>
-                <p className="text-sm text-purple-100">Add and manage your barbers</p>
+                <h3 className="text-lg font-bold text-white mb-2">Yobora Itsinda</h3>
+                <p className="text-sm text-purple-100">Ongeraho kandi uyobore abahanzi bawe</p>
               </div>
             </button>
 
@@ -2282,8 +2282,8 @@ const DashboardOwner: React.FC = () => {
                     {salonCustomersSummary.totalCustomers}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">View Customers</h3>
-                <p className="text-sm text-sky-100">See bookings and walk-in clients</p>
+                <h3 className="text-lg font-bold text-white mb-2">Reba Abakiriya</h3>
+                <p className="text-sm text-sky-100">Reba ubusabe n'abakiriya binjira</p>
               </div>
             </button>
 
@@ -2302,8 +2302,8 @@ const DashboardOwner: React.FC = () => {
                     {(services?.data?.services || (services as any)?.services || [])?.length || 0}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Manage Services</h3>
-                <p className="text-sm text-emerald-100">Update your service offerings</p>
+                <h3 className="text-lg font-bold text-white mb-2">Yobora Serivisi</h3>
+                <p className="text-sm text-emerald-100">Hindura ibyo utanga</p>
               </div>
             </button>
 
@@ -2323,8 +2323,8 @@ const DashboardOwner: React.FC = () => {
                     <span>+24%</span>
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">View Analytics</h3>
-                <p className="text-sm text-amber-100">Track performance and insights</p>
+                <h3 className="text-lg font-bold text-white mb-2">Reba Ubusesenguzi</h3>
+                <p className="text-sm text-amber-100">Kurikirana imikorere n'ubwenge</p>
               </div>
             </button>
 
@@ -2340,8 +2340,8 @@ const DashboardOwner: React.FC = () => {
                     <Settings className="h-6 w-6 text-white" />
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Salon Settings</h3>
-                <p className="text-sm text-slate-300">Configure your salon details</p>
+                <h3 className="text-lg font-bold text-white mb-2">Igenamiterere ry'Ubwoko</h3>
+                <p className="text-sm text-slate-300">Tegura ibisobanuro by'ubwoko bwawe</p>
               </div>
             </button>
 
@@ -2358,8 +2358,8 @@ const DashboardOwner: React.FC = () => {
                   </div>
                   <Star className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">View Salon Page</h3>
-                <p className="text-sm text-rose-100">See your public salon profile</p>
+                <h3 className="text-lg font-bold text-white mb-2">Reba Urupapuro rw'Ubwoko</h3>
+                <p className="text-sm text-rose-100">Reba profayili yawe ya rubanda y'ubwoko</p>
               </div>
             </button>
           </div>
@@ -2371,23 +2371,23 @@ const DashboardOwner: React.FC = () => {
         <div className="p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">Salon Status</h2>
-              <p className="text-sm lg:text-base text-slate-600">Overview of your salon information</p>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">Imiterere y'Ubwoko</h2>
+              <p className="text-sm lg:text-base text-slate-600">Incamake y'amakuru y'ubwoko bwawe</p>
             </div>
             <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold shadow-lg ${
-              salon.verified 
-                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white' 
+              salon.verified
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
                 : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white'
             }`}>
               {salon.verified ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Verified
+                  Byemejwe
                 </>
               ) : (
                 <>
                   <Clock className="h-4 w-4 mr-2" />
-                  Pending Verification
+                  Igenzura Ririmo
                 </>
               )}
             </span>
@@ -2398,20 +2398,20 @@ const DashboardOwner: React.FC = () => {
             <div className="space-y-4">
               <h3 className="font-bold text-slate-900 text-lg mb-4 flex items-center">
                 <Building2 className="h-5 w-5 mr-2 text-blue-600" />
-                Salon Information
+                Ibisobanuro by'Ubwoko
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Name</p>
+                    <p className="text-xs text-slate-500 font-medium">Izina</p>
                     <p className="text-sm font-semibold text-slate-900">{salon.name}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Address</p>
+                    <p className="text-xs text-slate-500 font-medium">Aderesi</p>
                     <p className="text-sm font-semibold text-slate-900">{salon.address}</p>
                     <p className="text-xs text-slate-500">{salon.district}</p>
                   </div>
@@ -2419,15 +2419,15 @@ const DashboardOwner: React.FC = () => {
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <Phone className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Phone</p>
-                    <p className="text-sm font-semibold text-slate-900">{salon.phone || 'Not provided'}</p>
+                    <p className="text-xs text-slate-500 font-medium">Telefoni</p>
+                    <p className="text-sm font-semibold text-slate-900">{salon.phone || 'Ntishyizwe'}</p>
                   </div>
                 </div>
                 {salon.email && (
                   <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                     <Mail className="h-5 w-5 text-slate-400 mt-0.5" />
                     <div>
-                      <p className="text-xs text-slate-500 font-medium">Email</p>
+                      <p className="text-xs text-slate-500 font-medium">Imeyili</p>
                       <p className="text-sm font-semibold text-slate-900">{salon.email}</p>
                     </div>
                   </div>
@@ -2439,23 +2439,23 @@ const DashboardOwner: React.FC = () => {
             <div className="space-y-4">
               <h3 className="font-bold text-slate-900 text-lg mb-4 flex items-center">
                 <Activity className="h-5 w-5 mr-2 text-purple-600" />
-                Quick Stats
+                Imibare y'Ibanga
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
-                  <p className="text-xs text-blue-600 font-medium mb-1">Total Bookings</p>
+                  <p className="text-xs text-blue-600 font-medium mb-1">Ubusabe Bwose</p>
                   <p className="text-2xl font-bold text-blue-900">{bookings?.data?.data?.bookings?.length || 0}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50">
-                  <p className="text-xs text-amber-600 font-medium mb-1">Pending</p>
+                  <p className="text-xs text-amber-600 font-medium mb-1">Bitegerejwe</p>
                   <p className="text-2xl font-bold text-amber-900">{pendingBookings.length}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50">
-                  <p className="text-xs text-emerald-600 font-medium mb-1">Completed</p>
+                  <p className="text-xs text-emerald-600 font-medium mb-1">Byarangiye</p>
                   <p className="text-2xl font-bold text-emerald-900">{completedBookings.length}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50">
-                  <p className="text-xs text-purple-600 font-medium mb-1">Revenue</p>
+                  <p className="text-xs text-purple-600 font-medium mb-1">Inyungu</p>
                   <p className="text-lg font-bold text-purple-900">{formatCurrency(totalRevenue)}</p>
                 </div>
               </div>
@@ -2470,21 +2470,21 @@ const DashboardOwner: React.FC = () => {
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Settings className="h-5 w-5 mr-2" />
-                <span>Customize Salon Settings</span>
+                <span>Hindura Igenamiterere ry'Ubwoko</span>
               </button>
               <button
                 onClick={() => handleTabChange('bookings')}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-green-700 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Calendar className="h-5 w-5 mr-2" />
-                <span>Manage Bookings</span>
+                <span>Yobora Ubusabe</span>
               </button>
               <button
                 onClick={() => handleTabChange('barbers')}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white font-semibold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Users className="h-5 w-5 mr-2" />
-                <span>Manage Staff</span>
+                <span>Yobora Abakozi</span>
               </button>
             </div>
           </div>
@@ -4492,8 +4492,8 @@ const DashboardOwner: React.FC = () => {
   if (!salon) {
     return (
       <DashboardLayout
-        title="Salon Owner"
-        subtitle="Owner Dashboard"
+        title="Nyir'ubwoko"
+        subtitle="Dashboard ya Nyir'ubwoko"
         sidebarItems={sidebarItems}
         activeTab={activeTab}
         onTabChange={setActiveTab}
