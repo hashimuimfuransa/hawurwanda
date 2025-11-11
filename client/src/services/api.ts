@@ -277,6 +277,16 @@ export const adminService = {
     api.post('/admin/staff/create', staffData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  
+  // Salon service management (admin only)
+  addServiceToSalon: (salonId: string, serviceData: any) =>
+    api.post(`/admin/salons/${salonId}/services`, serviceData),
+  
+  updateSalonService: (salonId: string, serviceId: string, serviceData: any) =>
+    api.patch(`/admin/salons/${salonId}/services/${serviceId}`, serviceData),
+  
+  deleteSalonService: (salonId: string, serviceId: string) =>
+    api.delete(`/admin/salons/${salonId}/services/${serviceId}`),
 };
 
 export const superAdminService = {

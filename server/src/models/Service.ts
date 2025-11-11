@@ -34,7 +34,7 @@ const serviceSchema = new Schema<IService>({
   durationMinutes: {
     type: Number,
     required: [true, 'Duration is required'],
-    min: [15, 'Duration must be at least 15 minutes'],
+    min: [5, 'Duration must be at least 5 minutes'],
     max: [480, 'Duration cannot exceed 8 hours'],
   },
   price: {
@@ -45,13 +45,13 @@ const serviceSchema = new Schema<IService>({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['hair', 'nails', 'skincare', 'massage', 'makeup', 'other'],
+    enum: ['haircut', 'styling', 'coloring', 'treatment', 'beard', 'nails', 'skincare', 'massage', 'makeup', 'other'],
     default: 'other',
   },
   targetAudience: {
     type: [String],
     required: [true, 'Target audience is required'],
-    enum: ['children', 'adults', 'men', 'women', 'both'],
+    enum: ['children', 'teens', 'adults', 'men', 'women'],
     validate: {
       validator: function(v: string[]) {
         return v && v.length > 0;

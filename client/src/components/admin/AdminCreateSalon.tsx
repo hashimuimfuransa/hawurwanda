@@ -90,13 +90,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
   const createSalonMutation = useMutation({
     mutationFn: (payload: FormData) => adminService.createSalon(payload),
     onSuccess: () => {
-      toast.success(t.salonCreatedSuccessfully);
+      toast.success('Salon created successfully');
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       onClose();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || t.failedToCreateSalon);
+      toast.error(error.response?.data?.message || 'Failed to create salon');
     },
   });
 
@@ -158,29 +158,29 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
       const locationData = await findLocationFromCoordinates(lat, lng);
       if (locationData) {
         const updates: Partial<FormState> = {};
-
+        
         if (locationData.province) {
           updates.province = locationData.province;
           const districts = getDistrictsByProvince(locationData.province);
           setAvailableDistricts(districts);
         }
-
+        
         if (locationData.district) {
           updates.district = locationData.district;
           const sectors = getSectorsByDistrict(locationData.district);
           setAvailableSectors(sectors);
         }
-
+        
         if (locationData.sector) {
           updates.sector = locationData.sector;
         }
-
+        
         if (locationData.address) {
           updates.address = locationData.address;
         }
-
+        
         setFormData((prev) => ({ ...prev, ...updates }));
-        toast.success(t.locationDetailsAutoFilled);
+        toast.success('Location details auto-filled from map!');
       }
     } catch (error) {
       console.error('Error fetching location data:', error);
@@ -190,10 +190,18 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
   const handleCategoryChange = (category: string) => {
     setFormData((prev) => {
-      const categories = prev.serviceCategories.includes(category)
-        ? prev.serviceCategories.filter((c) => c !== category)
-        : [...prev.serviceCategories, category];
-      return { ...prev, serviceCategories: categories };
+      // Special handling for "other" category
+      if (category === 'other' && !prev.serviceCategories.includes('other')) {
+        // If selecting "other", we need to make sure customServices is provided later
+        return { ...prev, serviceCategories: [...prev.serviceCategories, category] };
+      } else if (category === 'other' && prev.serviceCategories.includes('other')) {
+        // If unselecting "other", clear customServices
+        return { ...prev, serviceCategories: prev.serviceCategories.filter((c) => c !== category), customServices: '' };
+      } else {
+        return { ...prev, serviceCategories: prev.serviceCategories.includes(category)
+          ? prev.serviceCategories.filter((c) => c !== category)
+          : [...prev.serviceCategories, category] };
+      }
     });
   };
 
@@ -213,32 +221,32 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
     event.preventDefault();
 
     if (!formData.name || !formData.address || !formData.province || !formData.district || !formData.latitude || !formData.longitude) {
-      toast.error(t.fillRequiredFields);
+      toast.error('Please fill in all required fields (name, address, province, district, location).');
       return;
     }
 
     if (!formData.ownerId) {
-      toast.error(t.selectSalonOwnerError);
+      toast.error('Please select a salon owner.');
       return;
     }
 
     if (!formData.ownerIdNumber || !formData.ownerContactPhone) {
-      toast.error(t.provideOwnerInformation);
+      toast.error('Please provide owner information (ID number and contact phone).');
       return;
     }
 
     if (!formData.numberOfEmployees || Number(formData.numberOfEmployees) < 1) {
-      toast.error(t.provideNumberOfEmployees);
+      toast.error('Please provide the number of employees (must be at least 1).');
       return;
     }
 
     if (formData.serviceCategories.length === 0) {
-      toast.error(t.selectAtLeastOneServiceCategory);
+      toast.error('Please select at least one service category.');
       return;
     }
 
     if (formData.serviceCategories.includes('other') && !formData.customServices.trim()) {
-      toast.error(t.specifyCustomServicesWhenOther);
+      toast.error('Please specify custom services when "Other" category is selected.');
       return;
     }
 
@@ -246,7 +254,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
     const longitude = Number(formData.longitude);
 
     if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-      toast.error(t.latitudeLongitudeMustBeValid);
+      toast.error('Latitude and longitude must be valid numbers.');
       return;
     }
 
@@ -269,6 +277,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
     // Business Information
     payload.append('numberOfEmployees', formData.numberOfEmployees);
+    // Send service categories as a comma-separated string
     payload.append('serviceCategories', formData.serviceCategories.join(','));
     if (formData.customServices) payload.append('customServices', formData.customServices);
 
@@ -304,7 +313,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
       <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">{t.createSalonForOwner}</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Create Salon for Owner</h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
@@ -322,15 +331,15 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <User className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.selectSalonOwner}</h3>
-                <p className="text-sm text-gray-500">{t.chooseOwnerForSalon}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Select Salon Owner</h3>
+                <p className="text-sm text-gray-500">Choose an owner to assign to this salon</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1">
                 <label htmlFor="ownerId" className="block text-sm font-medium text-gray-700">
-                  {t.salonOwnerRequired}
+                  Salon Owner *
                 </label>
                 <select
                   id="ownerId"
@@ -340,7 +349,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   onChange={handleOwnerChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
                 >
-                  <option value="">{t.selectAnOwner}</option>
+                  <option value="">Select an owner</option>
                   {owners.map((owner: any) => (
                     <option key={owner._id} value={owner._id}>
                       {owner.name} - {owner.email}
@@ -352,13 +361,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
               {/* Owner Profile Picture */}
               <div className="space-y-2">
                 <label htmlFor="ownerProfilePicture" className="block text-sm font-medium text-gray-700">
-                  {t.ownerProfilePicture}
+                  Owner Profile Picture
                 </label>
-                <p className="text-xs text-gray-500 mb-2">{t.uploadOwnerProfilePicture}</p>
+                <p className="text-xs text-gray-500 mb-2">Upload the owner's profile picture</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                     <Camera className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">{t.chooseProfilePicture}</span>
+                    <span className="text-sm text-gray-600">Choose Profile Picture</span>
                     <input
                       id="ownerProfilePicture"
                       type="file"
@@ -382,15 +391,15 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.salonIdentity}</h3>
-                <p className="text-sm text-gray-500">{t.salonIdentityDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Salon Identity</h3>
+                <p className="text-sm text-gray-500">Basic information about the salon</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2 space-y-1">
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  {t.salonNameRequired}
+                  Salon Name *
                 </label>
                 <input
                   id="name"
@@ -400,13 +409,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder={t.salonNamePlaceholder}
+                  placeholder="Enter salon name"
                 />
               </div>
 
               <div className="space-y-1">
                 <label htmlFor="province" className="block text-sm font-medium text-gray-700">
-                  {t.provinceRequired}
+                  Province *
                 </label>
                 <select
                   id="province"
@@ -416,7 +425,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   onChange={handleProvinceChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
                 >
-                  <option value="">{t.selectProvince}</option>
+                  <option value="">Select province</option>
                   {getAllProvinces().map((province) => (
                     <option key={province} value={province}>
                       {province}
@@ -427,7 +436,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
               <div className="space-y-1">
                 <label htmlFor="district" className="block text-sm font-medium text-gray-700">
-                  {t.districtRequired}
+                  District *
                 </label>
                 <select
                   id="district"
@@ -438,7 +447,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   disabled={!formData.province}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">{t.selectDistrict}</option>
+                  <option value="">Select district</option>
                   {availableDistricts.map((district) => (
                     <option key={district} value={district}>
                       {district}
@@ -449,7 +458,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
               <div className="space-y-1">
                 <label htmlFor="sector" className="block text-sm font-medium text-gray-700">
-                  {t.sectorOptional}
+                  Sector (Optional)
                 </label>
                 <select
                   id="sector"
@@ -459,7 +468,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   disabled={!formData.district}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">{t.selectSector}</option>
+                  <option value="">Select sector</option>
                   {availableSectors.map((sector) => (
                     <option key={sector} value={sector}>
                       {sector}
@@ -470,7 +479,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
               <div className="md:col-span-2 space-y-1">
                 <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                  {t.streetAddressRequired}
+                  Street Address *
                 </label>
                 <input
                   id="address"
@@ -480,7 +489,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   value={formData.address}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder={t.streetAddressPlaceholder}
+                  placeholder="Enter street address"
                 />
               </div>
             </div>
@@ -493,8 +502,8 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.locationOnMap}</h3>
-                <p className="text-sm text-gray-500">{t.locationOnMapDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Location on Map</h3>
+                <p className="text-sm text-gray-500">Select the salon location on the map</p>
               </div>
             </div>
 
@@ -512,15 +521,15 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <IdCard className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.ownerInformation}</h3>
-                <p className="text-sm text-gray-500">{t.ownerInformationDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Owner Information</h3>
+                <p className="text-sm text-gray-500">Owner's identification and contact details</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label htmlFor="ownerIdNumber" className="block text-sm font-medium text-gray-700">
-                  {t.ownerIdNumberRequired}
+                  Owner ID Number *
                 </label>
                 <input
                   id="ownerIdNumber"
@@ -530,13 +539,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   value={formData.ownerIdNumber}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder={t.ownerIdNumberPlaceholder}
+                  placeholder="Enter owner's national ID number"
                 />
               </div>
 
               <div className="space-y-1">
                 <label htmlFor="ownerContactPhone" className="block text-sm font-medium text-gray-700">
-                  {t.ownerContactPhoneRequired}
+                  Owner Contact Phone *
                 </label>
                 <input
                   id="ownerContactPhone"
@@ -546,13 +555,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   value={formData.ownerContactPhone}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder={t.ownerContactPhonePlaceholder}
+                  placeholder="Enter owner's phone number"
                 />
               </div>
 
               <div className="md:col-span-2 space-y-1">
                 <label htmlFor="ownerContactEmail" className="block text-sm font-medium text-gray-700">
-                  {t.ownerContactEmail}
+                  Owner Contact Email
                 </label>
                 <input
                   id="ownerContactEmail"
@@ -561,7 +570,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   value={formData.ownerContactEmail}
                   onChange={handleChange}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder={t.ownerContactEmailPlaceholder}
+                  placeholder="Enter owner's email address"
                 />
               </div>
             </div>
@@ -574,15 +583,15 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <Briefcase className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.businessInformation}</h3>
-                <p className="text-sm text-gray-500">{t.businessInformationDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Business Information</h3>
+                <p className="text-sm text-gray-500">Business details and service categories</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1">
                 <label htmlFor="numberOfEmployees" className="block text-sm font-medium text-gray-700">
-                  {t.numberOfEmployeesRequired}
+                  Number of Employees *
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
@@ -597,24 +606,24 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                     value={formData.numberOfEmployees}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-gray-200 pl-9 pr-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                    placeholder={t.numberOfEmployeesPlaceholder}
+                    placeholder="Enter number of employees"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  {t.serviceCategoriesRequired}
+                  Service Categories *
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { value: 'haircut', label: t.haircut },
-                    { value: 'styling', label: t.styling },
-                    { value: 'coloring', label: t.coloring },
-                    { value: 'treatment', label: t.treatment },
-                    { value: 'beard', label: t.beardCare },
-                    { value: 'massage', label: t.massage },
-                    { value: 'other', label: t.otherServices },
+                    { value: 'haircut', label: 'Haircut' },
+                    { value: 'styling', label: 'Styling' },
+                    { value: 'coloring', label: 'Coloring' },
+                    { value: 'treatment', label: 'Treatment' },
+                    { value: 'beard', label: 'Beard Care' },
+                    { value: 'massage', label: 'Massage' },
+                    { value: 'other', label: 'Other Services' },
                   ].map((category) => (
                     <label
                       key={category.value}
@@ -639,10 +648,10 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
               {formData.serviceCategories.includes('other') && (
                 <div className="space-y-1 mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <label htmlFor="customServices" className="block text-sm font-medium text-gray-700">
-                    {t.specifyCustomServicesRequired}
+                    Specify Custom Services *
                   </label>
                   <p className="text-xs text-gray-500 mb-2">
-                    {t.specifyCustomServicesDesc}
+                    Describe the custom services offered by this salon
                   </p>
                   <textarea
                     id="customServices"
@@ -651,7 +660,8 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                     value={formData.customServices}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                    placeholder={t.specifyCustomServicesPlaceholder}
+                    placeholder="List custom services offered"
+                    required
                   />
                 </div>
               )}
@@ -665,20 +675,20 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <Image className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.salonMedia}</h3>
-                <p className="text-sm text-gray-500">{t.salonMediaDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Salon Media</h3>
+                <p className="text-sm text-gray-500">Upload salon images and promotional content</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
                 <label htmlFor="logo" className="block text-sm font-medium text-gray-700">
-                  {t.logo}
+                  Logo
                 </label>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                     <Upload className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">{t.chooseLogo}</span>
+                    <span className="text-sm text-gray-600">Choose Logo</span>
                     <input
                       id="logo"
                       type="file"
@@ -695,13 +705,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
               <div className="space-y-2">
                 <label htmlFor="coverImages" className="block text-sm font-medium text-gray-700">
-                  {t.coverImages}
+                  Cover Images
                 </label>
-                <p className="text-xs text-gray-500 mb-2">{t.coverImagesDesc}</p>
+                <p className="text-xs text-gray-500 mb-2">Upload up to 10 cover images for the salon</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                     <Upload className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">{t.chooseCoverImages}</span>
+                    <span className="text-sm text-gray-600">Choose Cover Images</span>
                     <input
                       id="coverImages"
                       type="file"
@@ -712,20 +722,20 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                     />
                   </label>
                   {formData.coverImages.length > 0 && (
-                    <span className="text-sm text-green-600">✓ {formData.coverImages.length} {t.imagesSelected}</span>
+                    <span className="text-sm text-green-600">✓ {formData.coverImages.length} images selected</span>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label htmlFor="promotionalVideo" className="block text-sm font-medium text-gray-700">
-                  {t.promotionalVideoOptional}
+                  Promotional Video (Optional)
                 </label>
-                <p className="text-xs text-gray-500 mb-2">{t.promotionalVideoDesc}</p>
+                <p className="text-xs text-gray-500 mb-2">Upload a promotional video for the salon (optional)</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                     <Video className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">{t.chooseVideo}</span>
+                    <span className="text-sm text-gray-600">Choose Video</span>
                     <input
                       id="promotionalVideo"
                       type="file"
@@ -742,13 +752,13 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
 
               <div className="space-y-2">
                 <label htmlFor="gallery" className="block text-sm font-medium text-gray-700">
-                  {t.galleryImages}
+                  Gallery Images
                 </label>
-                <p className="text-xs text-gray-500 mb-2">{t.galleryImagesDesc}</p>
+                <p className="text-xs text-gray-500 mb-2">Upload gallery images for the salon</p>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
                     <Upload className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-600">{t.chooseImages}</span>
+                    <span className="text-sm text-gray-600">Choose Images</span>
                     <input
                       id="gallery"
                       type="file"
@@ -759,7 +769,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                     />
                   </label>
                   {formData.gallery.length > 0 && (
-                    <span className="text-sm text-green-600">✓ {formData.gallery.length} {t.imagesSelected}</span>
+                    <span className="text-sm text-green-600">✓ {formData.gallery.length} images selected</span>
                   )}
                 </div>
               </div>
@@ -773,24 +783,23 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.aboutTheSalon}</h3>
-                <p className="text-sm text-gray-500">{t.aboutTheSalonDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">About the Salon</h3>
+                <p className="text-sm text-gray-500">Describe the salon and its services</p>
               </div>
-            </div>
-
-            <div className="space-y-1">
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                {t.description}
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                rows={4}
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                placeholder={t.descriptionPlaceholder}
-              />
+              <div className="space-y-1">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
+                  placeholder="Describe the salon, its specialties, and what makes it unique..."
+                />
+              </div>
             </div>
           </section>
 
@@ -801,44 +810,42 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <Phone className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.contactInformation}</h3>
-                <p className="text-sm text-gray-500">{t.contactInformationDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Contact Information</h3>
+                <p className="text-sm text-gray-500">Salon contact details</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                  {t.phoneNumber}
-                </label>
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder="E.g. +250 788 123 456"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  {t.emailAddress}
-                </label>
-                <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <Mail className="h-4 w-4" />
-                  </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
                   <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
                     onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 pl-9 pr-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                    placeholder={t.emailAddressPlaceholder}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
+                    placeholder="E.g. +250 788 123 456"
                   />
+                </div>
+                <div className="space-y-1">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                      <Mail className="h-4 w-4" />
+                    </span>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 pl-9 pr-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
+                      placeholder="salon@example.com"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -851,8 +858,8 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{t.verificationStatus}</h3>
-                <p className="text-sm text-gray-500">{t.verificationStatusDesc}</p>
+                <h3 className="text-xl font-semibold text-gray-900">Verification Status</h3>
+                <p className="text-sm text-gray-500">Set the verification status for this salon</p>
               </div>
             </div>
 
@@ -866,7 +873,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                 className="rounded text-green-600 focus:ring-green-500"
               />
               <label htmlFor="verified" className="text-sm font-medium text-gray-700">
-                {t.autoVerifySalon}
+                Auto-verify this salon
               </label>
             </div>
           </section>
@@ -879,7 +886,7 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
               disabled={createSalonMutation.isPending}
               className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {t.cancel}
+              Cancel
             </button>
             <button
               type="submit"
@@ -893,12 +900,12 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
               {createSalonMutation.isPending ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>{t.creatingSalon}</span>
+                  <span>Creating Salon...</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <Building2 className="h-4 w-4" />
-                  <span>{t.createSalon}</span>
+                  <span>Create Salon</span>
                 </div>
               )}
             </button>

@@ -3,11 +3,13 @@ import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import { authenticateToken, requireAdmin, requireSuperAdmin, AuthRequest } from '../middlewares/auth';
 import { validateRequest, validateParams } from '../middlewares/validation';
+import { validateObjectIdParam } from '../utils/validation';
 import { Salon } from '../models/Salon';
 import { User } from '../models/User';
 import { Booking } from '../models/Booking';
 import { Transaction } from '../models/Transaction';
 import { Notification } from '../models/Notification';
+import { Service } from '../models/Service';
 import { sendSalonApprovalEmail, sendSalonRejectionEmail } from '../utils/emailService';
 import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
 import Joi from 'joi';
@@ -2164,6 +2166,108 @@ router.post('/update-user-roles', authenticateToken, requireAdmin, async (req: A
     });
   } catch (error) {
     console.error('Error updating user roles:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Add service to salon (admin only)
+router.post('/salons/:id/services', authenticateToken, requireAdmin, validateObjectIdParam('id'), async (req: AuthRequest, res) => {
+  try {
+    const salonId = req.params.id;
+    const { title, description, durationMinutes, price, category, targetAudience } = req.body;
+
+    // Check if salon exists
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    const service = new Service({
+      salonId,
+      title,
+      description,
+      durationMinutes,
+      price,
+      category,
+      targetAudience,
+    });
+
+    await service.save();
+
+    // Add service to salon
+    salon.services.push(service._id as any);
+    await salon.save();
+
+    res.status(201).json({
+      message: 'Service added successfully',
+      service,
+    });
+  } catch (error) {
+    console.error('Add service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update salon service (admin only)
+router.patch('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    const { title, description, durationMinutes, price, category, targetAudience, isActive } = req.body;
+
+    // Check if salon exists
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    // Find and update the service
+    const service = await Service.findOneAndUpdate(
+      { _id: serviceId, salonId },
+      { title, description, durationMinutes, price, category, targetAudience, isActive },
+      { new: true, runValidators: true }
+    );
+
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    res.json({
+      message: 'Service updated successfully',
+      service,
+    });
+  } catch (error) {
+    console.error('Update service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete salon service (admin only)
+router.delete('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+
+    // Check if salon exists
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    // Find and delete the service
+    const service = await Service.findOneAndDelete({ _id: serviceId, salonId });
+
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Remove service from salon's services array
+    salon.services = salon.services.filter(id => id.toString() !== serviceId);
+    await salon.save();
+
+    res.json({
+      message: 'Service deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete service error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });

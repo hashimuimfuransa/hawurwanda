@@ -11,8 +11,10 @@ import {
   Camera,
   Briefcase,
   Scissors,
-  Users
+  Users,
+  Package
 } from 'lucide-react';
+import AdminServiceManagement from './AdminServiceManagement';
 
 interface SalonDetailsModalProps {
   showModal: boolean;
@@ -31,6 +33,7 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
 }) => {
   // Avoid React concurrent rendering warning by only creating the portal after mount
   const [mounted, setMounted] = useState(false);
+  const [showServiceManagement, setShowServiceManagement] = useState(false);
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -251,12 +254,22 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
               )}
 
               {/* Services */}
-              {displayData.services && displayData.services.length > 0 && (
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50/50 rounded-2xl p-6 border border-emerald-200">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+              <div className="bg-gradient-to-br from-emerald-50 to-green-50/50 rounded-2xl p-6 border border-emerald-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center">
                     <Scissors className="h-5 w-5 mr-2 text-emerald-600" />
-                    Services Offered ({displayData.services.length})
+                    Services Offered ({displayData.services?.length || 0})
                   </h3>
+                  <button
+                    onClick={() => setShowServiceManagement(true)}
+                    className="flex items-center px-3 py-1.5 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <Package className="h-4 w-4 mr-1" />
+                    Manage Services
+                  </button>
+                </div>
+                
+                {displayData.services && displayData.services.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {displayData.services.map((service: any, index: number) => (
                       <div key={index} className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
@@ -274,8 +287,12 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="text-center py-6 bg-white/50 rounded-xl border border-dashed border-emerald-200">
+                    <p className="text-slate-600">No services added yet</p>
+                  </div>
+                )}
+              </div>
 
               {/* Barbers */}
               {displayData.barbers && displayData.barbers.length > 0 && (
@@ -331,6 +348,15 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
           )}
         </div>
       </div>
+      
+      {/* Service Management Modal */}
+      {showServiceManagement && (
+        <AdminServiceManagement
+          salonId={displayData._id}
+          services={displayData.services || []}
+          onClose={() => setShowServiceManagement(false)}
+        />
+      )}
     </div>
     ) : null,
     document.body

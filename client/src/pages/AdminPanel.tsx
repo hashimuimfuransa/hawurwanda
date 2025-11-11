@@ -58,6 +58,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import CreateUserModal from '../components/admin/CreateUserModal';
 import SalonDetailsModal from '../components/admin/SalonDetailsModal';
 import StaffDigitalCard from '../components/admin/StaffDigitalCard';
+import AdminCreateSalon from '../components/admin/AdminCreateSalon';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthStore();
@@ -70,6 +71,7 @@ const AdminPanel: React.FC = () => {
   const [selectedGender, setSelectedGender] = useState('');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showSalonDetailsModal, setShowSalonDetailsModal] = useState(false);
+  const [showCreateSalonModal, setShowCreateSalonModal] = useState(false);
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
   const [selectedSalonData, setSelectedSalonData] = useState<any | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -940,9 +942,18 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Salon Management</h2>
-              <p className="text-gray-600 mt-1">Verify and manage salon registrations</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Salon Management</h2>
+                <p className="text-gray-600 mt-1">Verify and manage salon registrations</p>
+              </div>
+              <button
+                onClick={() => setShowCreateSalonModal(true)}
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+              >
+                <Plus className="h-5 w-5 mr-2" />
+                Create New Salon
+              </button>
             </div>
 
             {/* Search & Filters */}
@@ -2783,6 +2794,20 @@ const AdminPanel: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Salon Modal */}
+      {showCreateSalonModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <AdminCreateSalon 
+              onClose={() => {
+                setShowCreateSalonModal(false);
+                queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
+              }}
+            />
           </div>
         </div>
       )}
