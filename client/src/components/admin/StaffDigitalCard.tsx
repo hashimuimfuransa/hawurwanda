@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { X, Download, Building2, Calendar, Star, Award, User, Phone, Mail, Scissors, Upload, Image as ImageIcon } from 'lucide-react';
@@ -140,21 +141,32 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
   if (!isOpen || !staff) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-900">Staff Digital Card</h3>
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900">Staff Digital Card</h3>
+              <p className="text-sm text-gray-500 mt-1">{staff.name}</p>
+            </div>
             <div className="flex items-center space-x-3">
-              {!staff.profilePhoto && (
+              {(!staff.profilePhoto || staff.profilePhoto === '' || staff.profilePhoto === null) ? (
                 <button
                   onClick={() => setShowUploadModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
                 >
                   <Upload className="h-4 w-4" />
                   <span>Upload Photo</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Change Photo</span>
                 </button>
               )}
               <button
@@ -530,6 +542,8 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
       )}
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default StaffDigitalCard;

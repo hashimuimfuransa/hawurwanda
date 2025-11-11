@@ -1353,12 +1353,22 @@ const AdminPanel: React.FC = () => {
                                 className="h-10 w-10 rounded-full object-cover"
                               />
                             ) : (
-                              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center relative">
                                 <span className="text-white font-semibold">{member.name?.charAt(0)}</span>
+                                <div className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
+                                  <Upload className="h-2.5 w-2.5 text-white" />
+                                </div>
                               </div>
                             )}
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {member.name}
+                                {(!member.profilePhoto || member.profilePhoto === '' || member.profilePhoto === null) && (
+                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                    No Photo
+                                  </span>
+                                )}
+                              </div>
                               <div className="text-sm text-gray-500">{member.email}</div>
                             </div>
                           </div>
@@ -1391,18 +1401,20 @@ const AdminPanel: React.FC = () => {
                               <CreditCard className="h-4 w-4" />
                               <span className="hidden md:inline">Card</span>
                             </button>
-                            {!member.profilePhoto && (
+                            {(!member.profilePhoto || member.profilePhoto === '' || member.profilePhoto === null) && (
                               <button
                                 onClick={() => {
                                   setSelectedStaffForCard(member);
                                   setShowStaffCardModal(true);
-                                  toast('Click the card to upload profile photo', { icon: '📸' });
+                                  setTimeout(() => {
+                                    toast('Upload button is in the card header', { icon: '📸', duration: 3000 });
+                                  }, 500);
                                 }}
-                                className="text-purple-600 hover:text-purple-900 flex items-center space-x-1"
+                                className="text-purple-600 hover:text-purple-900 flex items-center space-x-1 bg-purple-50 px-2 py-1 rounded"
                                 title="Upload Photo"
                               >
                                 <Upload className="h-4 w-4" />
-                                <span className="hidden md:inline">Photo</span>
+                                <span className="text-xs font-semibold">Upload</span>
                               </button>
                             )}
                           </div>
