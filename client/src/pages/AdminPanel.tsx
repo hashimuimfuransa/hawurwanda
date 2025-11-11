@@ -66,6 +66,7 @@ const AdminPanel: React.FC = () => {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showSalonDetailsModal, setShowSalonDetailsModal] = useState(false);
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
+  const [selectedSalonData, setSelectedSalonData] = useState<any | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [ownerSearchTerm, setOwnerSearchTerm] = useState('');
   const [bookingSearchTerm, setBookingSearchTerm] = useState('');
@@ -815,6 +816,7 @@ const AdminPanel: React.FC = () => {
                       <button
                         onClick={() => {
                           setSelectedSalonId(salon._id);
+                          setSelectedSalonData(salon);
                           setShowSalonDetailsModal(true);
                         }}
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -933,6 +935,7 @@ const AdminPanel: React.FC = () => {
                       <button
                         onClick={() => {
                           setSelectedSalonId(salon._id);
+                          setSelectedSalonData(salon);
                           setShowSalonDetailsModal(true);
                         }}
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -1860,9 +1863,11 @@ const AdminPanel: React.FC = () => {
           onClose={() => {
             setShowSalonDetailsModal(false);
             setSelectedSalonId(null);
+            setSelectedSalonData(null);
           }}
           salonDetails={salonDetails}
           salonDetailsLoading={salonDetailsLoading}
+          fallbackSalonData={selectedSalonData}
         />
 
         {/* Staff Details Modal */}

@@ -121,6 +121,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
     try {
       await onSubmit({
         ...data,
+        timeSlot: new Date(data.timeSlot),
         salonId,
         barberId,
         serviceId,

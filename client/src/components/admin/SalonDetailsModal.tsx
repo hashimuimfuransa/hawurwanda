@@ -19,13 +19,15 @@ interface SalonDetailsModalProps {
   onClose: () => void;
   salonDetails: any;
   salonDetailsLoading: boolean;
+  fallbackSalonData?: any;
 }
 
 const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
   showModal,
   onClose,
   salonDetails,
-  salonDetailsLoading
+  salonDetailsLoading,
+  fallbackSalonData
 }) => {
   // Avoid React concurrent rendering warning by only creating the portal after mount
   const [mounted, setMounted] = useState(false);
@@ -44,6 +46,9 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
       body.style.overflow = previousOverflow;
     };
   }, [showModal]);
+
+  // Combine salon details with fallback data
+  const displayData = { ...fallbackSalonData, ...salonDetails?.data };
 
   if (!mounted) return null;
 
@@ -89,7 +94,7 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
           ) : salonDetails ? (
             <div className="space-y-6">
               {/* Logo, Cover Images, and Promotional Video */}
-              {(salonDetails.logo || (salonDetails.coverImages && salonDetails.coverImages.length > 0) || salonDetails.promotionalVideo) && (
+              {(displayData.logo || (displayData.coverImages && displayData.coverImages.length > 0) || displayData.promotionalVideo) && (
                 <div className="bg-gradient-to-br from-indigo-50 to-purple-50/50 rounded-2xl p-6 border border-indigo-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Camera className="h-5 w-5 mr-2 text-indigo-600" />
@@ -97,37 +102,37 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
                   </h3>
                   <div className="space-y-4">
                     {/* Promotional Video */}
-                    {salonDetails.promotionalVideo && (
+                    {displayData.promotionalVideo && (
                       <div>
                         <p className="text-sm text-slate-600 font-medium mb-2">Promotional Video</p>
                         <div className="aspect-video rounded-xl overflow-hidden border-2 border-indigo-200 bg-slate-900">
                           <video
                             controls
                             className="w-full h-full object-cover"
-                            poster={salonDetails.coverImages?.[0] || salonDetails.logo || undefined}
+                            poster={displayData.coverImages?.[0] || displayData.logo || undefined}
                           >
-                            <source src={salonDetails.promotionalVideo} type="video/mp4" />
-                            <source src={salonDetails.promotionalVideo} type="video/webm" />
-                            <source src={salonDetails.promotionalVideo} type="video/mov" />
+                            <source src={displayData.promotionalVideo} type="video/mp4" />
+                            <source src={displayData.promotionalVideo} type="video/webm" />
+                            <source src={displayData.promotionalVideo} type="video/mov" />
                             Your browser does not support the video tag.
                           </video>
                         </div>
                       </div>
                     )}
-                    
-                    {salonDetails.logo && (
+
+                    {displayData.logo && (
                       <div>
                         <p className="text-sm text-slate-600 font-medium mb-2">Salon Logo</p>
                         <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-indigo-200">
-                          <img src={salonDetails.logo} alt="Salon Logo" className="w-full h-full object-cover" />
+                          <img src={displayData.logo} alt="Salon Logo" className="w-full h-full object-cover" />
                         </div>
                       </div>
                     )}
-                    {salonDetails.coverImages && salonDetails.coverImages.length > 0 && (
+                    {displayData.coverImages && displayData.coverImages.length > 0 && (
                       <div>
-                        <p className="text-sm text-slate-600 font-medium mb-2">Cover Images ({salonDetails.coverImages.length})</p>
+                        <p className="text-sm text-slate-600 font-medium mb-2">Cover Images ({displayData.coverImages.length})</p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                          {salonDetails.coverImages.map((image: string, index: number) => (
+                          {displayData.coverImages.map((image: string, index: number) => (
                             <div key={index} className="aspect-video rounded-xl overflow-hidden border-2 border-indigo-200">
                               <img src={image} alt={`Cover ${index + 1}`} className="w-full h-full object-cover" />
                             </div>
@@ -148,12 +153,12 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-slate-600 font-medium">Salon Name</p>
-                    <p className="text-base text-slate-900 font-semibold">{salonDetails.name}</p>
+                    <p className="text-base text-slate-900 font-semibold">{displayData.name}</p>
                   </div>
-                  {salonDetails.description && (
+                  {displayData.description && (
                     <div className="md:col-span-2">
                       <p className="text-sm text-slate-600 font-medium">Description</p>
-                      <p className="text-base text-slate-900">{salonDetails.description}</p>
+                      <p className="text-base text-slate-900">{displayData.description}</p>
                     </div>
                   )}
                 </div>
@@ -166,36 +171,36 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
                   Contact Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {salonDetails.phone && (
+                  {displayData.phone && (
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-green-100 rounded-lg">
                         <Phone className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
                         <p className="text-sm text-slate-600">Phone</p>
-                        <p className="text-base text-slate-900 font-medium">{salonDetails.phone}</p>
+                        <p className="text-base text-slate-900 font-medium">{displayData.phone}</p>
                       </div>
                     </div>
                   )}
-                  {salonDetails.email && (
+                  {displayData.email && (
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-green-100 rounded-lg">
                         <Mail className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
                         <p className="text-sm text-slate-600">Email</p>
-                        <p className="text-base text-slate-900 font-medium">{salonDetails.email}</p>
+                        <p className="text-base text-slate-900 font-medium">{displayData.email}</p>
                       </div>
                     </div>
                   )}
-                  {salonDetails.address && (
+                  {displayData.address && (
                     <div className="flex items-center space-x-3 md:col-span-2">
                       <div className="p-2 bg-green-100 rounded-lg">
                         <MapPin className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
                         <p className="text-sm text-slate-600">Address</p>
-                        <p className="text-base text-slate-900 font-medium">{salonDetails.address}</p>
+                        <p className="text-base text-slate-900 font-medium">{displayData.address}</p>
                       </div>
                     </div>
                   )}
@@ -203,14 +208,14 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
               </div>
 
               {/* Operating Hours */}
-              {salonDetails.operatingHours && (
+              {displayData.operatingHours && (
                 <div className="bg-gradient-to-br from-amber-50 to-yellow-50/50 rounded-2xl p-6 border border-amber-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Clock className="h-5 w-5 mr-2 text-amber-600" />
                     Operating Hours
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {Object.entries(salonDetails.operatingHours).map(([day, hours]: [string, any]) => (
+                    {Object.entries(displayData.operatingHours).map(([day, hours]: [string, any]) => (
                       <div key={day} className="flex justify-between items-center bg-white rounded-lg p-3 border border-amber-200">
                         <span className="font-medium text-slate-900 capitalize">{day}</span>
                         <span className="text-slate-600">
@@ -223,37 +228,37 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
               )}
 
               {/* Service Categories */}
-              {salonDetails.serviceCategories && salonDetails.serviceCategories.length > 0 && (
+              {displayData.serviceCategories && displayData.serviceCategories.length > 0 && (
                 <div className="bg-gradient-to-br from-teal-50 to-cyan-50/50 rounded-2xl p-6 border border-teal-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Briefcase className="h-5 w-5 mr-2 text-teal-600" />
                     Service Categories
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {salonDetails.serviceCategories.map((category: string, index: number) => (
+                    {displayData.serviceCategories.map((category: string, index: number) => (
                       <span key={index} className="px-4 py-2 bg-teal-100 text-teal-800 rounded-full text-sm font-medium capitalize">
                         {category}
                       </span>
                     ))}
                   </div>
-                  {salonDetails.customServices && (
+                  {displayData.customServices && (
                     <div className="mt-4">
                       <p className="text-sm text-slate-600 font-medium">Custom Services</p>
-                      <p className="text-base text-slate-900 mt-1">{salonDetails.customServices}</p>
+                      <p className="text-base text-slate-900 mt-1">{displayData.customServices}</p>
                     </div>
                   )}
                 </div>
               )}
 
               {/* Services */}
-              {salonDetails.services && salonDetails.services.length > 0 && (
+              {displayData.services && displayData.services.length > 0 && (
                 <div className="bg-gradient-to-br from-emerald-50 to-green-50/50 rounded-2xl p-6 border border-emerald-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Scissors className="h-5 w-5 mr-2 text-emerald-600" />
-                    Services Offered ({salonDetails.services.length})
+                    Services Offered ({displayData.services.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {salonDetails.services.map((service: any, index: number) => (
+                    {displayData.services.map((service: any, index: number) => (
                       <div key={index} className="bg-white rounded-xl p-4 border border-emerald-200 shadow-sm">
                         <p className="font-semibold text-slate-900 text-lg">{service.title || service.name}</p>
                         {service.description && (
@@ -273,14 +278,14 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
               )}
 
               {/* Barbers */}
-              {salonDetails.barbers && salonDetails.barbers.length > 0 && (
+              {displayData.barbers && displayData.barbers.length > 0 && (
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50/50 rounded-2xl p-6 border border-purple-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Users className="h-5 w-5 mr-2 text-purple-600" />
-                    Barbers ({salonDetails.barbers.length})
+                    Barbers ({displayData.barbers.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {salonDetails.barbers.map((barber: any, index: number) => (
+                    {displayData.barbers.map((barber: any, index: number) => (
                       <div key={index} className="bg-white rounded-xl p-4 border border-purple-200 flex items-center space-x-4">
                         <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
                           {barber.name.charAt(0)}
@@ -299,17 +304,17 @@ const SalonDetailsModal: React.FC<SalonDetailsModalProps> = ({
               )}
 
               {/* Gallery */}
-              {salonDetails.gallery && salonDetails.gallery.length > 0 && (
+              {displayData.gallery && displayData.gallery.length > 0 && (
                 <div className="bg-gradient-to-br from-rose-50 to-red-50/50 rounded-2xl p-6 border border-rose-200">
                   <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
                     <Camera className="h-5 w-5 mr-2 text-rose-600" />
-                    Gallery ({salonDetails.gallery.length})
+                    Gallery ({displayData.gallery.length})
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {salonDetails.gallery.map((image: string, index: number) => (
+                    {displayData.gallery.map((image: string, index: number) => (
                       <div key={index} className="aspect-square rounded-xl overflow-hidden border border-rose-200">
-                        <img 
-                          src={image} 
+                        <img
+                          src={image}
                           alt={`Gallery ${index + 1}`}
                           className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
                         />

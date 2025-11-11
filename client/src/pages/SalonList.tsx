@@ -98,24 +98,24 @@ const SalonList: React.FC = () => {
                   <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">{t('findSalons', { language })}</h1>
-                  <p className="text-base sm:text-lg lg:text-xl text-blue-100">{t('discoverBestSalons', { language })}</p>
+                  <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-2">{t('findSalons')}</h1>
+                  <p className="text-base sm:text-lg lg:text-xl text-blue-100">{t('discoverBestSalons')}</p>
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 mt-6 sm:mt-8">
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.length}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">{t('salonCount', language)}</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('salonCount')}</div>
                 </div>
                 <div className="hidden sm:block w-px h-12 bg-white/30"></div>
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.filter(s => s.verified).length}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">{t('verifiedCount', language)}</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('verifiedCount')}</div>
                 </div>
                 <div className="hidden sm:block w-px h-12 bg-white/30"></div>
                 <div className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{salons.reduce((sum, s) => sum + (s.barbers?.length || 0), 0)}</div>
-                  <div className="text-blue-200 text-sm sm:text-base">{t('stylistsCount', language)}</div>
+                  <div className="text-blue-200 text-sm sm:text-base">{t('stylistsCount')}</div>
                 </div>
               </div>
             </div>
@@ -128,7 +128,7 @@ const SalonList: React.FC = () => {
           <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-white/30 dark:border-gray-700/30 rounded-3xl shadow-2xl mb-8 overflow-hidden">
             <div className="p-4 sm:p-6 lg:p-8">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('findYourPerfectSalon', language)}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{t('findYourPerfectSalon')}</h2>
                 <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-xl p-1 w-full sm:w-auto">
                   <button
                     onClick={() => setViewMode('grid')}
@@ -139,18 +139,18 @@ const SalonList: React.FC = () => {
                     }`}
                   >
                     <Grid className="h-4 w-4" />
-                    <span className="text-sm sm:text-base">{t('gridView', language)}</span>
+                    <span className="text-sm sm:text-base">{t('gridView')}</span>
                   </button>
                   <button
                     onClick={() => setViewMode('map')}
                     className={`flex items-center justify-center space-x-2 px-3 sm:px-4 py-2 rounded-lg transition-all duration-200 flex-1 sm:flex-none ${
-                      viewMode === 'map' 
-                        ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm' 
+                      viewMode === 'map'
+                        ? 'bg-white dark:bg-gray-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
                         : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                   >
                     <Map className="h-4 w-4" />
-                    <span className="text-sm sm:text-base">{t('mapView', language)}</span>
+                    <span className="text-sm sm:text-base">{t('mapView')}</span>
                   </button>
                 </div>
               </div>
@@ -161,7 +161,7 @@ const SalonList: React.FC = () => {
                   <Search className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 h-4 w-4 sm:h-5 sm:w-5" />
                   <input
                     type="text"
-                    placeholder={t('searchSalons', { language })}
+                    placeholder={t('searchSalons')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-3 sm:py-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 shadow-sm text-sm sm:text-base"
@@ -232,7 +232,7 @@ const SalonList: React.FC = () => {
                       className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 rounded"
                     />
                     <label htmlFor="verified" className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
-                      {t('verifiedOnly', { language })}
+                      {t('verifiedOnly')}
                     </label>
                   </div>
                   </div>
@@ -245,7 +245,7 @@ const SalonList: React.FC = () => {
                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 sm:px-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center text-sm sm:text-base"
                 >
                   <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
-                  {t('search', { language })}
+                  {t('search')}
                 </button>
               </div>
             </div>

@@ -146,8 +146,6 @@ const Booking: React.FC = () => {
             </div>
           </div>
         </div>
-
-        <Footer />
       </div>
     );
   }

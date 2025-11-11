@@ -276,6 +276,7 @@ export const enTranslations = {
 
   // Error Messages
   errorLoadingData: 'Error loading data',
+  errorLoadingBookings: 'Error Loading Bookings',
   somethingWentWrong: 'Something went wrong',
   pleaseCheckConnection: 'Please check your internet connection',
   tryAgain: 'Try Again',

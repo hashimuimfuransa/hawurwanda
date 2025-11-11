@@ -363,7 +363,7 @@ const Home: React.FC = () => {
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
-                  to="/booking"
+                  to="/salons"
                   className="group inline-flex items-center justify-center rounded-3xl px-8 py-4 text-sm font-semibold uppercase tracking-wide border border-emerald-300 bg-white/70 text-emerald-600 hover:bg-emerald-500 hover:text-white hover:border-transparent transition-all duration-200 shadow-md shadow-emerald-500/15"
                 >
                   {t('bookAppointment', language)}

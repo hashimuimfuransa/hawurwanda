@@ -276,6 +276,7 @@ export const rwTranslations = {
 
   // Error Messages
   errorLoadingData: 'Ikosa ryo gukurikanya makuru',
+  errorLoadingBookings: 'Ikosa ryo gukurikanya ibyemezo',
   somethingWentWrong: 'Habaye ikosa',
   pleaseCheckConnection: 'Kureba ubunanira',
   tryAgain: 'Gerageza',

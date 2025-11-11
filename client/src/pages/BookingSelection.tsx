@@ -46,7 +46,7 @@ const BookingSelection: React.FC = () => {
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const { isDarkMode } = useThemeStore();
-  const { language } = useTranslationStore();
+  const { language, t } = useTranslationStore();
 
   const districts = [
     'Kigali', 'Huye', 'Musanze', 'Rubavu', 'Nyagatare', 'Karongi',
@@ -160,7 +160,7 @@ const BookingSelection: React.FC = () => {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">{t('loadingSalons', language)}</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('loadingSalons')}</p>
           </div>
         </div>
       </div>
@@ -181,14 +181,14 @@ const BookingSelection: React.FC = () => {
               </div>
             </div>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
-              {t('bookAppointment', language)}
+              {t('bookAppointment')}
             </h1>
             <p className="text-lg sm:text-xl text-emerald-100 max-w-3xl mx-auto">
-              {t('bookAppointmentDesc', language)}
+              {t('bookAppointmentDesc')}
             </p>
             <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-full text-sm font-semibold mt-6">
               <Sparkles className="w-4 h-4 mr-2" />
-              {salons.length} {t('salonsAvailable', language)}
+              {salons.length} {t('salonsAvailable')}
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ const BookingSelection: React.FC = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder={t('searchSalons', language)}
+                placeholder={t('searchSalons')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -218,7 +218,7 @@ const BookingSelection: React.FC = () => {
                 onChange={(e) => setSelectedDistrict(e.target.value)}
                 className="pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-w-[200px]"
               >
-                <option value="">{t('allDistricts', language)}</option>
+                <option value="">{t('allDistricts')}</option>
                 {districts.map((district) => (
                   <option key={district} value={district}>{district}</option>
                 ))}

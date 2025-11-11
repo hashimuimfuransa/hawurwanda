@@ -29,11 +29,23 @@ const Profile: React.FC = () => {
     return null;
   }
 
-  const { data: bookings, isLoading: bookingsLoading } = useQuery({
-    queryKey: ['bookings', 'user'],
+  const { data: bookings, isLoading: bookingsLoading, error: bookingsError } = useQuery({
+    queryKey: ['bookings', user?._id],
     queryFn: () => bookingService.getBookings(),
     enabled: !!user,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
   });
+
+  // Extract bookings list more robustly
+  const getBookingsList = (data: any) => {
+    if (!data) return [];
+    // Try different possible structures
+    if (data.data?.bookings) return data.data.bookings;
+    if (data.bookings) return data.bookings;
+    if (Array.isArray(data)) return data;
+    return [];
+  };
 
   const updateProfileMutation = useMutation({
     mutationFn: (data: any) => authService.updateProfile(data),
@@ -109,9 +121,9 @@ const Profile: React.FC = () => {
   }
 
   // Calculate stats for user dashboard
-  const bookingsList = bookings?.data?.bookings || bookings?.bookings || [];
+  const bookingsList = getBookingsList(bookings);
   const completedBookings = bookingsList.filter((booking: any) => booking.status === 'completed');
-  const upcomingBookings = bookingsList.filter((booking: any) => booking.status === 'confirmed');
+  const upcomingBookings = bookingsList.filter((booking: any) => ['pending', 'confirmed'].includes(booking.status));
   const totalSpent = completedBookings.reduce((sum: number, booking: any) => sum + (booking.amountTotal || 0), 0);
 
   return (
@@ -364,7 +376,23 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              {bookingsLoading ? (
+              {bookingsError ? (
+                <div className="text-center py-16">
+                  <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-pink-100 dark:from-red-900 dark:to-pink-900 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Calendar className="h-12 w-12 text-red-500 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('errorLoadingBookings', language)}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                    {bookingsError instanceof Error ? bookingsError.message : 'Failed to load your bookings. Please try again.'}
+                  </p>
+                  <button 
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ['bookings', user?._id] })}
+                    className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-blue-500 text-white rounded-lg hover:from-emerald-600 hover:to-blue-600 transition-all"
+                  >
+                    {t('tryAgain', language)}
+                  </button>
+                </div>
+              ) : bookingsLoading ? (
                 <div className="text-center py-16">
                   <div className="w-16 h-16 bg-gradient-to-r from-emerald-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                     <Clock className="h-8 w-8 text-white animate-spin" />
@@ -391,8 +419,12 @@ const Profile: React.FC = () => {
                   <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-600">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t('pending', language)}: {bookingsList.filter(b => b.status === 'pending').length}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{t('upcoming', language)}: {upcomingBookings.length}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t('confirmed', language)}: {bookingsList.filter(b => b.status === 'confirmed').length}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-blue-400 rounded-full"></div>

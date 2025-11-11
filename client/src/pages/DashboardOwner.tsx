@@ -961,7 +961,7 @@ const DashboardOwner: React.FC = () => {
   }, [earningsPeriod]);
 
   const normalizedEarnings = React.useMemo<NormalizedEarningRecord[]>(() => {
-    const bookingsList = bookings?.data?.data?.bookings || [];
+    const bookingsList = bookings?.data?.bookings || [];
     const walkInsList = walkInsResponse?.data?.walkInCustomers || [];
     const normalized: NormalizedEarningRecord[] = [];
 
@@ -1021,7 +1021,7 @@ const DashboardOwner: React.FC = () => {
   }, [normalizedEarnings, periodStartTimestamp]);
 
   const salonCustomersSummary = React.useMemo(() => {
-    const bookingsList = bookings?.data?.data?.bookings || [];
+    const bookingsList = bookings?.data?.bookings || [];
     const walkInsList = walkInsResponse?.data?.walkInCustomers || [];
 
     const uniqueCustomerKeys = new Set<string>();
@@ -1218,14 +1218,14 @@ const DashboardOwner: React.FC = () => {
     console.log('🔄 Frontend: getFilteredAndSortedBookings called');
     console.log('📦 Frontend: Full bookings object:', bookings);
     console.log('📊 Frontend: bookings?.data:', bookings?.data);
-    console.log('📋 Frontend: bookings?.data?.data?.bookings:', bookings?.data?.data?.bookings);
+    console.log('📋 Frontend: bookings?.data?.bookings:', bookings?.data?.bookings);
     
-    if (!bookings?.data?.data?.bookings) {
+    if (!bookings?.data?.bookings) {
       console.log('❌ Frontend: No bookings data found, returning empty array');
       return [];
     }
 
-    let filteredBookings = bookings.data.data.bookings;
+    let filteredBookings = bookings.data.bookings;
     console.log('✅ Frontend: Initial filtered bookings:', filteredBookings.length);
 
     // Apply status filter
@@ -1818,7 +1818,7 @@ const DashboardOwner: React.FC = () => {
   }
 
   // Calculate booking stats for sidebar badges
-  const pendingBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
+  const pendingBookings = bookings?.data?.bookings?.filter((booking: any) => 
     booking.status === 'pending'
   ) || [];
 
@@ -2115,13 +2115,13 @@ const DashboardOwner: React.FC = () => {
     );
   }
 
-  const todayBookings = bookings?.data?.data?.bookings?.filter((booking: any) => {
+  const todayBookings = bookings?.data?.bookings?.filter((booking: any) => {
     const bookingDate = new Date(booking.timeSlot).toDateString();
     const today = new Date().toDateString();
     return bookingDate === today;
   }) || [];
 
-  const completedBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
+  const completedBookings = bookings?.data?.bookings?.filter((booking: any) => 
     booking.status === 'completed'
   ) || [];
 
@@ -2137,7 +2137,7 @@ const DashboardOwner: React.FC = () => {
     ), 0
   );
 
-  const confirmedBookings = bookings?.data?.data?.bookings?.filter((booking: any) => 
+  const confirmedBookings = bookings?.data?.bookings?.filter((booking: any) => 
     booking.status === 'confirmed'
   ) || [];
 
@@ -2444,7 +2444,7 @@ const DashboardOwner: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
                   <p className="text-xs text-blue-600 font-medium mb-1">Ubusabe Bwose</p>
-                  <p className="text-2xl font-bold text-blue-900">{bookings?.data?.data?.bookings?.length || 0}</p>
+                  <p className="text-2xl font-bold text-blue-900">{bookings?.data?.bookings?.length || 0}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50">
                   <p className="text-xs text-amber-600 font-medium mb-1">Bitegerejwe</p>
@@ -2507,7 +2507,7 @@ const DashboardOwner: React.FC = () => {
               <ArrowUp className="h-4 w-4 rotate-90" />
             </button>
           </div>
-          {bookings?.data?.data?.bookings?.length === 0 ? (
+          {bookings?.data?.bookings?.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <Calendar className="h-10 w-10 text-slate-400" />
@@ -2517,7 +2517,7 @@ const DashboardOwner: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {bookings?.data?.data?.bookings?.slice(0, 5).map((booking: any) => (
+              {bookings?.data?.bookings?.slice(0, 5).map((booking: any) => (
                 <BookingCard
                   key={booking._id}
                   booking={booking}
@@ -2558,11 +2558,11 @@ const DashboardOwner: React.FC = () => {
 
     const filteredBookings = getFilteredAndSortedBookings();
     const statusCounts = {
-      all: bookings?.data?.data?.bookings?.length || 0,
-      pending: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'pending').length || 0,
-      confirmed: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
-      completed: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'completed').length || 0,
-      cancelled: bookings?.data?.data?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
+      all: bookings?.data?.bookings?.length || 0,
+      pending: bookings?.data?.bookings?.filter((b: any) => b.status === 'pending').length || 0,
+      confirmed: bookings?.data?.bookings?.filter((b: any) => b.status === 'confirmed').length || 0,
+      completed: bookings?.data?.bookings?.filter((b: any) => b.status === 'completed').length || 0,
+      cancelled: bookings?.data?.bookings?.filter((b: any) => b.status === 'cancelled').length || 0,
     };
 
     return (
@@ -2794,7 +2794,7 @@ const DashboardOwner: React.FC = () => {
   };
 
   function renderCustomers() {
-    const salonBookings = bookings?.data?.data?.bookings || [];
+    const salonBookings = bookings?.data?.bookings || [];
     const salonWalkIns = walkInsResponse?.data?.walkInCustomers || [];
 
     const uniqueCustomerSet = new Set<string>();
@@ -4246,7 +4246,7 @@ const DashboardOwner: React.FC = () => {
   }
 
   function renderAnalytics() {
-    const allBookings = bookings?.data?.data?.bookings || [];
+    const allBookings = bookings?.data?.bookings || [];
     const completedBookings = allBookings.filter((b: any) => b.status === 'completed');
     const confirmedBookings = allBookings.filter((b: any) => b.status === 'confirmed');
     const pendingBookings = allBookings.filter((b: any) => b.status === 'pending');
