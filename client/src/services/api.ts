@@ -272,6 +272,11 @@ export const adminService = {
   
   updateStaffServices: (staffId: string, services: string[]) =>
     api.patch(`/admin/staff/${staffId}/services`, { services }),
+  
+  createStaffMember: (staffData: FormData) =>
+    api.post('/admin/staff/create', staffData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 export const superAdminService = {

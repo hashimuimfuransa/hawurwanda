@@ -11,6 +11,7 @@ export interface IUser extends Document {
   salonId?: Types.ObjectId;
   profilePhoto?: string;
   isVerified: boolean;
+  gender?: 'male' | 'female' | 'other';
   // Enhanced staff information
   staffCategory?: 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'other';
   specialties?: string[];
@@ -58,7 +59,14 @@ const userSchema = new Schema<IUser>({
     type: String,
     required: false,
     trim: true,
-    match: [/^[0-9]{16}$/, 'Please enter a valid 16-digit national ID'],
+    validate: {
+      validator: function(v: string) {
+        // Only validate if a value is provided
+        if (!v || v === '') return true;
+        return /^[0-9]{16}$/.test(v);
+      },
+      message: 'Please enter a valid 16-digit national ID'
+    },
     sparse: true, // Allows multiple null values but enforces uniqueness for non-null values
   },
   passwordHash: {
@@ -83,6 +91,11 @@ const userSchema = new Schema<IUser>({
   isVerified: {
     type: Boolean,
     default: false,
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    required: false,
   },
   // Enhanced staff information
   staffCategory: {

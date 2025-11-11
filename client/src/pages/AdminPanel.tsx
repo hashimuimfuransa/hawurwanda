@@ -67,6 +67,7 @@ const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('');
+  const [selectedGender, setSelectedGender] = useState('');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showSalonDetailsModal, setShowSalonDetailsModal] = useState(false);
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
@@ -90,6 +91,22 @@ const AdminPanel: React.FC = () => {
   const [selectedStaffServices, setSelectedStaffServices] = useState<string[]>([]);
   const [showStaffCardModal, setShowStaffCardModal] = useState(false);
   const [selectedStaffForCard, setSelectedStaffForCard] = useState<any>(null);
+  const [showCreateStaffModal, setShowCreateStaffModal] = useState(false);
+  const [staffFormData, setStaffFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    nationalId: '',
+    password: '',
+    salonId: '',
+    staffCategory: 'barber',
+    gender: '',
+    specialties: [] as string[],
+    experience: '',
+    bio: '',
+    credentials: [] as string[],
+    profilePhoto: null as File | null,
+  });
   
   // Booking management state
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
@@ -172,8 +189,8 @@ const AdminPanel: React.FC = () => {
 
   // Staff management data
   const { data: staffData, isLoading: staffLoading } = useQuery({
-    queryKey: ['admin-staff', searchTerm, selectedRole],
-    queryFn: () => adminService.getAllStaff({ search: searchTerm, role: selectedRole }),
+    queryKey: ['admin-staff', searchTerm, selectedRole, selectedGender],
+    queryFn: () => adminService.getAllStaff({ search: searchTerm, role: selectedRole, gender: selectedGender }),
   });
 
   // Extract data from API responses (handle both direct arrays and nested data structures)
@@ -332,6 +349,33 @@ const AdminPanel: React.FC = () => {
     },
   });
 
+  const createStaffMutation = useMutation({
+    mutationFn: (staffData: FormData) => adminService.createStaffMember(staffData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff member created successfully');
+      setShowCreateStaffModal(false);
+      setStaffFormData({
+        name: '',
+        email: '',
+        phone: '',
+        nationalId: '',
+        password: '',
+        salonId: '',
+        staffCategory: 'barber',
+        gender: '',
+        specialties: [],
+        experience: '',
+        bio: '',
+        credentials: [],
+        profilePhoto: null,
+      });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create staff member');
+    },
+  });
+
   // Booking management mutations
   const updateBookingStatusMutation = useMutation({
     mutationFn: ({ bookingId, status }: { bookingId: string; status: string }) => 
@@ -429,7 +473,11 @@ const AdminPanel: React.FC = () => {
 
   const handleAssignServices = (staff: any) => {
     setSelectedStaff(staff);
-    setSelectedStaffServices(staff.assignedServices || []);
+    // Extract service IDs from assigned services
+    const assignedServiceIds = (staff.assignedServices || []).map((service: any) => 
+      typeof service === 'string' ? service : service._id
+    );
+    setSelectedStaffServices(assignedServiceIds);
     setShowServiceAssignmentModal(true);
   };
 
@@ -452,6 +500,30 @@ const AdminPanel: React.FC = () => {
         ? prev.filter(id => id !== serviceId)
         : [...prev, serviceId]
     );
+  };
+
+  const handleCreateStaff = () => {
+    if (!staffFormData.name || !staffFormData.email || !staffFormData.phone || !staffFormData.password || !staffFormData.salonId) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', staffFormData.name);
+    formData.append('email', staffFormData.email);
+    formData.append('phone', staffFormData.phone);
+    formData.append('password', staffFormData.password);
+    formData.append('salonId', staffFormData.salonId);
+    formData.append('staffCategory', staffFormData.staffCategory);
+    if (staffFormData.gender) formData.append('gender', staffFormData.gender);
+    if (staffFormData.nationalId) formData.append('nationalId', staffFormData.nationalId);
+    if (staffFormData.experience) formData.append('experience', staffFormData.experience);
+    if (staffFormData.bio) formData.append('bio', staffFormData.bio);
+    if (staffFormData.specialties.length > 0) formData.append('specialties', JSON.stringify(staffFormData.specialties));
+    if (staffFormData.credentials.length > 0) formData.append('credentials', JSON.stringify(staffFormData.credentials));
+    if (staffFormData.profilePhoto) formData.append('profilePhoto', staffFormData.profilePhoto);
+
+    createStaffMutation.mutate(formData);
   };
 
   // Booking management handlers
@@ -1280,9 +1352,18 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-              <p className="text-gray-600 mt-1">Manage all staff members across salons</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
+                <p className="text-gray-600 mt-1">Manage all staff members across salons</p>
+              </div>
+              <button
+                onClick={() => setShowCreateStaffModal(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                <span>Add Staff Member</span>
+              </button>
             </div>
 
             {/* Stats Cards */}
@@ -1391,30 +1472,49 @@ const AdminPanel: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
                             <button
+                              onClick={() => handleAssignServices(member)}
+                              className="text-green-600 hover:text-green-900 flex items-center space-x-1"
+                              title="Assign Services"
+                            >
+                              <Scissors className="h-4 w-4" />
+                              <span className="hidden md:inline">Services</span>
+                            </button>
+                            <button
+                              onClick={() => handleMigrateStaff(member)}
+                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                              title="Change Salon"
+                            >
+                              <Building2 className="h-4 w-4" />
+                              <span className="hidden md:inline">Salon</span>
+                            </button>
+                            <button
                               onClick={() => {
                                 setSelectedStaffForCard(member);
                                 setShowStaffCardModal(true);
                               }}
-                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                              className="text-purple-600 hover:text-purple-900 flex items-center space-x-1"
                               title="View Digital Card"
                             >
                               <CreditCard className="h-4 w-4" />
                               <span className="hidden md:inline">Card</span>
                             </button>
-                            {(!member.profilePhoto || member.profilePhoto === '' || member.profilePhoto === null) && (
+                            {member.isActive !== false ? (
                               <button
-                                onClick={() => {
-                                  setSelectedStaffForCard(member);
-                                  setShowStaffCardModal(true);
-                                  setTimeout(() => {
-                                    toast('Upload button is in the card header', { icon: '📸', duration: 3000 });
-                                  }, 500);
-                                }}
-                                className="text-purple-600 hover:text-purple-900 flex items-center space-x-1 bg-purple-50 px-2 py-1 rounded"
-                                title="Upload Photo"
+                                onClick={() => handleDeactivateStaff(member)}
+                                className="text-red-600 hover:text-red-900 flex items-center space-x-1"
+                                title="Deactivate"
                               >
-                                <Upload className="h-4 w-4" />
-                                <span className="text-xs font-semibold">Upload</span>
+                                <X className="h-4 w-4" />
+                                <span className="hidden md:inline">Deactivate</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleActivateStaff(member)}
+                                className="text-green-600 hover:text-green-900 flex items-center space-x-1"
+                                title="Activate"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                                <span className="hidden md:inline">Activate</span>
                               </button>
                             )}
                           </div>
@@ -1763,6 +1863,18 @@ const AdminPanel: React.FC = () => {
                     <option value="owner">Owners</option>
                   </select>
                 </div>
+                <div className="sm:w-48">
+                  <select
+                    value={selectedGender}
+                    onChange={(e) => setSelectedGender(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">All Genders</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1791,6 +1903,9 @@ const AdminPanel: React.FC = () => {
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Role
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Gender
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Status
@@ -1838,12 +1953,17 @@ const AdminPanel: React.FC = () => {
                               {staffMember.role || 'Staff'}
                             </span>
                           </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {staffMember.gender ? (
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staffMember.gender === 'male' ? 'bg-blue-100 text-blue-800' : staffMember.gender === 'female' ? 'bg-pink-100 text-pink-800' : 'bg-purple-100 text-purple-800'}`}>
+                                {staffMember.gender.charAt(0).toUpperCase() + staffMember.gender.slice(1)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">Not specified</span>
+                            )}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              staffMember.isActive !== false 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staffMember.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                               {staffMember.isActive !== false ? 'Active' : 'Inactive'}
                             </span>
                           </td>
@@ -2217,7 +2337,7 @@ const AdminPanel: React.FC = () => {
                   <h4 className="text-lg font-medium text-gray-900 mb-4">Available Services</h4>
                   <div className="space-y-3 max-h-60 overflow-y-auto">
                     {salons
-                      .find((salon: any) => salon._id === selectedStaff.salon?._id)
+                      .find((salon: any) => salon._id === selectedStaff.salonId?._id || salon._id === selectedStaff.salonId)
                       ?.services?.map((service: any) => (
                         <div
                           key={service._id}
@@ -2248,7 +2368,11 @@ const AdminPanel: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )) || (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No services available for this salon. Please assign the staff member to a salon first.
+                        </p>
+                      )}
                   </div>
                 </div>
 
@@ -2455,6 +2579,211 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Create Staff Modal */}
+      {showCreateStaffModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900">Create Staff Member</h3>
+                  <button
+                    onClick={() => setShowCreateStaffModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-6 w-6 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input
+                          type="text"
+                          value={staffFormData.name}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="John Doe"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        <input
+                          type="email"
+                          value={staffFormData.email}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="john@example.com"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                        <input
+                          type="tel"
+                          value={staffFormData.phone}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="+250 XXX XXX XXX"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                        <select
+                          value={staffFormData.gender}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, gender: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">National ID</label>
+                        <input
+                          type="text"
+                          value={staffFormData.nationalId}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, nationalId: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="1234567890123456"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                        <input
+                          type="password"
+                          value={staffFormData.password}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                        <select
+                          value={staffFormData.staffCategory}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, staffCategory: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="barber">Barber</option>
+                          <option value="hairstylist">Hair Stylist</option>
+                          <option value="nail_technician">Nail Technician</option>
+                          <option value="massage_therapist">Massage Therapist</option>
+                          <option value="esthetician">Esthetician</option>
+                          <option value="receptionist">Receptionist</option>
+                          <option value="manager">Manager</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Salon Assignment */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Assignment</h4>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Salon *</label>
+                      <select
+                        value={staffFormData.salonId}
+                        onChange={(e) => setStaffFormData({ ...staffFormData, salonId: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">Select a salon</option>
+                        {salons.filter((s: any) => s.verified).map((salon: any) => (
+                          <option key={salon._id} value={salon._id}>
+                            {salon.name} - {salon.district}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Profile Photo */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Profile Photo</h4>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Upload Photo</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) setStaffFormData({ ...staffFormData, profilePhoto: file });
+                        }}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      {staffFormData.profilePhoto && (
+                        <p className="mt-2 text-sm text-green-600">✓ {staffFormData.profilePhoto.name}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Additional Info */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Additional Information</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                        <input
+                          type="text"
+                          value={staffFormData.experience}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, experience: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="5 years"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                        <textarea
+                          value={staffFormData.bio}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, bio: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={3}
+                          placeholder="Brief bio about the staff member..."
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowCreateStaffModal(false)}
+                      className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCreateStaff}
+                      disabled={createStaffMutation.isPending}
+                      className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {createStaffMutation.isPending ? 'Creating...' : 'Create Staff Member'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Staff Digital Card Modal */}
       <StaffDigitalCard 

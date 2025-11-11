@@ -662,12 +662,14 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
 // Get all staff members (admin only)
 router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { search, role, page = 1, limit = 10 } = req.query;
+    const { search, role, gender, page = 1, limit = 10 } = req.query;
     const query: any = {
       role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'] }
     };
 
     if (role) query.role = role;
+    if (gender) query.gender = gender;
+      
     if (search) {
       query.$or = [
         { name: new RegExp(search as string, 'i') },
@@ -695,12 +697,12 @@ router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, r
           // Find salon where this staff member is in the barbers array
           const salon = await Salon.findOne({ barbers: staffMember._id })
             .select('name address district');
-          
+            
           if (salon) {
             // Update the staff member's salonId
             staffMember.salonId = salon._id;
             await staffMember.save();
-            
+              
             return {
               ...staffMember.toObject(),
               salonId: {
@@ -839,6 +841,144 @@ router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async 
     res.json({ staff });
   } catch (error) {
     console.error('Update staff services error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Create staff member and assign to salon (admin only)
+router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+  try {
+    const {
+      name,
+      email,
+      phone,
+      nationalId,
+      password,
+      salonId,
+      staffCategory,
+      gender,
+      specialties,
+      experience,
+      bio,
+      credentials,
+      workSchedule,
+      assignedServices
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !phone || !password || !salonId) {
+      return res.status(400).json({ message: 'Name, email, phone, password, and salon are required' });
+    }
+
+    // Check if salon exists
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    // Check if email or phone already exists
+    const existingUser = await User.findOne({
+      $or: [{ email }, { phone }]
+    });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email or phone already exists' });
+    }
+
+    let profilePhotoUrl: string | undefined;
+
+    // Upload profile photo if provided
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'staff/profiles',
+        `profile-${Date.now()}`
+      );
+      profilePhotoUrl = result.secure_url;
+    }
+
+    // Parse arrays from JSON strings
+    let parsedSpecialties: string[] = [];
+    let parsedCredentials: string[] = [];
+    let parsedWorkSchedule: any = {};
+    let parsedAssignedServices: string[] = [];
+
+    if (specialties) {
+      try {
+        parsedSpecialties = JSON.parse(specialties);
+      } catch (e) {
+        parsedSpecialties = specialties.split(',').map((s: string) => s.trim());
+      }
+    }
+
+    if (credentials) {
+      try {
+        parsedCredentials = JSON.parse(credentials);
+      } catch (e) {
+        parsedCredentials = credentials.split(',').map((c: string) => c.trim());
+      }
+    }
+
+    if (workSchedule) {
+      try {
+        parsedWorkSchedule = JSON.parse(workSchedule);
+      } catch (e) {
+        console.warn('Invalid work schedule format');
+      }
+    }
+
+    if (assignedServices) {
+      try {
+        parsedAssignedServices = JSON.parse(assignedServices);
+      } catch (e) {
+        parsedAssignedServices = assignedServices.split(',').map((s: string) => s.trim());
+      }
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Create new staff member
+    const staffMember = new User({
+      name,
+      email,
+      phone,
+      nationalId: nationalId && nationalId.trim() !== '' ? nationalId : undefined,
+      passwordHash,
+      role: staffCategory || 'barber',
+      salonId,
+      profilePhoto: profilePhotoUrl,
+      isVerified: true,
+      gender: gender || undefined,
+      staffCategory,
+      specialties: parsedSpecialties,
+      experience,
+      bio,
+      credentials: parsedCredentials,
+      workSchedule: parsedWorkSchedule,
+      assignedServices: parsedAssignedServices.length > 0 ? parsedAssignedServices : salon.services,
+    });
+
+    await staffMember.save();
+
+    // Add staff member to salon barbers list
+    if (!salon.barbers.includes(staffMember._id as any)) {
+      salon.barbers.push(staffMember._id as any);
+      await salon.save();
+    }
+
+    // Return staff member without password hash
+    const staffMemberResponse = await User.findById(staffMember._id)
+      .select('-passwordHash')
+      .populate('salonId', 'name address district')
+      .populate('assignedServices', 'title category price');
+
+    res.status(201).json({
+      message: 'Staff member created successfully',
+      staff: staffMemberResponse,
+    });
+  } catch (error) {
+    console.error('Create staff error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
