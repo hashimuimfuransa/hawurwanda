@@ -1,5 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
 import { authenticateToken, requireAdmin, requireSuperAdmin, AuthRequest } from '../middlewares/auth';
 import { validateRequest, validateParams } from '../middlewares/validation';
 import { Salon } from '../models/Salon';
@@ -8,6 +9,7 @@ import { Booking } from '../models/Booking';
 import { Transaction } from '../models/Transaction';
 import { Notification } from '../models/Notification';
 import { sendSalonApprovalEmail, sendSalonRejectionEmail } from '../utils/emailService';
+import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
 import Joi from 'joi';
 
 const router = express.Router();
@@ -31,6 +33,44 @@ const createUserSchema = Joi.object({
   password: Joi.string().min(6).required(),
   role: Joi.string().valid('client', 'barber', 'owner', 'admin', 'superadmin').required(),
   salonId: Joi.string().optional(), // Optional salon ID for barber/owner roles
+});
+
+const createAdminSalonSchema = Joi.object({
+  name: Joi.string().min(2).max(100).required(),
+  address: Joi.string().min(5).max(200).required(),
+  province: Joi.string().required(),
+  district: Joi.string().required(),
+  sector: Joi.string().optional(),
+  latitude: Joi.number().min(-90).max(90).required(),
+  longitude: Joi.number().min(-180).max(180).required(),
+  ownerId: Joi.string().required(), // Admin selects the owner
+  // Owner Information
+  ownerIdNumber: Joi.string().min(10).max(20).required(),
+  ownerContactPhone: Joi.string().pattern(/^(\+250|250|0)?[0-9]{9}$/).required(),
+  ownerContactEmail: Joi.string().email().optional(),
+  // Business Information
+  numberOfEmployees: Joi.number().min(1).max(1000).required(),
+  serviceCategories: Joi.string().optional(), // Will be parsed from comma-separated string
+  customServices: Joi.string().max(500).optional(),
+  description: Joi.string().max(500).optional(),
+  phone: Joi.string().pattern(/^(\+250|250|0)?[0-9]{9}$/).optional(),
+  email: Joi.string().email().optional(),
+  verified: Joi.boolean().optional(), // Admin can choose to auto-verify
+});
+
+// Configure multer for file uploads (images and videos)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB for videos
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image and video files are allowed'));
+    }
+  },
 });
 
 // Get pending salon verifications
@@ -146,6 +186,198 @@ router.patch('/salons/:id/verify', authenticateToken, requireAdmin, validateRequ
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+// Create salon (admin only) - with file uploads
+router.post(
+  '/salons',
+  authenticateToken,
+  requireAdmin,
+  upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'coverImages', maxCount: 10 }, // Multiple cover images
+    { name: 'promotionalVideo', maxCount: 1 }, // Optional video
+    { name: 'gallery', maxCount: 5 },
+    { name: 'ownerProfilePicture', maxCount: 1 }, // Owner profile picture
+  ]),
+  async (req: AuthRequest, res) => {
+    try {
+      // Validate body data
+      const { error } = createAdminSalonSchema.validate(req.body);
+      if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+      }
+
+      const {
+        name,
+        address,
+        province,
+        district,
+        sector,
+        latitude,
+        longitude,
+        ownerId,
+        ownerIdNumber,
+        ownerContactPhone,
+        ownerContactEmail,
+        numberOfEmployees,
+        serviceCategories,
+        customServices,
+        description,
+        phone,
+        email,
+        verified = false,
+      } = req.body;
+
+      // Check if owner exists and is actually an owner
+      const owner = await User.findById(ownerId);
+      if (!owner) {
+        return res.status(404).json({ message: 'Owner not found' });
+      }
+      if (owner.role !== 'owner') {
+        return res.status(400).json({ message: 'Selected user is not an owner' });
+      }
+
+      // Check if owner already has a salon
+      const existingSalon = await Salon.findOne({ ownerId });
+      if (existingSalon) {
+        return res.status(400).json({ message: 'This owner already has a salon' });
+      }
+
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      let logoUrl: string | undefined;
+      let coverImageUrls: string[] = [];
+      let promotionalVideoUrl: string | undefined;
+      let galleryUrls: string[] = [];
+      let ownerProfilePictureUrl: string | undefined;
+
+      // Upload logo if provided
+      if (files?.logo && files.logo[0]) {
+        const result = await uploadToCloudinary(
+          files.logo[0].buffer,
+          'salons/logos',
+          `logo-${Date.now()}`
+        );
+        logoUrl = result.secure_url;
+      }
+
+      // Upload cover images if provided
+      if (files?.coverImages && files.coverImages.length > 0) {
+        coverImageUrls = await uploadMultipleToCloudinary(
+          files.coverImages,
+          'salons/covers'
+        );
+      }
+
+      // Upload promotional video if provided
+      if (files?.promotionalVideo && files.promotionalVideo[0]) {
+        const result = await uploadVideoToCloudinary(
+          files.promotionalVideo[0].buffer,
+          'salons/videos',
+          `video-${Date.now()}`
+        );
+        promotionalVideoUrl = result.secure_url;
+      }
+
+      // Upload gallery images if provided
+      if (files?.gallery && files.gallery.length > 0) {
+        galleryUrls = await uploadMultipleToCloudinary(
+          files.gallery,
+          'salons/gallery'
+        );
+      }
+
+      // Upload owner profile picture if provided
+      if (files?.ownerProfilePicture && files.ownerProfilePicture[0]) {
+        const result = await uploadToCloudinary(
+          files.ownerProfilePicture[0].buffer,
+          'users/profiles',
+          `profile-${ownerId}-${Date.now()}`
+        );
+        ownerProfilePictureUrl = result.secure_url;
+
+        // Update owner's profile picture
+        await User.findByIdAndUpdate(ownerId, { profilePhoto: ownerProfilePictureUrl });
+      }
+
+      // Parse service categories
+      let parsedServiceCategories: string[] = [];
+      if (serviceCategories) {
+        parsedServiceCategories = serviceCategories.split(',').map((cat: string) => cat.trim());
+      }
+
+      // Create salon
+      const salon = new Salon({
+        name,
+        address,
+        province,
+        district,
+        sector: sector || undefined,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        ownerId,
+        ownerIdNumber,
+        ownerContactPhone,
+        ownerContactEmail: ownerContactEmail || undefined,
+        numberOfEmployees: Number(numberOfEmployees),
+        serviceCategories: parsedServiceCategories,
+        customServices: customServices || undefined,
+        description: description || undefined,
+        phone: phone || undefined,
+        email: email || undefined,
+        logo: logoUrl,
+        coverImages: coverImageUrls,
+        promotionalVideo: promotionalVideoUrl,
+        gallery: galleryUrls,
+        verified: Boolean(verified),
+      });
+
+      await salon.save();
+
+      // Update owner's salonId
+      await User.findByIdAndUpdate(ownerId, { salonId: salon._id });
+
+      // Create notification for salon owner
+      const notification = new Notification({
+        toUserId: owner._id,
+        type: 'salon_created',
+        payload: {
+          salonId: salon._id,
+          message: verified
+            ? `Your salon "${salon.name}" has been created and is now live!`
+            : `Your salon "${salon.name}" has been created and is pending verification.`,
+          title: verified ? 'Salon Created & Verified' : 'Salon Created',
+        },
+      });
+
+      await notification.save();
+
+      // Send email notification
+      try {
+        if (verified) {
+          await sendSalonApprovalEmail(
+            owner.email,
+            owner.name,
+            salon.name
+          );
+        } else {
+          // Send a different email for admin-created salons
+          // You might want to create a specific email template for this
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+        // Don't fail the request if email fails
+      }
+
+      res.status(201).json({
+        message: `Salon created successfully${verified ? ' and verified' : ' and pending verification'}`,
+        salon: await Salon.findById(salon._id).populate('ownerId', 'name email phone'),
+      });
+    } catch (error) {
+      console.error('Create admin salon error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+);
 
 // Get platform reports
 router.get('/reports', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
@@ -721,9 +953,9 @@ router.post('/users', authenticateToken, requireSuperAdmin, validateRequest(crea
 });
 
 // Update user status (admin only)
-router.patch('/users/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
   try {
-    const { isVerified, role } = req.body;
+    const { isVerified, role, name, phone } = req.body;
     const userId = req.params.id;
 
     // Prevent super admin from being modified
@@ -735,6 +967,23 @@ router.patch('/users/:id', authenticateToken, requireAdmin, async (req: AuthRequ
     const updateData: any = {};
     if (isVerified !== undefined) updateData.isVerified = isVerified;
     if (role && req.user!.role === 'superadmin') updateData.role = role;
+    if (name) updateData.name = name;
+    if (phone) updateData.phone = phone;
+
+    // Handle profile photo upload
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(
+          req.file.buffer,
+          'staff-profiles',
+          `staff-${userId}-${Date.now()}`
+        );
+        updateData.profilePhoto = result.secure_url;
+      } catch (uploadError) {
+        console.error('Profile photo upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile photo' });
+      }
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,

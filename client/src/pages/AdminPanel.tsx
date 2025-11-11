@@ -48,12 +48,16 @@ import {
   Camera,
   User,
   Scissors,
-  X
+  X,
+  CreditCard,
+  Upload,
+  Image,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import CreateUserModal from '../components/admin/CreateUserModal';
 import SalonDetailsModal from '../components/admin/SalonDetailsModal';
+import StaffDigitalCard from '../components/admin/StaffDigitalCard';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthStore();
@@ -84,6 +88,8 @@ const AdminPanel: React.FC = () => {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [selectedSalonForMigration, setSelectedSalonForMigration] = useState<string>('');
   const [selectedStaffServices, setSelectedStaffServices] = useState<string[]>([]);
+  const [showStaffCardModal, setShowStaffCardModal] = useState(false);
+  const [selectedStaffForCard, setSelectedStaffForCard] = useState<any>(null);
   
   // Booking management state
   const [showBookingDetailsModal, setShowBookingDetailsModal] = useState(false);
@@ -581,6 +587,16 @@ const AdminPanel: React.FC = () => {
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <span className="mt-2 text-sm font-semibold text-gray-700">User Management</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('staff')}
+                    className="group flex flex-col items-center p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition-all duration-200 border-2 border-transparent hover:border-indigo-200"
+                  >
+                    <div className="p-3 bg-indigo-500 rounded-xl group-hover:scale-110 transition-transform">
+                      <Scissors className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="mt-2 text-sm font-semibold text-gray-700">Staff Cards</span>
                   </button>
 
                   <button
@@ -1249,6 +1265,146 @@ const AdminPanel: React.FC = () => {
                             >
                               Delete
                             </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'staff':
+        return (
+          <div className="space-y-6">
+            {/* Header */}
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
+              <p className="text-gray-600 mt-1">Manage all staff members across salons</p>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Total Staff</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{staff.length}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-xl">
+                    <Users className="h-8 w-8 text-blue-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">Active Staff</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {staff.filter((s: any) => s.isActive !== false).length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-xl">
+                    <UserCheck className="h-8 w-8 text-green-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 font-medium">With Photo</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {staff.filter((s: any) => s.profilePhoto).length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-xl">
+                    <Camera className="h-8 w-8 text-purple-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Staff Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salon</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {staff.map((member: any) => (
+                      <tr key={member._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            {member.profilePhoto ? (
+                              <img
+                                src={member.profilePhoto}
+                                alt={member.name}
+                                className="h-10 w-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                <span className="text-white font-semibold">{member.name?.charAt(0)}</span>
+                              </div>
+                            )}
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                              <div className="text-sm text-gray-500">{member.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {member.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {member.salonId?.name || 'Unassigned'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            member.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {member.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setSelectedStaffForCard(member);
+                                setShowStaffCardModal(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                              title="View Digital Card"
+                            >
+                              <CreditCard className="h-4 w-4" />
+                              <span className="hidden md:inline">Card</span>
+                            </button>
+                            {!member.profilePhoto && (
+                              <button
+                                onClick={() => {
+                                  setSelectedStaffForCard(member);
+                                  setShowStaffCardModal(true);
+                                  toast('Click the card to upload profile photo', { icon: '📸' });
+                                }}
+                                className="text-purple-600 hover:text-purple-900 flex items-center space-x-1"
+                                title="Upload Photo"
+                              >
+                                <Upload className="h-4 w-4" />
+                                <span className="hidden md:inline">Photo</span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -2287,6 +2443,16 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Staff Digital Card Modal */}
+      <StaffDigitalCard 
+        staff={selectedStaffForCard}
+        isOpen={showStaffCardModal}
+        onClose={() => {
+          setShowStaffCardModal(false);
+          setSelectedStaffForCard(null);
+        }}
+      />
     </DashboardLayout>
   );
 };

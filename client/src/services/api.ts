@@ -206,7 +206,12 @@ export const adminService = {
   
   verifySalon: (id: string, verified: boolean) =>
     api.patch(`/admin/salons/${id}/verify`, { verified }),
-  
+
+  createSalon: (salonData: FormData) =>
+    api.post('/admin/salons', salonData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
   getReports: (params?: any) =>
     api.get('/admin/reports', { params }),
   
