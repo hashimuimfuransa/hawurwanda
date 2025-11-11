@@ -122,6 +122,7 @@ const DashboardOwner: React.FC = () => {
     nationalId: '',
     password: '',
     staffCategory: 'barber',
+    gender: '',
     specialties: [] as string[],
     experience: '',
     bio: '',
@@ -830,6 +831,7 @@ const DashboardOwner: React.FC = () => {
         nationalId: '',
         password: '',
         staffCategory: 'barber',
+        gender: '',
         specialties: [],
         experience: '',
         bio: '',
@@ -1347,6 +1349,7 @@ const DashboardOwner: React.FC = () => {
       formData.append('nationalId', staffFormData.nationalId);
       formData.append('password', staffFormData.password);
       formData.append('staffCategory', staffFormData.staffCategory);
+      if (staffFormData.gender) formData.append('gender', staffFormData.gender);
       
       // Optional information
       if (staffFormData.experience) formData.append('experience', staffFormData.experience);
@@ -1383,6 +1386,7 @@ const DashboardOwner: React.FC = () => {
       nationalId: staff.nationalId || '',
       password: '', // Don't pre-fill password for security
       staffCategory: staff.staffCategory || 'barber',
+      gender: staff.gender || '',
       specialties: staff.specialties || [],
       experience: staff.experience || '',
       bio: staff.bio || '',
@@ -1466,6 +1470,7 @@ const DashboardOwner: React.FC = () => {
       formData.append('phone', staffFormData.phone);
       formData.append('nationalId', staffFormData.nationalId);
       formData.append('staffCategory', staffFormData.staffCategory);
+      if (staffFormData.gender) formData.append('gender', staffFormData.gender);
       
       // Optional information
       if (staffFormData.experience) formData.append('experience', staffFormData.experience);
@@ -3201,6 +3206,21 @@ const DashboardOwner: React.FC = () => {
                       maxLength={16}
                     />
                     <p className="text-xs text-slate-500 mt-1">Optional - 16-digit national ID number</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Gender
+                    </label>
+                    <select
+                      value={staffFormData.gender}
+                      onChange={(e) => setStaffFormData(prev => ({ ...prev, gender: e.target.value }))}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
