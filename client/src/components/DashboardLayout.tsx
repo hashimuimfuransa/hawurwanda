@@ -46,6 +46,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { language, toggleLanguage, t } = useTranslationStore();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarMinimized, setSidebarMinimized] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -80,7 +81,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       <div className="flex relative z-10">
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 w-64 sm:w-72 lg:w-80 bg-white/95 backdrop-blur-xl border-r border-slate-200/60 shadow-2xl shadow-slate-900/10 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed overflow-y-auto`}>
+        <div className={`fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-20' : 'w-64 sm:w-72 lg:w-80'} bg-white/95 backdrop-blur-xl border-r border-slate-200/60 shadow-2xl shadow-slate-900/10 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed overflow-y-auto`}>
           {/* Sidebar Header */}
           <div className="flex items-center justify-between h-20 lg:h-24 px-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
             {/* Header background decoration */}
@@ -93,18 +94,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   <div className="w-3 h-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-sm"></div>
                 </div>
               </div>
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-white drop-shadow-sm">{title}</h1>
-                <p className="text-blue-100/80 text-sm hidden lg:block">{subtitle || 'Dashboard'}</p>
-              </div>
+              {!sidebarMinimized && (
+                <div>
+                  <h1 className="text-xl lg:text-2xl font-bold text-white drop-shadow-sm">{title}</h1>
+                  <p className="text-blue-100/80 text-sm hidden lg:block">{subtitle || 'Dashboard'}</p>
+                </div>
+              )}
             </div>
             
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2.5 rounded-xl text-blue-100 hover:text-white hover:bg-white/20 transition-all duration-200 relative z-10"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setSidebarMinimized(!sidebarMinimized)}
+                className="hidden lg:block p-2.5 rounded-xl text-blue-100 hover:text-white hover:bg-white/20 transition-all duration-200 relative z-10"
+                title={sidebarMinimized ? 'Expand sidebar' : 'Collapse sidebar'}
+              >
+                {sidebarMinimized ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2.5 rounded-xl text-blue-100 hover:text-white hover:bg-white/20 transition-all duration-200 relative z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
           
           {/* Navigation */}
@@ -121,7 +141,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     activeTab === item.id
                       ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/30 scale-[1.02]'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50/50 hover:shadow-lg hover:scale-[1.01]'
-                  }`}
+                  } ${sidebarMinimized ? 'justify-center' : ''}`}
+                  title={sidebarMinimized ? item.label : undefined}
                   style={{ 
                     animationDelay: `${index * 50}ms`,
                     animation: 'slideInLeft 0.5s ease-out forwards'
@@ -141,15 +162,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }`} />
                   </div>
                   
-                  <div className="flex-1 relative z-10">
-                    <span className={`font-semibold text-sm lg:text-base ${activeTab === item.id ? 'text-white' : ''}`}>
-                      {item.label}
-                    </span>
-                    {activeTab === item.id && (
-                      <div className="w-full h-0.5 bg-white/30 rounded-full mt-1"></div>
-                    )}
-                  </div>
-                  
+                  {!sidebarMinimized && (
+                    <div className="flex-1 relative z-10">
+                      <span className={`font-semibold text-sm lg:text-base ${activeTab === item.id ? 'text-white' : ''}`}>
+                        {item.label}
+                      </span>
+                      {activeTab === item.id && (
+                        <div className="w-full h-0.5 bg-white/30 rounded-full mt-1"></div>
+                      )}
+                    </div>
+                  )}
+                                     
                   {item.badge && (
                     <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold transition-all duration-300 ${
                       activeTab === item.id 
@@ -164,20 +187,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
 
             {/* Sidebar Footer */}
-            <div className="mt-8 sm:mt-12 mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-slate-50 to-blue-50/80 rounded-2xl border border-slate-200/60">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </span>
+            {!sidebarMinimized && (
+              <div className="mt-8 sm:mt-12 mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-slate-50 to-blue-50/80 rounded-2xl border border-slate-200/60">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg">
+                    <span className="text-white font-bold text-lg">
+                      {user?.name?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
+                  <p className="text-xs text-slate-500 capitalize flex items-center justify-center mt-1">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                    {user?.role}
+                  </p>
                 </div>
-                <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
-                <p className="text-xs text-slate-500 capitalize flex items-center justify-center mt-1">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                  {user?.role}
-                </p>
               </div>
-            </div>
+            )}
           </nav>
         </div>
 
@@ -190,9 +215,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
 
         {/* Main content */}
-        <div className="flex-1 flex flex-col min-h-screen lg:ml-80">
+        <div className={`flex-1 flex flex-col min-h-screen ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-80'} transition-all duration-300 ease-in-out`}>
           {/* Header */}
-          <header className="bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 lg:left-80 z-40">
+          <header className={`bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 ${sidebarMinimized ? 'lg:left-20' : 'lg:left-80'} transition-all duration-300 ease-in-out z-40`}>
             <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-blue-50/30 to-indigo-50/30"></div>
             
             <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4">
