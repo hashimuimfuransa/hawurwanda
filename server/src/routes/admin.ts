@@ -1219,6 +1219,21 @@ router.get('/stats/comprehensive', authenticateToken, requireAdmin, async (req: 
       }
     ]);
 
+    // Staff gender distribution
+    const staffGenderDistribution = await User.aggregate([
+      {
+        $match: {
+          role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$gender',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
     // Growth metrics (compare last 30 days vs previous 30 days)
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
@@ -1238,6 +1253,7 @@ router.get('/stats/comprehensive', authenticateToken, requireAdmin, async (req: 
       salonStats: salonStats[0] || { totalSalons: 0, verifiedSalons: 0, pendingSalons: 0 },
       bookingStats,
       revenueStats: revenueStats[0] || { totalRevenue: 0, totalTransactions: 0 },
+      staffGenderDistribution,
       growth: {
         users: {
           current: currentUsers,

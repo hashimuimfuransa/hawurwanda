@@ -56,6 +56,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
     setDownloadingCard(true);
     try {
+      // Wait for any animations to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const html2canvas = (await import('html2canvas')).default;
@@ -66,28 +67,43 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
         logging: false,
         useCORS: true,
         allowTaint: true,
-        imageTimeout: 0,
+        imageTimeout: 15000, // Increase timeout
         onclone: (clonedDoc) => {
           const clonedCard = clonedDoc.getElementById(`staff-card-${view}`);
           if (clonedCard) {
+            // Ensure all images are visible
             const images = clonedCard.getElementsByTagName('img');
             Array.from(images).forEach((img: HTMLImageElement) => {
               img.style.display = 'block';
               img.style.visibility = 'visible';
+              img.crossOrigin = 'anonymous';
             });
+            
+            // Ensure proper styling is applied
+            clonedCard.style.transform = 'none';
+            clonedCard.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
           }
         },
+        removeContainer: true,
       });
 
+      // Convert to high-quality PNG
+      const dataUrl = canvas.toDataURL('image/png', 1.0);
+      
+      // Create download link
       const link = document.createElement('a');
-      link.download = `${staff.name.replace(/\s+/g, '-')}-staff-card-${view}.png`;
-      link.href = canvas.toDataURL('image/png', 1.0);
+      link.download = `${staff.name.replace(/\s+/g, '-')}-staff-card-${view}-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      
+      // Trigger download
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
 
       toast.success('Card downloaded successfully');
     } catch (error) {
       console.error('Error downloading card:', error);
-      toast.error('Failed to download card');
+      toast.error('Failed to download card. Please try again.');
     } finally {
       setDownloadingCard(false);
     }
@@ -112,7 +128,9 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
       const formData = new FormData();
       formData.append('profilePhoto', file);
 
-      const response = await fetch(`http://localhost:3000/api/admin/users/${staff._id}`, {
+      // Use the correct API base URL and endpoint
+      const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${API_BASE_URL}/admin/users/${staff._id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -125,12 +143,13 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
         throw new Error(errorData.message || 'Upload failed');
       }
 
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
       toast.success('Profile photo uploaded successfully!');
       setShowUploadModal(false);
       
-      // Refresh the page data
-      window.location.reload();
+      // Refresh the component data without full page reload
+      queryClient.refetchQueries({ queryKey: ['admin-staff'] });
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       toast.error(error.message || 'Failed to upload photo');
