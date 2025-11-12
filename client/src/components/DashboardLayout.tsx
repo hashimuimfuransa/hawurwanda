@@ -195,7 +195,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <header className="bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 lg:left-80 z-40">
             <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-blue-50/30 to-indigo-50/30"></div>
             
-            <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-8 py-3 sm:py-4 lg:py-6">
+            <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4">
               <div className="flex items-center flex-1">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -421,7 +421,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </header>
 
           {/* Main content area */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-20 lg:pt-24">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-16 lg:pt-20">
             <div className="container mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl relative z-1">
               {children}
             </div>
