@@ -7,6 +7,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 60000, // 60 second timeout for file uploads
 });
 
 // Request interceptor to add auth token
@@ -272,6 +273,16 @@ export const adminService = {
   
   updateStaffServices: (staffId: string, services: string[]) =>
     api.patch(`/admin/staff/${staffId}/services`, { services }),
+  
+  updateStaffProfilePhoto: (staffId: string, profilePhoto: FormData) =>
+    api.patch(`/admin/users/${staffId}`, profilePhoto, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000, // 2 minute timeout for profile photo uploads
+      onUploadProgress: (progressEvent) => {
+        // Progress tracking can be implemented in the component if needed
+        console.log('Upload progress:', progressEvent);
+      },
+    }),
   
   createStaffMember: (staffData: FormData) =>
     api.post('/admin/staff/create', staffData, {

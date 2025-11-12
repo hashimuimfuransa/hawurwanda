@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import QRCode from 'qrcode';
 import { X, Download, Building2, Calendar, Star, Award, User, Phone, Mail, Scissors, Upload, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { adminService } from '../../services/api';
 
 interface StaffDigitalCardProps {
   staff: any;
@@ -109,12 +110,68 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
     }
   };
 
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const img = new Image();
+        img.src = reader.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          // Calculate new dimensions (max 400px on longest side for profile photos to make them faster)
+          let { width, height } = img;
+          const maxSize = 400;
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw image with compression
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with 60% quality for faster uploads
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Could not compress image'));
+              }
+            },
+            'image/jpeg',
+            0.6
+          );
+        };
+        img.onerror = () => reject(new Error('Could not load image'));
+      };
+      reader.onerror = () => reject(new Error('Could not read file'));
+    });
+  };
+
   const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size must be less than 10MB');
+    // Reduce file size limit to 5MB to prevent timeouts
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB. Please choose a smaller image.');
       return;
     }
 
@@ -125,22 +182,40 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
     setUploadingPhoto(true);
     try {
+      // Compress image to reduce upload time
+      let finalFile = file;
+      if (file.type !== 'image/gif') { // Don't compress GIFs to preserve animation
+        try {
+          const compressedBlob = await compressImage(file);
+          finalFile = new File([compressedBlob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+        } catch (compressError) {
+          console.warn('Could not compress image, uploading original:', compressError);
+        }
+      }
+
       const formData = new FormData();
-      formData.append('profilePhoto', file);
+      formData.append('profilePhoto', finalFile);
 
-      // Use the correct API base URL and endpoint
-      const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
-      const response = await fetch(`${API_BASE_URL}/admin/users/${staff._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
+      // Use the admin service to update staff profile photo with retry mechanism
+      let uploadSuccess = false;
+      let attempts = 0;
+      const maxAttempts = 3;
+      
+      while (!uploadSuccess && attempts < maxAttempts) {
+        try {
+          await adminService.updateStaffProfilePhoto(staff._id, formData);
+          uploadSuccess = true;
+        } catch (error: any) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            throw error; // Re-throw if max attempts reached
+          }
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        }
       }
 
       // Invalidate queries to refresh data
@@ -152,7 +227,17 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
       queryClient.refetchQueries({ queryKey: ['admin-staff'] });
     } catch (error: any) {
       console.error('Error uploading photo:', error);
-      toast.error(error.message || 'Failed to upload photo');
+      if (error.code === 'ECONNABORTED' || error.message === 'Network Error') {
+        toast.error('Upload timed out. Please try a smaller image or check your connection.');
+      } else if (error.response?.status === 404) {
+        toast.error('Staff member not found');
+      } else if (error.response?.status === 403) {
+        toast.error('Permission denied');
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to upload profile photo. Please try again.');
+      }
     } finally {
       setUploadingPhoto(false);
     }
@@ -171,7 +256,15 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
               <p className="text-sm text-gray-500 mt-1">{staff.name}</p>
             </div>
             <div className="flex items-center space-x-3">
-              {(!staff.profilePhoto || staff.profilePhoto === '' || staff.profilePhoto === null) ? (
+              {uploadingPhoto ? (
+                <button
+                  disabled={true}
+                  className="flex items-center space-x-2 px-4 py-2 bg-purple-400 text-white rounded-lg cursor-not-allowed"
+                >
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Uploading...</span>
+                </button>
+              ) : (!staff.profilePhoto || staff.profilePhoto === '' || staff.profilePhoto === null) ? (
                 <button
                   onClick={() => setShowUploadModal(true)}
                   className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md"
@@ -520,40 +613,39 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <div className="text-center">
                     <ImageIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <label className="cursor-pointer">
-                      <span className="text-blue-600 hover:text-blue-700 font-medium">
-                        Choose a photo
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleProfilePhotoUpload}
-                        className="hidden"
-                        disabled={uploadingPhoto}
-                      />
-                    </label>
+                    {uploadingPhoto ? (
+                      <div className="flex items-center justify-center space-x-2 text-blue-600">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <span className="text-sm font-medium">Uploading photo...</span>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer">
+                        <span className="text-blue-600 hover:text-blue-700 font-medium">
+                          Choose a photo
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePhotoUpload}
+                          className="hidden"
+                          disabled={uploadingPhoto}
+                        />
+                      </label>
+                    )}
                     <p className="text-xs text-gray-500 mt-2">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, GIF up to 5MB
                     </p>
                   </div>
                 </div>
-
-                {uploadingPhoto && (
-                  <div className="flex items-center justify-center space-x-2 text-blue-600">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-                    <span className="text-sm">Uploading...</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-6">
-                <button
-                  onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  disabled={uploadingPhoto}
-                >
-                  Cancel
-                </button>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={() => setShowUploadModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    disabled={uploadingPhoto}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </div>
           </div>

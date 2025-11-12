@@ -37,7 +37,7 @@ export const uploadToCloudinary = (
         public_id: filename,
         resource_type: 'image',
         transformation: [
-          { quality: 'auto', fetch_format: 'auto' },
+          { quality: 'auto:eco', fetch_format: 'auto', crop: 'limit', width: 400, height: 400 },
         ],
       },
       (error, result) => {
@@ -81,7 +81,7 @@ export const uploadVideoToCloudinary = (
         public_id: filename,
         resource_type: 'video',
         transformation: [
-          { quality: 'auto', fetch_format: 'auto' },
+          { quality: 'auto:low', fetch_format: 'auto' },
         ],
       },
       (error, result) => {

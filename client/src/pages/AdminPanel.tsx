@@ -576,6 +576,12 @@ const AdminPanel: React.FC = () => {
       return;
     }
 
+    // Check profile photo size if provided
+    if (staffFormData.profilePhoto && staffFormData.profilePhoto.size > 5 * 1024 * 1024) {
+      toast.error('Profile photo must be less than 5MB. Please choose a smaller image.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('name', staffFormData.name);
     formData.append('email', staffFormData.email);
@@ -1425,175 +1431,79 @@ const AdminPanel: React.FC = () => {
           </div>
         );
 
-      case 'staff':
+      case 'notifications':
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">Staff Management</h2>
-                <p className="text-gray-600 mt-1">Manage all staff members across salons</p>
-              </div>
-              <button
-                onClick={() => setShowCreateStaffModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-5 w-5" />
-                <span>Add Staff Member</span>
-              </button>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
+              <p className="text-gray-600 mt-1">View and manage all notifications</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Staff</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{staff.length}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <Users className="h-8 w-8 text-blue-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">Active Staff</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">
-                      {staff.filter((s: any) => s.isActive !== false).length}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-xl">
-                    <UserCheck className="h-8 w-8 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 font-medium">With Photo</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">
-                      {staff.filter((s: any) => s.profilePhoto).length}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-purple-100 rounded-xl">
-                    <Camera className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Staff Table */}
+            {/* Notifications Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salon</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Notification ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Recipient
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Title
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Message
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Sent At
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {staff.map((member: any) => (
-                      <tr key={member._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            {member.profilePhoto ? (
-                              <img
-                                src={member.profilePhoto}
-                                alt={member.name}
-                                className="h-10 w-10 rounded-full object-cover"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center relative">
-                                <span className="text-white font-semibold">{member.name?.charAt(0)}</span>
-                                <div className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
-                                  <Upload className="h-2.5 w-2.5 text-white" />
-                                </div>
-                              </div>
-                            )}
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">
-                                {member.name}
-                                {(!member.profilePhoto || member.profilePhoto === '' || member.profilePhoto === null) && (
-                                  <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                    No Photo
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-sm text-gray-500">{member.email}</div>
-                            </div>
-                          </div>
+                    {notifications.map((notification: any) => (
+                      <tr key={notification._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          #{notification._id.slice(-6)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {member.role}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {notification.recipientId?.name || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {notification.title}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {member.salonId?.name || 'Unassigned'}
+                          {notification.message}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            member.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {member.isActive !== false ? 'Active' : 'Inactive'}
-                          </span>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(notification.sentAt).toLocaleDateString()} {new Date(notification.sentAt).toLocaleTimeString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-2">
+                          <div className="flex space-x-2">
                             <button
-                              onClick={() => handleAssignServices(member)}
-                              className="text-green-600 hover:text-green-900 flex items-center space-x-1"
-                              title="Assign Services"
+                              onClick={() => {
+                                // TODO: Implement view notification functionality
+                                console.log('View notification:', notification);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 font-medium"
                             >
-                              <Scissors className="h-4 w-4" />
-                              <span className="hidden md:inline">Services</span>
-                            </button>
-                            <button
-                              onClick={() => handleMigrateStaff(member)}
-                              className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
-                              title="Change Salon"
-                            >
-                              <Building2 className="h-4 w-4" />
-                              <span className="hidden md:inline">Salon</span>
+                              View
                             </button>
                             <button
                               onClick={() => {
-                                setSelectedStaffForCard(member);
-                                setShowStaffCardModal(true);
+                                // TODO: Implement delete notification functionality
+                                console.log('Delete notification:', notification._id);
                               }}
-                              className="text-purple-600 hover:text-purple-900 flex items-center space-x-1"
-                              title="View Digital Card"
+                              className="text-red-600 hover:text-red-800 font-medium"
                             >
-                              <CreditCard className="h-4 w-4" />
-                              <span className="hidden md:inline">Card</span>
+                              Delete
                             </button>
-                            {member.isActive !== false ? (
-                              <button
-                                onClick={() => handleDeactivateStaff(member)}
-                                className="text-red-600 hover:text-red-900 flex items-center space-x-1"
-                                title="Deactivate"
-                              >
-                                <X className="h-4 w-4" />
-                                <span className="hidden md:inline">Deactivate</span>
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => handleActivateStaff(member)}
-                                className="text-green-600 hover:text-green-900 flex items-center space-x-1"
-                                title="Activate"
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                                <span className="hidden md:inline">Activate</span>
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1666,6 +1576,18 @@ const AdminPanel: React.FC = () => {
         );
 
       case 'staff':
+        // Filter staff based on search term, role, and gender
+        const filteredStaff = staff.filter((member: any) => {
+          const matchesSearch = searchTerm 
+            ? (member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               member.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               member.salonId?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+            : true;
+          const matchesRole = selectedRole ? member.role === selectedRole : true;
+          const matchesGender = selectedGender ? member.gender === selectedGender : true;
+          return matchesSearch && matchesRole && matchesGender;
+        });
+
         return (
           <div className="space-y-6">
             {/* Staff Management Header */}
@@ -1678,6 +1600,13 @@ const AdminPanel: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => setShowCreateStaffModal(true)}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg font-semibold"
+                  >
+                    <Plus className="h-5 w-5" />
+                    <span>Add New Staff</span>
+                  </button>
                   <div className="p-3 bg-blue-500 rounded-xl">
                     <UserCheck className="h-6 w-6 text-white" />
                   </div>
@@ -1732,146 +1661,108 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
 
-            {/* Staff List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {staffLoading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading staff...</p>
-                </div>
-              ) : staff.length === 0 ? (
-                <div className="p-8 text-center">
-                  <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No staff members found</p>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Staff Member
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Salon
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Role
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Gender
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Joined
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {staff.map((staffMember: any) => (
-                        <tr key={staffMember._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10">
-                                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                                  <span className="text-white font-medium text-sm">
-                                    {staffMember.name?.charAt(0).toUpperCase()}
+            {/* Staff Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Role</th>
+                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Salon</th>
+                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredStaff.map((member: any) => (
+                      <tr key={member._id} className="hover:bg-gray-50">
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              {member.profilePhoto ? (
+                                <img className="h-8 w-8 rounded-full object-cover" src={member.profilePhoto} alt={member.name} />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                  <span className="text-white font-medium text-xs">
+                                    {member.name?.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
-                              </div>
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {staffMember.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {staffMember.email}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {staffMember.salonId?.name || 'No Salon'}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              {staffMember.salonId?.address || ''}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {staffMember.role || 'Staff'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {staffMember.gender ? (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staffMember.gender === 'male' ? 'bg-blue-100 text-blue-800' : staffMember.gender === 'female' ? 'bg-pink-100 text-pink-800' : 'bg-purple-100 text-purple-800'}`}>
-                                {staffMember.gender.charAt(0).toUpperCase() + staffMember.gender.slice(1)}
-                              </span>
-                            ) : (
-                              <span className="text-gray-400 text-xs">Not specified</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${staffMember.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                              {staffMember.isActive !== false ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {new Date(staffMember.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleViewStaff(staffMember)}
-                                className="text-blue-600 hover:text-blue-900 p-1 rounded"
-                                title="View Details"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleAssignServices(staffMember)}
-                                className="text-indigo-600 hover:text-indigo-900 p-1 rounded"
-                                title="Assign Services"
-                              >
-                                <Settings className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleMigrateStaff(staffMember)}
-                                className="text-purple-600 hover:text-purple-900 p-1 rounded"
-                                title="Migrate to Another Salon"
-                              >
-                                <ArrowUp className="h-4 w-4" />
-                              </button>
-                              {staffMember.isActive !== false ? (
-                                <button
-                                  onClick={() => handleDeactivateStaff(staffMember)}
-                                  className="text-red-600 hover:text-red-900 p-1 rounded"
-                                  title="Deactivate"
-                                >
-                                  <XCircle className="h-4 w-4" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleActivateStaff(staffMember)}
-                                  className="text-green-600 hover:text-green-900 p-1 rounded"
-                                  title="Activate"
-                                >
-                                  <CheckCircle className="h-4 w-4" />
-                                </button>
                               )}
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+                            <div className="ml-2">
+                              <div className="font-medium text-gray-900 truncate max-w-[100px] md:max-w-[150px]">{member.name}</div>
+                              <div className="text-gray-500 truncate max-w-[100px] md:max-w-[150px] hidden md:block">{member.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap hidden md:table-cell">
+                          <span className="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            {member.role}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap text-gray-500 hidden xl:table-cell">
+                          <div className="max-w-[120px] truncate">
+                            {member.salonId?.name || 'Unassigned'}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          <span className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+                            member.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {member.isActive !== false ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 whitespace-nowrap font-medium">
+                          <div className="flex items-center space-x-0.5">
+                            <button
+                              onClick={() => handleAssignServices(member)}
+                              className="text-green-600 hover:text-green-900 p-1 rounded"
+                              title="Assign Services"
+                            >
+                              <Scissors className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleMigrateStaff(member)}
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                              title="Change Salon"
+                            >
+                              <Building2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedStaffForCard(member);
+                                setShowStaffCardModal(true);
+                              }}
+                              className="text-purple-600 hover:text-purple-900 p-1 rounded bg-purple-50 hover:bg-purple-100"
+                              title="View Digital Card"
+                            >
+                              <CreditCard className="h-3.5 w-3.5" />
+                            </button>
+                            {member.isActive !== false ? (
+                              <button
+                                onClick={() => handleDeactivateStaff(member)}
+                                className="text-red-600 hover:text-red-900 p-1 rounded"
+                                title="Deactivate"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleActivateStaff(member)}
+                                className="text-green-600 hover:text-green-900 p-1 rounded"
+                                title="Activate"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         );
