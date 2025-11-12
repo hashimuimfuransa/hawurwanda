@@ -88,17 +88,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50 relative overflow-hidden">
-      <style>
-        {`
-          @keyframes pulse-slow {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-          }
-          .animate-pulse-slow {
-            animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          }
-        `}
-      </style>
+      {/* No floating button animation needed anymore */}
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-indigo-600/20 rounded-full blur-3xl"></div>
@@ -109,7 +99,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Sidebar */}
         <div className={`fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-20' : 'w-64 sm:w-72 lg:w-80'} bg-white/95 backdrop-blur-xl border-r border-slate-200/60 ${sidebarMinimized ? 'shadow-2xl shadow-slate-900/20' : 'shadow-2xl shadow-slate-900/10'} transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed overflow-y-auto`}>
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-20 lg:h-24 px-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200/60 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
             {/* Header background decoration */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-indigo-700/90 backdrop-blur-sm"></div>
             <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br from-white/5 via-transparent to-white/10"></div>
@@ -128,29 +118,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               )}
             </div>
             
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setSidebarMinimized(!sidebarMinimized)}
-                className={`hidden lg:block p-2.5 rounded-xl transition-all duration-300 relative z-10 transform hover:scale-110 ${sidebarMinimized ? 'text-white bg-blue-500/40 hover:bg-blue-500/60 border border-white/40 shadow-lg' : 'text-blue-100 hover:text-white hover:bg-white/30'}`}
-                title={sidebarMinimized ? 'Expand sidebar (Ctrl+E)' : 'Collapse sidebar (Ctrl+E)'}
-              >
-                {sidebarMinimized ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-2.5 rounded-xl text-blue-100 hover:text-white hover:bg-white/20 transition-all duration-200 relative z-10"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2.5 rounded-xl text-blue-100 hover:text-white hover:bg-white/20 transition-all duration-200 relative z-10"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
           
           {/* Navigation */}
@@ -247,28 +220,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Main content */}
         <div className={`flex-1 flex flex-col min-h-screen ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-80'} transition-all duration-300 ease-in-out`}>
           
-          {/* Floating expand button when sidebar is minimized */}
-          {sidebarMinimized && (
-            <div className="hidden lg:block fixed left-20 top-20 z-30 flex items-center">
-              <button
-                onClick={() => setSidebarMinimized(false)}
-                className="p-2.5 bg-white rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition-all duration-300 transform hover:scale-110 animate-pulse-slow"
-                title="Expand sidebar (Ctrl+E)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </button>
-              <div className="ml-2 px-2 py-1 bg-blue-500 text-white text-xs font-medium rounded-lg whitespace-nowrap">
-                Expand Menu (Ctrl+E)
-              </div>
-            </div>
-          )}
+          {/* Removed floating expand button - now in header */}
           {/* Header */}
           <header className={`bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 ${sidebarMinimized ? 'lg:left-20' : 'lg:left-80'} transition-all duration-300 ease-in-out z-40`}>
             <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-blue-50/30 to-indigo-50/30"></div>
             
-            <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4">
+            <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-2 lg:py-3">
               <div className="flex items-center flex-1">
                 <button
                   onClick={() => setSidebarOpen(true)}
@@ -279,15 +236,32 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 
                 <div className="flex-1">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent capitalize">
-                        {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
-                      </h2>
-                      <p className="text-sm lg:text-base text-slate-600 mt-1 flex items-center">
-                        <span className="hidden sm:inline">Welcome back, </span>
-                        <span className="font-medium text-slate-800">{user?.name?.split(' ')[0]}</span>
-                        <span className="ml-2">👋</span>
-                      </p>
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => setSidebarMinimized(!sidebarMinimized)}
+                        className={`hidden lg:block p-2.5 rounded-xl transition-all duration-300 relative z-10 transform hover:scale-110 mr-3 ${sidebarMinimized ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        title={sidebarMinimized ? 'Expand sidebar (Ctrl+E)' : 'Collapse sidebar (Ctrl+E)'}
+                      >
+                        {sidebarMinimized ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                      <div>
+                        <h2 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent capitalize">
+                          {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
+                        </h2>
+                        <p className="text-sm lg:text-base text-slate-600 mt-1 flex items-center">
+                          <span className="hidden sm:inline">Welcome back, </span>
+                          <span className="font-medium text-slate-800">{user?.name?.split(' ')[0]}</span>
+                          <span className="ml-2">👋</span>
+                        </p>
+                      </div>
                     </div>
 
                     {/* Mobile-optimized header actions */}
@@ -494,7 +468,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </header>
 
           {/* Main content area */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-16 lg:pt-20">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-14 lg:pt-16">
             <div className="container mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl relative z-1">
               {children}
             </div>
