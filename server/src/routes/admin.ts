@@ -871,8 +871,8 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
     } = req.body;
 
     // Validate required fields
-    if (!name || !email || !phone || !password || !salonId) {
-      return res.status(400).json({ message: 'Name, email, phone, password, and salon are required' });
+    if (!name || !email || !phone || !password) {
+      return res.status(400).json({ message: 'Name, email, phone, and password are required' });
     }
 
     // Check if user already exists
@@ -886,10 +886,13 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       });
     }
 
-    // Check if salon exists
-    const salon = await Salon.findById(salonId);
-    if (!salon) {
-      return res.status(404).json({ message: 'Salon not found' });
+    // Check if salon exists (only if salonId is provided)
+    let salon = null;
+    if (salonId) {
+      salon = await Salon.findById(salonId);
+      if (!salon) {
+        return res.status(404).json({ message: 'Salon not found' });
+      }
     }
 
     // Hash password
@@ -968,14 +971,14 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       bio,
       credentials: parsedCredentials,
       workSchedule: parsedWorkSchedule,
-      assignedServices: parsedAssignedServices.length > 0 ? parsedAssignedServices : salon.services,
+      assignedServices: parsedAssignedServices.length > 0 ? parsedAssignedServices : (salon ? salon.services : []),
       profilePhoto: profilePhotoUrl,
     });
 
     await staffMember.save();
 
-    // Add staff member to salon barbers list
-    if (!salon.barbers.includes(staffMember._id as any)) {
+    // Add staff member to salon barbers list (only if salon is assigned)
+    if (salon && !salon.barbers.includes(staffMember._id as any)) {
       salon.barbers.push(staffMember._id as any);
       await salon.save();
     }

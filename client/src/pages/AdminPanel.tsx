@@ -575,7 +575,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleCreateStaff = () => {
-    if (!staffFormData.name || !staffFormData.email || !staffFormData.phone || !staffFormData.password || !staffFormData.salonId) {
+    if (!staffFormData.name || !staffFormData.email || !staffFormData.phone || !staffFormData.password) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -591,7 +591,7 @@ const AdminPanel: React.FC = () => {
     formData.append('email', staffFormData.email);
     formData.append('phone', staffFormData.phone);
     formData.append('password', staffFormData.password);
-    formData.append('salonId', staffFormData.salonId);
+    if (staffFormData.salonId) formData.append('salonId', staffFormData.salonId);
     formData.append('staffCategory', staffFormData.staffCategory);
     if (staffFormData.gender) formData.append('gender', staffFormData.gender);
     if (staffFormData.nationalId) formData.append('nationalId', staffFormData.nationalId);
@@ -2493,7 +2493,7 @@ const AdminPanel: React.FC = () => {
                   <div>
                     <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Assignment</h4>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Salon *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Salon (Optional)</label>
                       <select
                         value={staffFormData.salonId}
                         onChange={(e) => setStaffFormData({ ...staffFormData, salonId: e.target.value })}
