@@ -1875,463 +1875,467 @@ const AdminPanel: React.FC = () => {
   ];
 
   return (
-    <DashboardLayout
-      title="Admin"
-      subtitle="Admin Dashboard"
-      sidebarItems={sidebarItems}
-      activeTab={activeTab}
-      onTabChange={setActiveTab}
-      headerActions={
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => window.location.reload()}
-            className="px-3 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
-          >
-            Refresh
-          </button>
+    <div className="relative">
+      <DashboardLayout
+        title="Admin"
+        subtitle="Admin Dashboard"
+        sidebarItems={sidebarItems}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        headerActions={
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-3 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
+            >
+              Refresh
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          {renderContent()}
         </div>
-      }
-    >
-      <div className="space-y-6">
-        {renderContent()}
-        <CreateUserModal
-          showModal={showCreateUserModal}
-          onClose={() => setShowCreateUserModal(false)}
-          onSubmit={(userData) => createUserMutation.mutate(userData)}
-        />
-        <SalonDetailsModal
-          showModal={showSalonDetailsModal}
-          onClose={() => {
-            setShowSalonDetailsModal(false);
-            setSelectedSalonId(null);
-            setSelectedSalonData(null);
-          }}
-          salonDetails={salonDetails}
-          salonDetailsLoading={salonDetailsLoading}
-          fallbackSalonData={selectedSalonData}
-        />
+      </DashboardLayout>
 
-        {/* Staff Details Modal */}
-        {showStaffDetailsModal && selectedStaff && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Staff Details</h3>
-                  <button
-                    onClick={() => setShowStaffDetailsModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <XCircle className="h-6 w-6" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">
-                      {selectedStaff.name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
-                    <p className="text-gray-600">{selectedStaff.email}</p>
-                    <p className="text-sm text-gray-500">{selectedStaff.phone}</p>
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                    <p className="text-sm text-gray-900">{selectedStaff.role || 'Staff'}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      selectedStaff.isActive !== false 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {selectedStaff.isActive !== false ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current Salon</label>
-                    <p className="text-sm text-gray-900">{selectedStaff.salonId?.name || 'No Salon'}</p>
-                    <p className="text-xs text-gray-500">{selectedStaff.salonId?.address || ''}</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Joined Date</label>
-                    <p className="text-sm text-gray-900">
-                      {new Date(selectedStaff.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
+      {/* Modals moved outside DashboardLayout to be positioned relative to viewport */}
+      <CreateUserModal
+        showModal={showCreateUserModal}
+        onClose={() => setShowCreateUserModal(false)}
+        onSubmit={(userData) => createUserMutation.mutate(userData)}
+      />
+      <SalonDetailsModal
+        showModal={showSalonDetailsModal}
+        onClose={() => {
+          setShowSalonDetailsModal(false);
+          setSelectedSalonId(null);
+          setSelectedSalonData(null);
+        }}
+        salonDetails={salonDetails}
+        salonDetailsLoading={salonDetailsLoading}
+        fallbackSalonData={selectedSalonData}
+      />
 
-                {selectedStaff.specialties && selectedStaff.specialties.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedStaff.specialties.map((specialty: string, index: number) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                        >
-                          {specialty}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedStaff.experience && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
-                    <p className="text-sm text-gray-900">{selectedStaff.experience} years</p>
-                  </div>
-                )}
+      {/* Staff Details Modal */}
+      {showStaffDetailsModal && selectedStaff && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Staff Details</h3>
+                <button
+                  onClick={() => setShowStaffDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Staff Migration Modal */}
-        {showStaffMigrationModal && selectedStaff && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Migrate Staff</h3>
-                  <button
-                    onClick={() => setShowStaffMigrationModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <XCircle className="h-6 w-6" />
-                  </button>
+            <div className="p-6 space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {selectedStaff.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
+                  <p className="text-gray-600">{selectedStaff.email}</p>
+                  <p className="text-sm text-gray-500">{selectedStaff.phone}</p>
                 </div>
               </div>
-              <div className="p-6 space-y-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Migrate <strong>{selectedStaff.name}</strong> to a different salon
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <p className="text-sm text-gray-900">{selectedStaff.role || 'Staff'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    selectedStaff.isActive !== false 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {selectedStaff.isActive !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Salon</label>
+                  <p className="text-sm text-gray-900">{selectedStaff.salonId?.name || 'No Salon'}</p>
+                  <p className="text-xs text-gray-500">{selectedStaff.salonId?.address || ''}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Joined Date</label>
+                  <p className="text-sm text-gray-900">
+                    {new Date(selectedStaff.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select New Salon
-                  </label>
-                  <select
-                    value={selectedSalonForMigration}
-                    onChange={(e) => setSelectedSalonForMigration(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Choose a salon...</option>
-                    {salons
-                      .filter((salon: any) => salon._id !== selectedStaff.salon?._id)
-                      .map((salon: any) => (
-                        <option key={salon._id} value={salon._id}>
-                          {salon.name} - {salon.address}
-                        </option>
-                      ))}
-                  </select>
-                </div>
+              </div>
 
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    onClick={() => setShowStaffMigrationModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleStaffMigration}
-                    disabled={!selectedSalonForMigration}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Migrate Staff
-                  </button>
+              {selectedStaff.specialties && selectedStaff.specialties.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedStaff.specialties.map((specialty: string, index: number) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        {specialty}
+                      </span>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              {selectedStaff.experience && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Experience</label>
+                  <p className="text-sm text-gray-900">{selectedStaff.experience} years</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Migration Modal */}
+      {showStaffMigrationModal && selectedStaff && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Migrate Staff</h3>
+                <button
+                  onClick={() => setShowStaffMigrationModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Migrate <strong>{selectedStaff.name}</strong> to a different salon
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select New Salon
+                </label>
+                <select
+                  value={selectedSalonForMigration}
+                  onChange={(e) => setSelectedSalonForMigration(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Choose a salon...</option>
+                  {salons
+                    .filter((salon: any) => salon._id !== selectedStaff.salon?._id)
+                    .map((salon: any) => (
+                      <option key={salon._id} value={salon._id}>
+                        {salon.name} - {salon.address}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  onClick={() => setShowStaffMigrationModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStaffMigration}
+                  disabled={!selectedSalonForMigration}
+                  className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Migrate Staff
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Service Assignment Modal */}
-        {showServiceAssignmentModal && selectedStaff && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-gray-900">Assign Services to Staff</h3>
-                  <button
-                    onClick={() => setShowServiceAssignmentModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <XCircle className="h-6 w-6" />
-                  </button>
+      {/* Service Assignment Modal */}
+      {showServiceAssignmentModal && selectedStaff && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Assign Services to Staff</h3>
+                <button
+                  onClick={() => setShowServiceAssignmentModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">
+                    {selectedStaff.name?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
+                  <p className="text-gray-600">{selectedStaff.email}</p>
+                  <p className="text-sm text-gray-500">{selectedStaff.salonId?.name || 'No Salon'}</p>
                 </div>
               </div>
-              <div className="p-6 space-y-6">
-                <div className="flex items-center space-x-4">
-                  <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-xl">
-                      {selectedStaff.name?.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
-                    <p className="text-gray-600">{selectedStaff.email}</p>
-                    <p className="text-sm text-gray-500">{selectedStaff.salonId?.name || 'No Salon'}</p>
-                  </div>
-                </div>
 
-                <div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Available Services</h4>
-                  <div className="space-y-3 max-h-60 overflow-y-auto">
-                    {salons
-                      .find((salon: any) => salon._id === selectedStaff.salonId?._id || salon._id === selectedStaff.salonId)
-                      ?.services?.map((service: any) => (
-                        <div
-                          key={service._id}
-                          className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                            selectedStaffServices.includes(service._id)
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
-                          onClick={() => toggleServiceAssignment(service._id)}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <h5 className="font-medium text-gray-900">{service.title}</h5>
-                              <p className="text-sm text-gray-600">{service.description}</p>
-                              <div className="flex items-center mt-2 text-sm text-gray-500">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{service.durationMinutes} minutes</span>
-                                <span className="mx-2">•</span>
-                                <span className="font-medium">{service.price.toLocaleString()} RWF</span>
-                              </div>
-                            </div>
-                            <div className="ml-4">
-                              {selectedStaffServices.includes(service._id) ? (
-                                <CheckCircle className="h-6 w-6 text-blue-500" />
-                              ) : (
-                                <div className="h-6 w-6 border-2 border-gray-300 rounded-full"></div>
-                              )}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-4">Available Services</h4>
+                <div className="space-y-3 max-h-60 overflow-y-auto">
+                  {salons
+                    .find((salon: any) => salon._id === selectedStaff.salonId?._id || salon._id === selectedStaff.salonId)
+                    ?.services?.map((service: any) => (
+                      <div
+                        key={service._id}
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedStaffServices.includes(service._id)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleServiceAssignment(service._id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h5 className="font-medium text-gray-900">{service.title}</h5>
+                            <p className="text-sm text-gray-600">{service.description}</p>
+                            <div className="flex items-center mt-2 text-sm text-gray-500">
+                              <Clock className="h-4 w-4 mr-1" />
+                              <span>{service.durationMinutes} minutes</span>
+                              <span className="mx-2">•</span>
+                              <span className="font-medium">{service.price.toLocaleString()} RWF</span>
                             </div>
                           </div>
+                          <div className="ml-4">
+                            {selectedStaffServices.includes(service._id) ? (
+                              <CheckCircle className="h-6 w-6 text-blue-500" />
+                            ) : (
+                              <div className="h-6 w-6 border-2 border-gray-300 rounded-full"></div>
+                            )}
+                          </div>
                         </div>
-                      )) || (
-                        <p className="text-sm text-gray-500 text-center py-4">
-                          No services available for this salon. Please assign the staff member to a salon first.
-                        </p>
-                      )}
-                  </div>
+                      </div>
+                    )) || (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        No services available for this salon. Please assign the staff member to a salon first.
+                      </p>
+                    )}
                 </div>
+              </div>
 
-                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setShowServiceAssignmentModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleServiceAssignment}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Assign Services
-                  </button>
-                </div>
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowServiceAssignmentModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleServiceAssignment}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Assign Services
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Booking Details Modal */}
-        {showBookingDetailsModal && selectedBooking && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Booking Details</h3>
-                  <button
-                    onClick={() => setShowBookingDetailsModal(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="h-6 w-6 text-gray-500" />
-                  </button>
+      {/* Booking Details Modal */}
+      {showBookingDetailsModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Booking Details</h3>
+                <button
+                  onClick={() => setShowBookingDetailsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="h-6 w-6 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Booking Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Booking Information</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Booking ID</label>
+                        <p className="text-sm text-gray-900">#{selectedBooking._id.slice(-6)}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Date & Time</label>
+                        <p className="text-sm text-gray-900">
+                          {new Date(selectedBooking.date).toLocaleDateString()} at {selectedBooking.time}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          selectedBooking.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          selectedBooking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                          selectedBooking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {selectedBooking.status}
+                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          {selectedBooking.totalPrice?.toLocaleString()} RWF
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.clientId?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.clientId?.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.clientId?.phone || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-6">
-                  {/* Booking Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Booking Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Booking ID</label>
-                          <p className="text-sm text-gray-900">#{selectedBooking._id.slice(-6)}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Date & Time</label>
-                          <p className="text-sm text-gray-900">
-                            {new Date(selectedBooking.date).toLocaleDateString()} at {selectedBooking.time}
-                          </p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Status</label>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            selectedBooking.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            selectedBooking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                            selectedBooking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                            'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {selectedBooking.status}
-                          </span>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                          <p className="text-sm text-gray-900 font-semibold">
-                            {selectedBooking.totalPrice?.toLocaleString()} RWF
-                          </p>
-                        </div>
+                {/* Salon & Service Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Information</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Salon Name</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.salonId?.name || 'N/A'}</p>
                       </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Client Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Name</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.name || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Email</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.email || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Phone</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.clientId?.phone || 'N/A'}</p>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Address</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.salonId?.address || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">District</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.salonId?.district || 'N/A'}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Salon & Service Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Salon Name</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.name || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Address</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.address || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">District</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.salonId?.district || 'N/A'}</p>
-                        </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Service Information</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Service</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.serviceId?.title || 'N/A'}</p>
                       </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Service Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Service</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.title || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Category</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.category || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Duration</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.serviceId?.durationMinutes || 'N/A'} minutes</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Price</label>
-                          <p className="text-sm text-gray-900 font-semibold">
-                            {selectedBooking.serviceId?.price?.toLocaleString()} RWF
-                          </p>
-                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Category</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.serviceId?.category || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Duration</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.serviceId?.durationMinutes || 'N/A'} minutes</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Price</label>
+                        <p className="text-sm text-gray-900 font-semibold">
+                          {selectedBooking.serviceId?.price?.toLocaleString()} RWF
+                        </p>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Barber Information */}
-                  {selectedBooking.barberId && (
-                    <div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-4">Stylist Information</h4>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Name</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.name || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Email</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.email || 'N/A'}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Phone</label>
-                          <p className="text-sm text-gray-900">{selectedBooking.barberId?.phone || 'N/A'}</p>
-                        </div>
+                {/* Barber Information */}
+                {selectedBooking.barberId && (
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Stylist Information</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.barberId?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.barberId?.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <p className="text-sm text-gray-900">{selectedBooking.barberId?.phone || 'N/A'}</p>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  {/* Actions */}
-                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                    <button
-                      onClick={() => setShowBookingDetailsModal(false)}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      Close
-                    </button>
-                    {selectedBooking.status === 'pending' && (
-                      <>
-                        <button
-                          onClick={() => {
-                            handleUpdateBookingStatus(selectedBooking._id, 'confirmed');
-                            setShowBookingDetailsModal(false);
-                          }}
-                          className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
-                        >
-                          Confirm Booking
-                        </button>
-                        <button
-                          onClick={() => {
-                            handleUpdateBookingStatus(selectedBooking._id, 'cancelled');
-                            setShowBookingDetailsModal(false);
-                          }}
-                          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                          Cancel Booking
-                        </button>
-                      </>
-                    )}
-                    {selectedBooking.status === 'confirmed' && (
+                {/* Actions */}
+                <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowBookingDetailsModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Close
+                  </button>
+                  {selectedBooking.status === 'pending' && (
+                    <>
                       <button
                         onClick={() => {
-                          handleUpdateBookingStatus(selectedBooking._id, 'completed');
+                          handleUpdateBookingStatus(selectedBooking._id, 'confirmed');
                           setShowBookingDetailsModal(false);
                         }}
                         className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
                       >
-                        Mark as Completed
+                        Confirm Booking
                       </button>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => {
+                          handleUpdateBookingStatus(selectedBooking._id, 'cancelled');
+                          setShowBookingDetailsModal(false);
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        Cancel Booking
+                      </button>
+                    </>
+                  )}
+                  {selectedBooking.status === 'confirmed' && (
+                    <button
+                      onClick={() => {
+                        handleUpdateBookingStatus(selectedBooking._id, 'completed');
+                        setShowBookingDetailsModal(false);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Mark as Completed
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Create Staff Modal */}
       {showCreateStaffModal && (
@@ -2557,7 +2561,7 @@ const AdminPanel: React.FC = () => {
           setSelectedStaffForCard(null);
         }}
       />
-    </DashboardLayout>
+    </div>
   );
 };
 

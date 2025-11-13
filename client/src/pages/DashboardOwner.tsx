@@ -2507,34 +2507,34 @@ const DashboardOwner: React.FC = () => {
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-emerald-100 font-semibold mb-2">Served Customers</p>
+                    <p className="text-sm text-emerald-100 font-semibold mb-2">{t('servedCustomers')}</p>
                     <p className="text-3xl font-bold">{salonCustomersSummary.servedCount}</p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-emerald-100 opacity-70" />
                 </div>
-                <p className="text-xs text-emerald-100 mt-4">Completed services across your salon</p>
+                <p className="text-xs text-emerald-100 mt-4">{t('completedServicesAcrossSalon')}</p>
               </div>
 
               <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-amber-100 font-semibold mb-2">Awaiting Service</p>
+                    <p className="text-sm text-amber-100 font-semibold mb-2">{t('awaitingService')}</p>
                     <p className="text-3xl font-bold">{salonCustomersSummary.awaitingCount}</p>
                   </div>
                   <Clock className="h-8 w-8 text-amber-100 opacity-70" />
                 </div>
-                <p className="text-xs text-amber-100 mt-4">Customers pending confirmation or completion</p>
+                <p className="text-xs text-amber-100 mt-4">{t('customersPendingConfirmation')}</p>
               </div>
 
               <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-6 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-purple-100 font-semibold mb-2">Total Revenue</p>
+                    <p className="text-sm text-purple-100 font-semibold mb-2">{t('totalRevenue')}</p>
                     <p className="text-3xl font-bold">{formatCurrency(salonCustomersSummary.totalRevenue)}</p>
                   </div>
                   <DollarSign className="h-8 w-8 text-purple-100 opacity-70" />
                 </div>
-                <p className="text-xs text-purple-100 mt-4">Revenue from completed bookings and walk-ins</p>
+                <p className="text-xs text-purple-100 mt-4">{t('revenueFromCompletedBookings')}</p>
               </div>
             </div>
           </div>
@@ -3850,9 +3850,9 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl border border-blue-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-semibold mb-2">Total Revenue</p>
+                <p className="text-sm text-blue-600 font-semibold mb-2">{t('totalRevenue')}</p>
                 <p className="text-3xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
-                <p className="text-xs text-blue-600 mt-2">From {completedBookings.length} completed bookings</p>
+                <p className="text-xs text-blue-600 mt-2">{t('fromCompletedBookings', { count: completedBookings.length })}</p>
               </div>
               <DollarSign className="h-8 w-8 text-blue-600 opacity-30" />
             </div>
@@ -3861,9 +3861,9 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl border border-emerald-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-emerald-600 font-semibold mb-2">Completed</p>
+                <p className="text-sm text-emerald-600 font-semibold mb-2">{t('completed')}</p>
                 <p className="text-3xl font-bold text-slate-900">{completedBookings.length}</p>
-                <p className="text-xs text-emerald-600 mt-2">Avg: {formatCurrency(avgBookingValue)}</p>
+                <p className="text-xs text-emerald-600 mt-2">{t('avgBookingValue', { amount: formatCurrency(avgBookingValue) })}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-emerald-600 opacity-30" />
             </div>
@@ -3872,9 +3872,9 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-50 to-indigo-100/50 rounded-xl border border-blue-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-semibold mb-2">Confirmed</p>
+                <p className="text-sm text-blue-600 font-semibold mb-2">{t('confirmed')}</p>
                 <p className="text-3xl font-bold text-slate-900">{confirmedBookings.length}</p>
-                <p className="text-xs text-blue-600 mt-2">Awaiting completion</p>
+                <p className="text-xs text-blue-600 mt-2">{t('awaitingCompletion')}</p>
               </div>
               <Calendar className="h-8 w-8 text-blue-600 opacity-30" />
             </div>
@@ -3883,9 +3883,9 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl border border-amber-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-amber-600 font-semibold mb-2">Pending</p>
+                <p className="text-sm text-amber-600 font-semibold mb-2">{t('pending')}</p>
                 <p className="text-3xl font-bold text-slate-900">{pendingBookings.length}</p>
-                <p className="text-xs text-amber-600 mt-2">Awaiting confirmation</p>
+                <p className="text-xs text-amber-600 mt-2">{t('awaitingConfirmation')}</p>
               </div>
               <Clock className="h-8 w-8 text-amber-600 opacity-30" />
             </div>
@@ -3898,14 +3898,14 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
               <BarChart3 className="h-5 w-5 mr-2 text-slate-600" />
-              Booking Status Distribution
+              {t('bookingStatusDistribution')}
             </h3>
             <div className="space-y-4">
               {[
-                { label: 'Completed', count: completedBookings.length, color: 'bg-emerald-500', total: allBookings.length },
-                { label: 'Confirmed', count: confirmedBookings.length, color: 'bg-blue-500', total: allBookings.length },
-                { label: 'Pending', count: pendingBookings.length, color: 'bg-amber-500', total: allBookings.length },
-                { label: 'Cancelled', count: cancelledBookings.length, color: 'bg-red-500', total: allBookings.length }
+                { label: t('completed'), count: completedBookings.length, color: 'bg-emerald-500', total: allBookings.length },
+                { label: t('confirmed'), count: confirmedBookings.length, color: 'bg-blue-500', total: allBookings.length },
+                { label: t('pending'), count: pendingBookings.length, color: 'bg-amber-500', total: allBookings.length },
+                { label: t('cancelled'), count: cancelledBookings.length, color: 'bg-red-500', total: allBookings.length }
               ].map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-2">
@@ -3927,7 +3927,7 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
               <Package className="h-5 w-5 mr-2 text-slate-600" />
-              Top Services
+              {t('topServices')}
             </h3>
             {topServices.length === 0 ? (
               <div className="text-center py-8">
