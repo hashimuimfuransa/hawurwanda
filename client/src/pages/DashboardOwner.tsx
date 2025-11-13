@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿﻿﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
@@ -1360,11 +1360,6 @@ const DashboardOwner: React.FC = () => {
       formData.append('credentials', JSON.stringify(staffFormData.credentials));
       formData.append('workSchedule', JSON.stringify(staffFormData.workSchedule));
       
-      // Profile photo
-      if (staffFormData.profilePhoto) {
-        formData.append('profilePhoto', staffFormData.profilePhoto);
-      }
-      
       await addStaffMutation.mutateAsync(formData);
     } catch (error) {
       console.error('Error adding staff:', error);
@@ -1480,11 +1475,6 @@ const DashboardOwner: React.FC = () => {
       formData.append('specialties', JSON.stringify(staffFormData.specialties));
       formData.append('credentials', JSON.stringify(staffFormData.credentials));
       formData.append('workSchedule', JSON.stringify(staffFormData.workSchedule));
-      
-      // Profile photo
-      if (staffFormData.profilePhoto) {
-        formData.append('profilePhoto', staffFormData.profilePhoto);
-      }
       
       await updateStaffMutation.mutateAsync({ 
         staffId: selectedStaff._id, 
@@ -3259,22 +3249,6 @@ const DashboardOwner: React.FC = () => {
                       </button>
                     ))}
                   </div>
-                </div>
-
-                {/* Profile Photo */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Profile Photo
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] || null;
-                      setStaffFormData(prev => ({ ...prev, profilePhoto: file }));
-                    }}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
                 </div>
 
                 {/* Experience and Bio */}

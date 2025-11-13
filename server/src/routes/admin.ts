@@ -875,84 +875,89 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       return res.status(400).json({ message: 'Name, email, phone, password, and salon are required' });
     }
 
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { phone }],
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'User with this email or phone already exists',
+      });
+    }
+
     // Check if salon exists
     const salon = await Salon.findById(salonId);
     if (!salon) {
       return res.status(404).json({ message: 'Salon not found' });
     }
 
-    // Check if email or phone already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }]
-    });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User with this email or phone already exists' });
-    }
+    // Hash password
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    let profilePhotoUrl: string | undefined;
-
-    // Upload profile photo if provided
-    if (req.file) {
-      const result = await uploadToCloudinary(
-        req.file.buffer,
-        'staff/profiles',
-        `profile-${Date.now()}`
-      );
-      profilePhotoUrl = result.secure_url;
-    }
-
-    // Parse arrays from JSON strings
-    let parsedSpecialties: string[] = [];
-    let parsedCredentials: string[] = [];
-    let parsedWorkSchedule: any = {};
-    let parsedAssignedServices: string[] = [];
-
-    if (specialties) {
+    // Parse JSON fields if they're strings
+    let parsedSpecialties = specialties || [];
+    if (typeof specialties === 'string') {
       try {
         parsedSpecialties = JSON.parse(specialties);
       } catch (e) {
-        parsedSpecialties = specialties.split(',').map((s: string) => s.trim());
+        parsedSpecialties = [];
       }
     }
 
-    if (credentials) {
+    let parsedCredentials = credentials || [];
+    if (typeof credentials === 'string') {
       try {
         parsedCredentials = JSON.parse(credentials);
       } catch (e) {
-        parsedCredentials = credentials.split(',').map((c: string) => c.trim());
+        parsedCredentials = [];
       }
     }
 
-    if (workSchedule) {
+    let parsedWorkSchedule = workSchedule || {};
+    if (typeof workSchedule === 'string') {
       try {
         parsedWorkSchedule = JSON.parse(workSchedule);
       } catch (e) {
-        console.warn('Invalid work schedule format');
+        parsedWorkSchedule = {};
       }
     }
 
-    if (assignedServices) {
+    let parsedAssignedServices = assignedServices || [];
+    if (typeof assignedServices === 'string') {
       try {
         parsedAssignedServices = JSON.parse(assignedServices);
       } catch (e) {
-        parsedAssignedServices = assignedServices.split(',').map((s: string) => s.trim());
+        parsedAssignedServices = [];
       }
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    // Handle profile photo upload if provided
+    let profilePhotoUrl = undefined;
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(
+          req.file.buffer,
+          'staff-profiles',
+          `staff-${Date.now()}`
+        );
+        profilePhotoUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Profile photo upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile photo' });
+      }
+    }
 
-    // Create new staff member
+    // Create staff member
     const staffMember = new User({
-      name,
-      email,
-      phone,
-      nationalId: nationalId && nationalId.trim() !== '' ? nationalId : undefined,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      nationalId: nationalId || undefined,
       passwordHash,
       role: staffCategory || 'barber',
       salonId,
-      profilePhoto: profilePhotoUrl,
       isVerified: true,
       gender: gender || undefined,
       staffCategory,
@@ -964,6 +969,7 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       credentials: parsedCredentials,
       workSchedule: parsedWorkSchedule,
       assignedServices: parsedAssignedServices.length > 0 ? parsedAssignedServices : salon.services,
+      profilePhoto: profilePhotoUrl,
     });
 
     await staffMember.save();
@@ -984,8 +990,11 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       message: 'Staff member created successfully',
       staff: staffMemberResponse,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Create staff error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error: ' + error.message });
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1032,16 +1041,8 @@ router.post('/users/create', authenticateToken, requireAdmin, validateRequest(cr
     await user.save();
 
     res.status(201).json({
-      message: `${role} user created successfully`,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-      },
+      message: 'User created successfully',
+      user,
     });
   } catch (error) {
     console.error('Create user error:', error);
