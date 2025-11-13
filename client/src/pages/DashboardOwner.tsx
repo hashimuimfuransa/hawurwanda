@@ -2466,9 +2466,9 @@ const DashboardOwner: React.FC = () => {
             <div>
               <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1 flex items-center gap-2">
                 <Users className="h-6 w-6 text-blue-600" />
-                Salon Customers
+                {t('salonCustomers')}
               </h2>
-              <p className="text-sm text-slate-600">View and manage every customer associated with your salon</p>
+              <p className="text-sm text-slate-600">{t('manageSalonCustomers')}</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
@@ -2479,14 +2479,14 @@ const DashboardOwner: React.FC = () => {
                 className="inline-flex items-center px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${bookingsLoading || walkInsLoading ? 'animate-spin' : ''}`} />
-                Refresh Data
+                {t('refreshData')}
               </button>
               <button
                 onClick={() => setShowWalkInForm(true)}
                 className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Walk-in Customer
+                {t('addWalkInCustomer')}
               </button>
             </div>
           </div>
@@ -2496,12 +2496,12 @@ const DashboardOwner: React.FC = () => {
               <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-blue-100 font-semibold mb-2">Total Customers</p>
+                    <p className="text-sm text-blue-100 font-semibold mb-2">{t('totalCustomers')}</p>
                     <p className="text-3xl font-bold">{salonCustomersSummary.totalCustomers}</p>
                   </div>
                   <Users className="h-8 w-8 text-blue-100 opacity-70" />
                 </div>
-                <p className="text-xs text-blue-100 mt-4">Unique clients from bookings and walk-ins</p>
+                <p className="text-xs text-blue-100 mt-4">{t('uniqueClientsFromBookings')}</p>
               </div>
 
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg">

@@ -97,23 +97,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       <div className="flex relative z-10">
         {/* Sidebar */}
-        <div className={`fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-20' : 'w-64 sm:w-72 lg:w-80'} bg-white/95 backdrop-blur-xl border-r border-slate-200/60 ${sidebarMinimized ? 'shadow-2xl shadow-slate-900/20' : 'shadow-2xl shadow-slate-900/10'} transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed overflow-y-auto`}>
+        <div className={`fixed inset-y-0 left-0 z-50 ${sidebarMinimized ? 'w-12' : 'w-48 sm:w-56 lg:w-64'} bg-white/95 backdrop-blur-xl border-r border-slate-200/60 ${sidebarMinimized ? 'shadow-2xl shadow-slate-900/20' : 'shadow-2xl shadow-slate-900/10'} transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-all duration-300 ease-in-out lg:translate-x-0 lg:fixed overflow-y-auto`}>
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-slate-200/60 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
+          <div className="flex items-center justify-between h-12 sm:h-14 px-2 sm:px-3 border-b border-slate-200/60 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
             {/* Header background decoration */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-indigo-700/90 backdrop-blur-sm"></div>
             <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-gradient-to-br from-white/5 via-transparent to-white/10"></div>
             
             <div className="relative z-10 flex items-center">
-              <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center mr-3 shadow-lg backdrop-blur-sm">
-                <div className="w-6 h-6 bg-white rounded-lg flex items-center justify-center">
-                  <div className="w-3 h-3 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-sm"></div>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white/20 rounded-lg sm:rounded-xl flex items-center justify-center mr-1.5 sm:mr-2 shadow-sm sm:shadow-md backdrop-blur-sm">
+                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-sm sm:rounded-md flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-sm"></div>
                 </div>
               </div>
               {!sidebarMinimized && (
                 <div>
-                  <h1 className="text-xl lg:text-2xl font-bold text-white drop-shadow-sm">{title}</h1>
-                  <p className="text-blue-100/80 text-sm hidden lg:block">{subtitle || 'Dashboard'}</p>
+                  <h1 className="text-lg lg:text-xl font-bold text-white drop-shadow-sm">{title}</h1>
+                  <p className="text-blue-100/80 text-xs hidden lg:block">{subtitle || 'Dashboard'}</p>
                 </div>
               )}
             </div>
@@ -127,8 +127,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
           
           {/* Navigation */}
-          <nav className="mt-4 sm:mt-8 px-4 sm:px-6">
-            <div className="space-y-1 sm:space-y-2">
+          <nav className="mt-3 sm:mt-5 px-2.5 sm:px-4">
+            <div className="space-y-0.5 sm:space-y-1">
               {sidebarItems.map((item, index) => (
                 <button
                   key={item.id}
@@ -136,11 +136,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     onTabChange(item.id);
                     setSidebarOpen(false); // Close sidebar on mobile after selection
                   }}
-                  className={`w-full flex items-center px-3 sm:px-4 py-3 sm:py-4 text-left rounded-2xl transition-all duration-300 group relative overflow-hidden ${
-                    activeTab === item.id
-                      ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white shadow-xl shadow-blue-500/30 scale-[1.02]'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50/50 hover:shadow-lg hover:scale-[1.01]'
-                  } ${sidebarMinimized ? 'justify-center' : ''}`}
+                  className={`w-full flex items-center px-2 py-2 text-left rounded-lg transition-all duration-300 group relative overflow-hidden ${activeTab === item.id ? 'bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-700 text-white shadow-md shadow-blue-500/30 scale-[1.01]' : 'text-slate-600 hover:text-slate-900 hover:bg-gradient-to-r hover:from-slate-50 hover:to-blue-50/50 hover:shadow-sm hover:scale-[1.005]'} ${sidebarMinimized ? 'justify-center' : ''}`}
                   title={sidebarMinimized ? item.label : undefined}
                   style={{ 
                     animationDelay: `${index * 50}ms`,
@@ -155,23 +151,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-indigo-600/20 rounded-2xl blur-xl"></div>
                   )}
                   
-                  <div className={`p-2.5 rounded-xl mr-4 transition-all duration-300 ${
+                  <div className={`p-1.5 rounded-md mr-2 transition-all duration-300 ${
                     activeTab === item.id 
-                      ? 'bg-white/20 shadow-lg' 
-                      : 'bg-slate-100 group-hover:bg-blue-100 group-hover:shadow-md'
+                      ? 'bg-white/20 shadow-sm' 
+                      : 'bg-slate-100 group-hover:bg-blue-100 group-hover:shadow-xs'
                   }`}>
-                    <item.icon className={`h-5 w-5 transition-colors ${
+                    <item.icon className={`h-3.5 w-3.5 transition-colors ${
                       activeTab === item.id ? 'text-white' : 'text-slate-500 group-hover:text-blue-600'
                     }`} />
                   </div>
                   
                   {!sidebarMinimized && (
                     <div className="flex-1 relative z-10">
-                      <span className={`font-semibold text-sm lg:text-base ${activeTab === item.id ? 'text-white' : ''}`}>
+                      <span className={`font-medium text-xs lg:text-sm ${activeTab === item.id ? 'text-white' : ''}`}>
                         {item.label}
                       </span>
                       {activeTab === item.id && (
-                        <div className="w-full h-0.5 bg-white/30 rounded-full mt-1"></div>
+                        <div className="w-full h-0.5 bg-white/30 rounded-full mt-0.5"></div>
                       )}
                     </div>
                   )}
@@ -191,16 +187,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
             {/* Sidebar Footer */}
             {!sidebarMinimized && (
-              <div className="mt-8 sm:mt-12 mb-4 sm:mb-6 p-3 sm:p-4 bg-gradient-to-r from-slate-50 to-blue-50/80 rounded-2xl border border-slate-200/60">
+              <div className="mt-4 sm:mt-6 mb-2 sm:mb-3 p-2 bg-gradient-to-r from-slate-50 to-blue-50/80 rounded-lg border border-slate-200/60">
                 <div className="text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mx-auto mb-3 flex items-center justify-center shadow-lg">
-                    <span className="text-white font-bold text-lg">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg mx-auto mb-1.5 flex items-center justify-center shadow-sm">
+                    <span className="text-white font-bold text-xs">
                       {user?.name?.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
-                  <p className="text-xs text-slate-500 capitalize flex items-center justify-center mt-1">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                  <p className="text-xs font-semibold text-slate-900 truncate">{user?.name}</p>
+                  <p className="text-xs text-slate-500 capitalize flex items-center justify-center mt-0.5">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1"></span>
                     {user?.role}
                   </p>
                 </div>
@@ -218,20 +214,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         )}
 
         {/* Main content */}
-        <div className={`flex-1 flex flex-col min-h-screen ${sidebarMinimized ? 'lg:ml-20' : 'lg:ml-80'} transition-all duration-300 ease-in-out`}>
+        <div className={`flex-1 flex flex-col min-h-screen ${sidebarMinimized ? 'lg:ml-12' : 'lg:ml-64'} transition-all duration-300 ease-in-out`}>
           
           {/* Removed floating expand button - now in header */}
           {/* Header */}
-          <header className={`bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 ${sidebarMinimized ? 'lg:left-20' : 'lg:left-80'} transition-all duration-300 ease-in-out z-40`}>
+          <header className={`bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-lg fixed top-0 right-0 left-0 ${sidebarMinimized ? 'lg:left-12' : 'lg:left-64'} transition-all duration-300 ease-in-out z-40`}>
             <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-blue-50/30 to-indigo-50/30"></div>
             
-            <div className="relative z-10 flex items-center justify-between px-2 sm:px-4 lg:px-6 py-2 sm:py-2 lg:py-3">
+            <div className="relative z-10 flex items-center justify-between px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1">
               <div className="flex items-center flex-1">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden p-3 rounded-2xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 mr-4 transition-all duration-200 shadow-sm"
+                  className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 mr-2 transition-all duration-200 shadow-xs"
                 >
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-5 w-5" />
                 </button>
                 
                 <div className="flex-1">
@@ -239,7 +235,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <div className="flex items-center">
                       <button
                         onClick={() => setSidebarMinimized(!sidebarMinimized)}
-                        className={`hidden lg:block p-2.5 rounded-xl transition-all duration-300 relative z-10 transform hover:scale-110 mr-3 ${sidebarMinimized ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+                        className={`hidden lg:block p-2 rounded-lg transition-all duration-300 relative z-10 transform hover:scale-110 mr-2 ${sidebarMinimized ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 shadow-xs' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
                         title={sidebarMinimized ? 'Expand sidebar (Ctrl+E)' : 'Collapse sidebar (Ctrl+E)'}
                       >
                         {sidebarMinimized ? (
@@ -253,103 +249,95 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         )}
                       </button>
                       <div>
-                        <h2 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent capitalize">
+                        <h2 className="text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-slate-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent capitalize">
                           {sidebarItems.find(item => item.id === activeTab)?.label || 'Dashboard'}
                         </h2>
-                        <p className="text-sm lg:text-base text-slate-600 mt-1 flex items-center">
-                          <span className="hidden sm:inline">Welcome back, </span>
+                        <p className="text-xs text-slate-600 mt-0.5 flex items-center">
                           <span className="font-medium text-slate-800">{user?.name?.split(' ')[0]}</span>
-                          <span className="ml-2">👋</span>
+                          <span className="ml-1 text-xs">👋</span>
                         </p>
                       </div>
                     </div>
 
-                    {/* Mobile-optimized header actions */}
-                    <div className="flex items-center space-x-1 sm:space-x-2 lg:hidden">
-                      {/* Mobile search button */}
-                      <button className="p-2.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
-                        <Search className="h-5 w-5" />
+                    {/* Unified header actions for both mobile and desktop */}
+                    <div className="flex items-center space-x-1">
+                      {/* Search button - unified for all devices */}
+                      <button className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                        <Search className="h-4 w-4" />
                       </button>
                       
-                      {/* Mobile notifications */}
+                      {/* Notifications - unified for all devices */}
                       <button 
                         onClick={onNotificationClick}
-                        className="relative p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                        className="relative p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                       >
-                        <Bell className="h-5 w-5" />
-                        <span className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></span>
+                        <Bell className="h-4 w-4" />
+                        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></span>
                       </button>
 
-                      {/* Mobile user menu */}
+                      {/* User menu - unified for all devices */}
                       <div className="relative">
                         <button
                           onClick={() => setUserMenuOpen(!userMenuOpen)}
-                          className="flex items-center p-1 rounded-xl hover:bg-slate-50 transition-all duration-200"
+                          className="flex items-center p-0.5 rounded-lg hover:bg-slate-50 transition-all duration-200"
                         >
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
-                            <span className="text-white text-xs sm:text-sm font-semibold">
+                          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-md flex items-center justify-center shadow-xs">
+                            <span className="text-white text-xs font-semibold">
                               {user?.name?.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </button>
                         
-                        {/* Mobile User Dropdown */}
+                        {/* Unified User Dropdown */}
                         {userMenuOpen && (
-                          <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 z-[99999] overflow-hidden">
-                            <div className="p-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50/50">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                                  <span className="text-white font-bold text-sm">
+                          <div className="absolute right-0 mt-1 w-48 bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200/60 z-[99999] overflow-hidden lg:w-56 lg:rounded-2xl">
+                            <div className="p-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50/50 lg:p-4">
+                              <div className="flex items-center space-x-2 lg:space-x-3">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md lg:w-10 lg:h-10 lg:rounded-xl">
+                                  <span className="text-white font-bold text-xs lg:text-sm">
                                     {user?.name?.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
                                 <div>
-                                  <p className="font-semibold text-slate-900 text-sm">{user?.name}</p>
+                                  <p className="font-semibold text-slate-900 text-xs lg:text-sm">{user?.name}</p>
                                   <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
-                                  <div className="flex items-center mt-1">
-                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5"></span>
+                                  <div className="flex items-center mt-0.5">
+                                    <span className="w-1 h-1 bg-emerald-500 rounded-full mr-1 lg:w-1.5 lg:h-1.5"></span>
                                     <span className="text-xs text-emerald-600 font-medium">Online</span>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                            <div className="py-2">
+                            <div className="py-1.5 lg:py-2">
                               <button
                                 onClick={() => {
                                   navigate('/profile');
                                   setUserMenuOpen(false);
                                 }}
-                                className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                                className="flex items-center w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors group lg:px-4 lg:py-2.5"
                               >
-                                <User className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-600" />
+                                <User className="h-3.5 w-3.5 mr-2.5 text-slate-400 group-hover:text-blue-600" />
                                 Profile Settings
-                              </button>
-                              <button
-                                onClick={() => setUserMenuOpen(false)}
-                                className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
-                              >
-                                <Settings className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-600" />
-                                Preferences
                               </button>
                               <button
                                 onClick={() => {
                                   toggleLanguage();
                                   setUserMenuOpen(false);
                                 }}
-                                className="flex items-center w-full px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
+                                className="flex items-center w-full px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 transition-colors group lg:px-4 lg:py-2.5"
                               >
-                                <Globe className="h-4 w-4 mr-3 text-slate-400 group-hover:text-blue-600" />
+                                <Globe className="h-3.5 w-3.5 mr-2.5 text-slate-400 group-hover:text-blue-600" />
                                 {t('languageToggle')} ({language === 'en' ? 'EN' : 'RW'})
                               </button>
-                              <hr className="my-2 border-slate-100" />
+                              <hr className="my-1 border-slate-100" />
                               <button
                                 onClick={() => {
                                   handleLogout();
                                   setUserMenuOpen(false);
                                 }}
-                                className="flex items-center w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors group"
+                                className="flex items-center w-full px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors group lg:px-4 lg:py-2.5"
                               >
-                                <LogOut className="h-4 w-4 mr-3 group-hover:text-red-700" />
+                                <LogOut className="h-3.5 w-3.5 mr-2.5 group-hover:text-red-700" />
                                 Sign Out
                               </button>
                             </div>
@@ -360,116 +348,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Desktop header actions */}
-              <div className="hidden lg:flex items-center space-x-4">
-                {headerActions}
-
-                {/* Desktop Search */}
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search anything..."
-                    className="pl-11 pr-6 py-3 w-80 bg-white/80 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all duration-200 text-sm shadow-sm backdrop-blur-sm"
-                  />
-                </div>
-
-                {/* Desktop Notifications */}
-                <button 
-                  onClick={onNotificationClick}
-                  className="relative p-3 text-slate-400 hover:text-slate-700 hover:bg-white/80 rounded-2xl transition-all duration-200 shadow-sm group"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">3</span>
-                  </span>
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full animate-ping opacity-75"></span>
-                </button>
-
-                {/* Desktop User menu */}
-                <div className="relative" ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center space-x-4 p-2 rounded-2xl hover:bg-white/80 transition-all duration-200 group shadow-sm"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 text-right">{user?.name}</p>
-                        <p className="text-xs text-slate-500 capitalize flex items-center justify-end">
-                          <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                          {user?.role}
-                        </p>
-                      </div>
-                      <div className="w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span className="text-white font-semibold">
-                          {user?.name?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                  </button>
-
-                  {userMenuOpen && (
-                    <div className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200/60 z-[99999] overflow-hidden animate-in slide-in-from-top-2 duration-200">
-                      <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-blue-50/50">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                            <span className="text-white font-bold text-lg">
-                              {user?.name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-900">{user?.name}</p>
-                            <p className="text-sm text-slate-500 capitalize">{user?.role}</p>
-                            <div className="flex items-center mt-1">
-                              <span className="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
-                              <span className="text-xs text-emerald-600 font-medium">Online</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="py-3">
-                        <button
-                          onClick={() => navigate('/profile')}
-                          className="flex items-center w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
-                        >
-                          <User className="h-4 w-4 mr-4 text-slate-400 group-hover:text-blue-600" />
-                          Profile Settings
-                        </button>
-                        <button
-                          onClick={() => {}}
-                          className="flex items-center w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
-                        >
-                          <Settings className="h-4 w-4 mr-4 text-slate-400 group-hover:text-blue-600" />
-                          Preferences
-                        </button>
-                        <button
-                          onClick={toggleLanguage}
-                          className="flex items-center w-full px-6 py-3 text-sm text-slate-700 hover:bg-slate-50 transition-colors group"
-                        >
-                          <Globe className="h-4 w-4 mr-4 text-slate-400 group-hover:text-blue-600" />
-                          {t('languageToggle')} ({language === 'en' ? 'EN' : 'RW'})
-                        </button>
-                        <hr className="my-3 border-slate-100" />
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-6 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors group"
-                        >
-                          <LogOut className="h-4 w-4 mr-4 group-hover:text-red-700" />
-                          Sign Out
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
             </div>
           </header>
 
           {/* Main content area */}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-14 lg:pt-16">
-            <div className="container mx-auto px-2 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-12 max-w-7xl relative z-1">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-transparent via-slate-50/30 to-blue-50/40 relative z-0 pt-8 lg:pt-10">
+            <div className="container mx-auto px-1.5 sm:px-2 lg:px-4 py-2 sm:py-3 lg:py-6 max-w-7xl relative z-1">
               {children}
             </div>
           </main>
