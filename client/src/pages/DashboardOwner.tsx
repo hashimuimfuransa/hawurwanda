@@ -1,4 +1,4 @@
-﻿﻿﻿import React, { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
@@ -117,7 +117,6 @@ const DashboardOwner: React.FC = () => {
     phone: '',
     nationalId: '',
     password: '',
-    staffCategory: 'barber',
     gender: '',
     specialties: [] as string[],
     experience: '',
@@ -315,7 +314,8 @@ const DashboardOwner: React.FC = () => {
     queryKey: ['salon-bookings', user?.salonId],
     queryFn: async () => {
       console.log('🔍 Frontend: Fetching bookings for salonId:', user?.salonId);
-      const result = await bookingService.getBookings({ salonId: user?.salonId });
+      // For salon owners, we don't need to pass salonId as it's handled by the backend
+      const result = await bookingService.getBookings({ limit: 1000 });
       console.log('📦 Frontend: Raw booking API response:', result);
       console.log('📊 Frontend: Bookings data structure:', result?.data);
       console.log('📋 Frontend: Bookings array:', result?.data?.bookings);
@@ -446,7 +446,6 @@ const DashboardOwner: React.FC = () => {
         phone: '',
         nationalId: '',
         password: '',
-        staffCategory: 'barber',
         gender: '',
         specialties: [],
         experience: '',
@@ -964,7 +963,8 @@ const DashboardOwner: React.FC = () => {
       formData.append('phone', staffFormData.phone);
       formData.append('nationalId', staffFormData.nationalId);
       formData.append('password', staffFormData.password);
-      formData.append('staffCategory', staffFormData.staffCategory);
+      // Set default staff category to 'barber' since we removed the selection UI
+      formData.append('staffCategory', 'barber');
       if (staffFormData.gender) formData.append('gender', staffFormData.gender);
       
       // Optional information
@@ -996,7 +996,6 @@ const DashboardOwner: React.FC = () => {
       phone: staff.phone || '',
       nationalId: staff.nationalId || '',
       password: '', // Don't pre-fill password for security
-      staffCategory: staff.staffCategory || 'barber',
       gender: staff.gender || '',
       specialties: staff.specialties || [],
       experience: staff.experience || '',
@@ -1080,7 +1079,8 @@ const DashboardOwner: React.FC = () => {
       formData.append('email', staffFormData.email);
       formData.append('phone', staffFormData.phone);
       formData.append('nationalId', staffFormData.nationalId);
-      formData.append('staffCategory', staffFormData.staffCategory);
+      // Set default staff category to 'barber' since we removed the selection UI
+      formData.append('staffCategory', 'barber');
       if (staffFormData.gender) formData.append('gender', staffFormData.gender);
       
       // Optional information
@@ -1436,7 +1436,6 @@ const DashboardOwner: React.FC = () => {
   // Define sidebar items early so they can be used in pending state
   const sidebarItems = [
     { id: 'overview', label: 'Incamake', icon: BarChart3, badge: undefined },
-    { id: 'bookings', label: 'Ubusabe', icon: Calendar, badge: pendingBookings.length || undefined },
     { id: 'customers', label: 'Abakiriya', icon: Users, badge: undefined },
     { id: 'barbers', label: 'Itsinda', icon: Users, badge: undefined },
     { id: 'services', label: 'Serivisi', icon: Package, badge: undefined },
@@ -2842,30 +2841,6 @@ const DashboardOwner: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Staff Category */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Staff Category *
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {staffCategories.map((category) => (
-                      <button
-                        key={category.value}
-                        type="button"
-                        onClick={() => setStaffFormData(prev => ({ ...prev, staffCategory: category.value }))}
-                        className={`p-3 rounded-xl border-2 transition-all duration-200 text-center ${
-                          staffFormData.staffCategory === category.value
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-slate-200 hover:border-slate-300 text-slate-600'
-                        }`}
-                      >
-                        <div className="text-2xl mb-1">{category.icon}</div>
-                        <div className="text-sm font-medium">{category.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Experience and Bio */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -3248,30 +3223,6 @@ const DashboardOwner: React.FC = () => {
                       maxLength={16}
                     />
                     <p className="text-xs text-slate-500 mt-1">Optional - 16-digit national ID number</p>
-                  </div>
-                </div>
-
-                {/* Staff Category */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Staff Category *
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {staffCategories.map((category) => (
-                      <button
-                        key={category.value}
-                        type="button"
-                        onClick={() => setStaffFormData(prev => ({ ...prev, staffCategory: category.value }))}
-                        className={`p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center space-y-2 ${
-                          staffFormData.staffCategory === category.value
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                        }`}
-                      >
-                        <span className="text-2xl">{category.icon}</span>
-                        <span className="text-sm font-medium">{category.label}</span>
-                      </button>
-                    ))}
                   </div>
                 </div>
 

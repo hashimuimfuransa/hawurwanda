@@ -260,7 +260,7 @@ router.post('/', authenticateToken, validateRequest(createBookingSchema), async 
 // Get bookings
 router.get('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { salonId, barberId, date, status, page = 1, limit = 10 } = req.query;
+    const { salonId, barberId, date, status, page = 1, limit = req.user!.role === 'owner' ? 1000 : 10 } = req.query;
     const query: any = {};
 
     // Debug logging

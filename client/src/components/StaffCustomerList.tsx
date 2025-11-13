@@ -49,13 +49,16 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
     queryKey: ['staff-customer-bookings', ownerIdentifier, selectedDate, statusFilter, serviceStatusFilter, showSalonView],
     queryFn: () => {
       const params: any = {};
-      if (selectedDate) {
+      // Only apply date filter if a specific date is selected
+      if (selectedDate && selectedDate.trim() !== '') {
         params.date = selectedDate;
       }
       if (statusFilter !== 'all') params.status = statusFilter;
       if (showSalonView && user?.salonId) {
         params.salonId = user.salonId;
       }
+      // Increase limit for salon view to ensure all bookings are fetched
+      params.limit = showSalonView ? 1000 : 50;
 
       return bookingService.getBookings(params);
     },
@@ -67,13 +70,16 @@ const StaffCustomerList: React.FC<StaffCustomerListProps> = ({ showSalonView = f
     queryKey: ['staff-walkin-customers', selectedDate, statusFilter, serviceStatusFilter, ownerIdentifier, showSalonView],
     queryFn: () => {
       const params: any = {};
-      if (selectedDate) {
+      // Only apply date filter if a specific date is selected
+      if (selectedDate && selectedDate.trim() !== '') {
         params.date = selectedDate;
       }
       if (statusFilter !== 'all') params.status = statusFilter;
       if (showSalonView && user?.salonId) {
         params.salonId = user.salonId;
       }
+      // Increase limit for salon view to ensure all walk-ins are fetched
+      params.limit = showSalonView ? 1000 : 50;
 
       return showSalonView
         ? walkInCustomerService.getSalonWalkIns(params)

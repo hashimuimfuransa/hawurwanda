@@ -54,7 +54,11 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
       }
       if (statusFilter !== 'all') params.status = statusFilter;
       // Note: barberId is automatically handled by the backend based on user role
-      
+      // Increase limit for salon view to ensure all bookings are fetched
+      if (showSalonView) {
+        params.limit = 1000;
+      }
+
       return bookingService.getBookings(params);
     },
     enabled: !!user && !!user.id,

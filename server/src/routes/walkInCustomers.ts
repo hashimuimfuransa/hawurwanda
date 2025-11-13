@@ -197,7 +197,7 @@ router.post('/', authenticateToken, validateRequest(createWalkInSchema), async (
 // Get walk-in customers for staff
 router.get('/', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { page = 1, limit = 10, status, paymentStatus, date } = req.query;
+    const { page = 1, limit = req.user!.role === 'owner' ? 1000 : 50, status, paymentStatus, date } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // Build filter
@@ -343,7 +343,7 @@ router.get('/salon/all', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ message: 'Not authorized to view all walk-in customers' });
     }
 
-    const { page = 1, limit = 10, status, paymentStatus, date, barberId } = req.query;
+    const { page = 1, limit = req.user!.role === 'owner' ? 1000 : 10, status, paymentStatus, date, barberId } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
 
     // Build filter
