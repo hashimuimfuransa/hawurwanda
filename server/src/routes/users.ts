@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middlewares/auth';
 import { validateRequest, validateParams } from '../middlewares/validation';
 import { User } from '../models/User';
+import { isValidUploadcareUrl } from '../utils/uploadcare';
 import Joi from 'joi';
 
 const router = express.Router();
@@ -60,7 +61,14 @@ router.patch('/me', authenticateToken, async (req: AuthRequest, res): Promise<vo
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (phone) updateData.phone = phone;
-    if (profilePhoto) updateData.profilePhoto = profilePhoto;
+    if (profilePhoto) {
+      // Check if it's an Uploadcare URL
+      if (typeof profilePhoto === 'string' && isValidUploadcareUrl(profilePhoto)) {
+        updateData.profilePhoto = profilePhoto;
+      } else {
+        updateData.profilePhoto = profilePhoto;
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,
@@ -147,7 +155,7 @@ router.get('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
 // Update user (admin only)
 router.patch('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
   try {
-    const { name, email, phone, role, isVerified } = req.body;
+    const { name, email, phone, role, isVerified, profilePhoto } = req.body;
     const userId = req.params.id;
 
     const updateData: any = {};
@@ -156,6 +164,14 @@ router.patch('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, r
     if (phone) updateData.phone = phone;
     if (role) updateData.role = role;
     if (isVerified !== undefined) updateData.isVerified = isVerified;
+    if (profilePhoto) {
+      // Check if it's an Uploadcare URL
+      if (typeof profilePhoto === 'string' && isValidUploadcareUrl(profilePhoto)) {
+        updateData.profilePhoto = profilePhoto;
+      } else {
+        updateData.profilePhoto = profilePhoto;
+      }
+    }
 
     const user = await User.findByIdAndUpdate(
       userId,

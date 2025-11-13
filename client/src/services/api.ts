@@ -274,15 +274,28 @@ export const adminService = {
   updateStaffServices: (staffId: string, services: string[]) =>
     api.patch(`/admin/staff/${staffId}/services`, { services }),
   
-  updateStaffProfilePhoto: (staffId: string, profilePhoto: FormData) =>
-    api.patch(`/admin/users/${staffId}`, profilePhoto, {
+  updateStaffProfilePhoto: (staffId: string, profilePhoto: FormData | string) => {
+    // If profilePhoto is a string (URL), send as JSON
+    if (typeof profilePhoto === 'string') {
+      return api.patch(`/admin/users/${staffId}`, { profilePhoto }, {
+        timeout: 120000, // 2 minute timeout for profile photo uploads
+        onUploadProgress: (progressEvent) => {
+          // Progress tracking can be implemented in the component if needed
+          console.log('Upload progress:', progressEvent);
+        },
+      });
+    }
+    
+    // If profilePhoto is FormData, send as multipart/form-data
+    return api.patch(`/admin/users/${staffId}`, profilePhoto, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 120000, // 2 minute timeout for profile photo uploads
       onUploadProgress: (progressEvent) => {
         // Progress tracking can be implemented in the component if needed
         console.log('Upload progress:', progressEvent);
       },
-    }),
+    });
+  },
   
   createStaffMember: (staffData: FormData) =>
     api.post('/admin/staff/create', staffData, {

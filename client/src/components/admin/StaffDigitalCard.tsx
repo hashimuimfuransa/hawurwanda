@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { X, Download, Building2, Calendar, Star, Award, User, Phone, Mail, Scissors, Upload, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminService } from '../../services/api';
+import { directUploadToUploadcare } from '../../utils/uploadcare';
 
 interface StaffDigitalCardProps {
   staff: any;
@@ -110,61 +111,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
     }
   };
 
-  const compressImage = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const img = new Image();
-        img.src = reader.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Could not get canvas context'));
-            return;
-          }
-          
-          // Calculate new dimensions (max 400px on longest side for profile photos to make them faster)
-          let { width, height } = img;
-          const maxSize = 400;
-          if (width > height) {
-            if (width > maxSize) {
-              height = (height * maxSize) / width;
-              width = maxSize;
-            }
-          } else {
-            if (height > maxSize) {
-              width = (width * maxSize) / height;
-              height = maxSize;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          
-          // Draw image with compression
-          ctx.drawImage(img, 0, 0, width, height);
-          
-          // Convert to blob with 60% quality for faster uploads
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                resolve(blob);
-              } else {
-                reject(new Error('Could not compress image'));
-              }
-            },
-            'image/jpeg',
-            0.6
-          );
-        };
-        img.onerror = () => reject(new Error('Could not load image'));
-      };
-      reader.onerror = () => reject(new Error('Could not read file'));
-    });
-  };
-
   const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -182,23 +128,9 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
     setUploadingPhoto(true);
     try {
-      // Compress image to reduce upload time
-      let finalFile = file;
-      if (file.type !== 'image/gif') { // Don't compress GIFs to preserve animation
-        try {
-          const compressedBlob = await compressImage(file);
-          finalFile = new File([compressedBlob], file.name, {
-            type: 'image/jpeg',
-            lastModified: Date.now(),
-          });
-        } catch (compressError) {
-          console.warn('Could not compress image, uploading original:', compressError);
-        }
-      }
-
-      const formData = new FormData();
-      formData.append('profilePhoto', finalFile);
-
+      // Upload directly to Uploadcare
+      const imageUrl = await directUploadToUploadcare(file);
+      
       // Use the admin service to update staff profile photo with retry mechanism
       let uploadSuccess = false;
       let attempts = 0;
@@ -206,7 +138,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
       
       while (!uploadSuccess && attempts < maxAttempts) {
         try {
-          await adminService.updateStaffProfilePhoto(staff._id, formData);
+          await adminService.updateStaffProfilePhoto(staff._id, imageUrl);
           uploadSuccess = true;
         } catch (error: any) {
           attempts++;

@@ -12,6 +12,7 @@ import { Notification } from '../models/Notification';
 import { Service } from '../models/Service';
 import { sendSalonApprovalEmail, sendSalonRejectionEmail } from '../utils/emailService';
 import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
+import { isValidUploadcareUrl } from '../utils/uploadcare';
 import Joi from 'joi';
 
 const router = express.Router();
@@ -1112,7 +1113,7 @@ router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profi
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
 
-    // Handle profile photo upload
+    // Handle profile photo upload or URL
     if (req.file) {
       try {
         const result = await uploadToCloudinary(
@@ -1125,6 +1126,9 @@ router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profi
         console.error('Profile photo upload error:', uploadError);
         return res.status(500).json({ message: 'Failed to upload profile photo' });
       }
+    } else if (req.body.profilePhoto && isValidUploadcareUrl(req.body.profilePhoto)) {
+      // Handle Uploadcare URL
+      updateData.profilePhoto = req.body.profilePhoto;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
