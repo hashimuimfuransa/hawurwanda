@@ -75,7 +75,16 @@ app.use('/api/auth', limiter); // Apply rate limiting to auth routes
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/hawu-rwanda')
-  .then(() => console.log('✅ Connected to MongoDB'))
+  .then(async () => {
+    console.log('✅ Connected to MongoDB');
+    // Sync indexes to ensure they match model definitions
+    try {
+      await mongoose.connection.syncIndexes();
+      console.log('✅ MongoDB indexes synced successfully');
+    } catch (indexError) {
+      console.error('❌ Error syncing MongoDB indexes:', indexError);
+    }
+  })
   .catch((error) => console.error('❌ MongoDB connection error:', error));
 
 // Routes

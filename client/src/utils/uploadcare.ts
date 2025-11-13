@@ -25,27 +25,14 @@ const uploadcareConfig = {
  */
 export const uploadToUploadcare = (file: File): Promise<any> => {
   return new Promise((resolve, reject) => {
-    // Create a temporary input element for Uploadcare
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    document.body.appendChild(input);
-    
     // Use Uploadcare's direct file upload with config
-    const widget = uploadcare.Widget(input, uploadcareConfig);
-    
-    // Open dialog and handle result
-    widget.onUploadComplete((info: any) => {
-      document.body.removeChild(input);
-      resolve(info);
-    });
-    
-    widget.onError((error: any) => {
-      document.body.removeChild(input);
-      reject(error);
-    });
-    
-    // Set the file and open dialog
-    widget.value(file);
+    uploadcare.fileFrom('object', file, uploadcareConfig)
+      .then((fileInfo: any) => {
+        resolve(fileInfo);
+      })
+      .catch((error: any) => {
+        reject(error);
+      });
   });
 };
 

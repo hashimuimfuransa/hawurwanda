@@ -11,6 +11,7 @@ import { Availability } from '../models/Availability';
 import { Notification } from '../models/Notification';
 import Joi from 'joi';
 import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
+import { uploadToUploadcare } from '../utils/uploadcare';
 import { sendStaffWelcomeEmail, sendOwnerWelcomeEmail } from '../utils/welcomeEmails';
 
 const router = express.Router();
@@ -174,32 +175,31 @@ router.post(
 
       // Upload logo if provided
       if (files?.logo && files.logo[0]) {
-        const result = await uploadToCloudinary(
-          files.logo[0].buffer,
-          'salons/logos',
-          `logo-${Date.now()}`
-        );
-        logoUrl = result.secure_url;
+        const logoUrlResult = await uploadToUploadcare(files.logo[0].buffer, files.logo[0].originalname);
+        logoUrl = logoUrlResult;
       }
 
       // Upload multiple cover images if provided
       if (files?.coverImages && files.coverImages.length > 0) {
-        coverImageUrls = await uploadMultipleToCloudinary(files.coverImages, 'salons/covers');
+        // Upload multiple cover images to Uploadcare
+        const uploadPromises = files.coverImages.map(file => 
+          uploadToUploadcare(file.buffer, file.originalname)
+        );
+        coverImageUrls = await Promise.all(uploadPromises);
       }
 
       // Upload promotional video if provided (optional)
       if (files?.promotionalVideo && files.promotionalVideo[0]) {
-        const result = await uploadVideoToCloudinary(
-          files.promotionalVideo[0].buffer,
-          'salons/videos',
-          `video-${Date.now()}`
-        );
-        promotionalVideoUrl = result.secure_url;
+        promotionalVideoUrl = await uploadToUploadcare(files.promotionalVideo[0].buffer, files.promotionalVideo[0].originalname);
       }
 
       // Upload gallery images if provided
       if (files?.gallery && files.gallery.length > 0) {
-        galleryUrls = await uploadMultipleToCloudinary(files.gallery, 'salons/gallery');
+        // Upload gallery images to Uploadcare
+        const galleryUploadPromises = files.gallery.map(file => 
+          uploadToUploadcare(file.buffer, file.originalname)
+        );
+        galleryUrls = await Promise.all(galleryUploadPromises);
       }
 
       // Parse service categories from comma-separated string
@@ -492,12 +492,7 @@ router.post('/:id/staff', authenticateToken, requireOwnerOrAdmin, validateObject
     
     // Upload profile photo if provided
     if (req.file) {
-      const result = await uploadToCloudinary(
-        req.file.buffer,
-        'staff/profiles',
-        `profile-${Date.now()}`
-      );
-      profilePhotoUrl = result.secure_url;
+      profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
     }
 
     // Parse arrays from JSON strings
@@ -780,12 +775,8 @@ router.patch('/:salonId/staff/:staffId', authenticateToken, requireOwnerOrAdmin,
 
     // Handle profile photo update if provided
     if (req.file) {
-      const result = await uploadToCloudinary(
-        req.file.buffer,
-        'staff/profiles',
-        `profile-${Date.now()}`
-      );
-      updateData.profilePhoto = result.secure_url;
+      const profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
+      updateData.profilePhoto = profilePhotoUrl;
     }
 
     // Parse arrays if they're strings

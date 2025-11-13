@@ -179,7 +179,7 @@ const userSchema = new Schema<IUser>({
 });
 
 // Indexes
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 }, { sparse: true });
 userSchema.index({ phone: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ salonId: 1 });

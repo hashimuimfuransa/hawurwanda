@@ -61,7 +61,6 @@ import StaffDigitalCard from '../components/admin/StaffDigitalCard';
 import AdminCreateSalon from '../components/admin/AdminCreateSalon';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ReportsDashboard from '../components/admin/ReportsDashboard';
-import CreateStaffModal from '../components/admin/CreateStaffModal';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthStore();
@@ -73,7 +72,6 @@ const AdminPanel: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [selectedGender, setSelectedGender] = useState('');
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showSalonDetailsModal, setShowSalonDetailsModal] = useState(false);
   const [showCreateSalonModal, setShowCreateSalonModal] = useState(false);
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
@@ -266,18 +264,6 @@ const AdminPanel: React.FC = () => {
     },
   });
 
-  const createSalonMutation = useMutation({
-    mutationFn: (salonData: any) => adminService.createSalon(salonData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
-      toast.success('Salon created successfully');
-      setShowCreateSalonModal(false);
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create salon');
-    },
-  });
-
   // Verify owner mutation
   const verifyUserMutation = useMutation({
     mutationFn: (userId: string) => adminService.updateUser(userId, { isVerified: true }),
@@ -332,6 +318,23 @@ const AdminPanel: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
       toast.success('Staff member created successfully');
       setShowCreateStaffModal(false);
+      setStaffFormData({
+        name: '',
+        email: '',
+        phone: '',
+        nationalId: '',
+        password: '',
+        salonId: '',
+        staffCategory: 'barber',
+        gender: '',
+        specialties: [],
+        experience: '',
+        educationLevel: '',
+        birthYearRange: '',
+        bio: '',
+        credentials: [],
+        profilePhoto: null,
+      });
     },
     onError: (error: any) => {
       console.error('Create staff error:', error);
@@ -1947,26 +1950,12 @@ const AdminPanel: React.FC = () => {
         </div>
       </DashboardLayout>
 
-      <CreateStaffModal
-        showModal={showCreateStaffModal}
-        onClose={() => setShowCreateStaffModal(false)}
-        onSubmit={(staffData) => createStaffMutation.mutate(staffData)}
-        salons={salons}
-        isPending={createStaffMutation.isPending}
-      />
-
-      {/* Create Salon Modal - Moved to bottom of file */}
-
-      {/* Create User Modal */}
+      {/* Modals moved outside DashboardLayout to be positioned relative to viewport */}
       <CreateUserModal
         showModal={showCreateUserModal}
         onClose={() => setShowCreateUserModal(false)}
         onSubmit={(userData) => createUserMutation.mutate(userData)}
       />
-
-      {/* Edit User Modal - Component not available */}
-
-      {/* Salon Details Modal */}
       <SalonDetailsModal
         showModal={showSalonDetailsModal}
         onClose={() => {
@@ -2727,6 +2716,208 @@ const AdminPanel: React.FC = () => {
                       Mark as Completed
                     </button>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Staff Modal */}
+      {showCreateStaffModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900">Create Staff Member</h3>
+                  <button
+                    onClick={() => setShowCreateStaffModal(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="h-6 w-6 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input
+                          type="text"
+                          value={staffFormData.name}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="John Doe"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
+                        <input
+                          type="email"
+                          value={staffFormData.email}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="john@example.com"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                        <input
+                          type="tel"
+                          value={staffFormData.phone}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 9) })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="788 123 456"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Enter 9-digit Rwandan phone number (e.g., 788123456)</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                        <select
+                          value={staffFormData.gender}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, gender: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                        <input
+                          type="text"
+                          value={staffFormData.experience}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, experience: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="5 years"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
+                        <select
+                          value={staffFormData.educationLevel}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, educationLevel: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Education Level</option>
+                          <option value="primary">Primary School</option>
+                          <option value="secondary">Secondary School</option>
+                          <option value="certificate">Certificate</option>
+                          <option value="diploma">Diploma</option>
+                          <option value="degree">Bachelor's Degree</option>
+                          <option value="masters">Master's Degree</option>
+                          <option value="phd">PhD</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Birth Year Range</label>
+                        <select
+                          value={staffFormData.birthYearRange}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, birthYearRange: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Birth Year Range</option>
+                          <option value="12-35">12-35 years</option>
+                          <option value="35-60">35-60 years</option>
+                          <option value="60+">60+ years</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">National ID</label>
+                        <input
+                          type="text"
+                          value={staffFormData.nationalId}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, nationalId: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="1234567890123456"
+                          maxLength={16}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Optional - 16-digit national ID number</p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                        <input
+                          type="password"
+                          value={staffFormData.password}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="••••••••"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
+                        <select
+                          value={staffFormData.staffCategory}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, staffCategory: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="barber">Barber</option>
+                          <option value="hairstylist">Hair Stylist</option>
+                          <option value="nail_technician">Nail Technician</option>
+                          <option value="massage_therapist">Massage Therapist</option>
+                          <option value="esthetician">Esthetician</option>
+                          <option value="receptionist">Receptionist</option>
+                          <option value="manager">Manager</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Salon Assignment */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4">Salon Assignment</h4>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Salon (Optional)</label>
+                      <select
+                        value={staffFormData.salonId}
+                        onChange={(e) => setStaffFormData({ ...staffFormData, salonId: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">Select a salon</option>
+                        {salons.filter((s: any) => s.verified).map((salon: any) => (
+                          <option key={salon._id} value={salon._id}>
+                            {salon.name} - {salon.district}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() => setShowCreateStaffModal(false)}
+                      className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleMigrateStaff}
+                      disabled={createStaffMutation.isPending}
+                      className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {createStaffMutation.isPending ? 'Creating...' : 'Create Staff Member'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

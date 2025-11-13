@@ -262,6 +262,11 @@ export const adminService = {
   getStaffDetails: (staffId: string) =>
     api.get(`/admin/staff/${staffId}`),
   
+  updateStaffMember: (staffId: string, staffData: FormData) =>
+    api.patch(`/admin/staff/${staffId}`, staffData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  
   updateStaffSalon: (staffId: string, salonId: string) =>
     api.patch(`/admin/staff/${staffId}/salon`, { salonId }),
   

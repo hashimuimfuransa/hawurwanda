@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { X, Download, Building2, Calendar, Star, Award, User, Phone, Mail, Scissors, Upload, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminService } from '../../services/api';
+import { uploadToUploadcare } from '../../utils/uploadcare'; // Import the Uploadcare widget utility
 
 interface StaffDigitalCardProps {
   staff: any;
@@ -117,6 +118,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
     }
   };
 
+  // Updated function to use Uploadcare widget for reliable uploads
   const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -134,9 +136,9 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
     setUploadingPhoto(true);
     try {
-      // Upload to Uploadcare via backend to avoid CORS issues
-      const uploadResponse = await adminService.uploadToUploadcare(file);
-      const imageUrl = uploadResponse.data.url;
+      // Use Uploadcare widget for reliable uploads
+      const uploadResult = await uploadToUploadcare(file);
+      const imageUrl = uploadResult.cdnUrl || uploadResult.url;
 
       // Use the admin service to update staff profile photo with retry mechanism
       let uploadSuccess = false;

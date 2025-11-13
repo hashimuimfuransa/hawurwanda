@@ -868,6 +868,81 @@ router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async 
   }
 });
 
+// Update staff member (admin only)
+router.patch('/staff/:staffId', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+  try {
+    const { staffId } = req.params;
+    const updateData: any = { ...req.body };
+
+    // Handle password update separately
+    if (updateData.password) {
+      const saltRounds = 12;
+      updateData.passwordHash = await bcrypt.hash(updateData.password, saltRounds);
+      delete updateData.password; // Remove plain text password
+    }
+
+    // Parse JSON fields if they're strings
+    if (updateData.specialties && typeof updateData.specialties === 'string') {
+      try {
+        updateData.specialties = JSON.parse(updateData.specialties);
+      } catch (e) {
+        updateData.specialties = [];
+      }
+    }
+
+    if (updateData.credentials && typeof updateData.credentials === 'string') {
+      try {
+        updateData.credentials = JSON.parse(updateData.credentials);
+      } catch (e) {
+        updateData.credentials = [];
+      }
+    }
+
+    if (updateData.workSchedule && typeof updateData.workSchedule === 'string') {
+      try {
+        updateData.workSchedule = JSON.parse(updateData.workSchedule);
+      } catch (e) {
+        updateData.workSchedule = {};
+      }
+    }
+
+    // Handle profile photo upload if provided
+    if (req.file) {
+      try {
+        const profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
+        updateData.profilePhoto = profilePhotoUrl;
+      } catch (uploadError) {
+        console.error('Profile photo upload error:', uploadError);
+        return res.status(500).json({ message: 'Failed to upload profile photo' });
+      }
+    }
+
+    // Update staff member
+    const updatedStaff = await User.findByIdAndUpdate(
+      staffId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-passwordHash')
+      .populate('salonId', 'name address district')
+      .populate('assignedServices', 'title category durationMinutes price');
+
+    if (!updatedStaff) {
+      return res.status(404).json({ message: 'Staff member not found' });
+    }
+
+    res.json({
+      message: 'Staff member updated successfully',
+      staff: updatedStaff,
+    });
+  } catch (error: any) {
+    console.error('Update staff error:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error: ' + error.message });
+    }
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Create staff member and assign to salon (admin only)
 router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), validateRequest(createStaffSchema), async (req: AuthRequest, res) => {
   try {
@@ -967,12 +1042,7 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
     let profilePhotoUrl = undefined;
     if (req.file) {
       try {
-        const result = await uploadToCloudinary(
-          req.file.buffer,
-          'staff-profiles',
-          `staff-${Date.now()}`
-        );
-        profilePhotoUrl = result.secure_url;
+        profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
       } catch (uploadError) {
         console.error('Profile photo upload error:', uploadError);
         return res.status(500).json({ message: 'Failed to upload profile photo' });
@@ -982,14 +1052,14 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
     // Create staff member
     const staffMember = new User({
       name: name.trim(),
-      email: email ? email.toLowerCase().trim() : undefined,
+      email: email ? email.toLowerCase().trim() : null,
       phone: phone.trim(),
-      nationalId: nationalId || undefined,
+      nationalId: nationalId || null,
       passwordHash,
       role: staffCategory || 'barber',
       salonId,
       isVerified: true,
-      gender: gender || undefined,
+      gender: gender || null,
       staffCategory,
       specialties: parsedSpecialties,
       experience,
@@ -1052,11 +1122,12 @@ router.post('/users/create', authenticateToken, requireAdmin, validateRequest(cr
     // Create user object with conditional salonId
     const userData: any = {
       name,
-      email,
+      email: email || null,
       phone,
       passwordHash,
       role,
       isVerified: role === 'owner' ? true : false, // Auto-verify owners created by admin
+
     };
 
     // Add gender if provided
@@ -1109,7 +1180,7 @@ router.post('/users', authenticateToken, requireSuperAdmin, validateRequest(crea
     // Create admin user
     const user = new User({
       name,
-      email,
+      email: email || null,
       phone,
       passwordHash,
       role: 'admin',
@@ -1156,12 +1227,8 @@ router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profi
     // Handle profile photo upload or URL
     if (req.file) {
       try {
-        const result = await uploadToCloudinary(
-          req.file.buffer,
-          'staff-profiles',
-          `staff-${userId}-${Date.now()}`
-        );
-        updateData.profilePhoto = result.secure_url;
+        const profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
+        updateData.profilePhoto = profilePhotoUrl;
       } catch (uploadError) {
         console.error('Profile photo upload error:', uploadError);
         return res.status(500).json({ message: 'Failed to upload profile photo' });
@@ -1896,7 +1963,7 @@ router.post('/superadmin/users', authenticateToken, requireSuperAdmin, validateR
     // Create user
     const userData: any = {
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: email ? email.toLowerCase().trim() : null,
       phone: phone.trim(),
       passwordHash,
       role,

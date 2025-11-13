@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { uploadToCloudinary } from './cloudinary';
 
 // Load environment variables
 dotenv.config();
@@ -35,24 +34,38 @@ export const extractUploadcareFileId = (url: string): string | null => {
 };
 
 /**
- * Upload file to cloud storage via backend
+ * Upload file to Uploadcare via direct upload
  * @param fileBuffer - File buffer
  * @param fileName - Original file name
  * @returns Promise with uploaded file URL
  */
 export const uploadFileToCloud = async (fileBuffer: Buffer, fileName: string): Promise<string> => {
   try {
-    // Check if Cloudinary is configured
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in your .env file.');
+    // Check if Uploadcare is configured
+    if (!UPLOADCARE_PUBLIC_KEY || UPLOADCARE_PUBLIC_KEY === 'your-uploadcare-public-key') {
+      throw new Error('Uploadcare is not configured. Please set UPLOADCARE_PUBLIC_KEY in your .env file.');
     }
 
-    // Use Cloudinary for uploads
-    const result = await uploadToCloudinary(fileBuffer, 'staff-profiles', `staff-${Date.now()}`);
-    return result.secure_url;
+    // Create FormData for upload
+    const formData = new FormData();
+    formData.append('UPLOADCARE_PUB_KEY', UPLOADCARE_PUBLIC_KEY);
+    formData.append('file', new Blob([fileBuffer]), fileName);
+
+    // Upload to Uploadcare
+    const response = await axios.post('https://upload.uploadcare.com/base/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // Extract file ID from response
+    const fileId = response.data.file;
+    
+    // Return CDN URL
+    return `https://ucarecdn.com/${fileId}/`;
   } catch (error: any) {
-    console.error('Cloudinary upload error:', error);
-    const errorMessage = error.message || 'Unknown error occurred during upload';
+    console.error('Uploadcare upload error:', error.response?.data || error.message);
+    const errorMessage = error.response?.data?.detail || error.message || 'Unknown error occurred during upload';
     throw new Error(`File upload failed: ${errorMessage}`);
   }
 };
