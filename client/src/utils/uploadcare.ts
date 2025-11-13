@@ -1,10 +1,14 @@
+/// <reference types="vite/client" />
+
 import uploadcare from 'uploadcare-widget';
 
 // Initialize Uploadcare with public key from environment
 const UPLOADCARE_PUBLIC_KEY = import.meta.env.VITE_UPLOADCARE_PUBLIC_KEY || 'your-uploadcare-public-key';
 
-// Configure Uploadcare
-uploadcare.defaults({
+// Configure Uploadcare - Updated for v3.x API
+// Instead of using uploadcare.defaults(), we'll pass options directly to widget instances
+// Global configuration object
+const uploadcareConfig = {
   publicKey: UPLOADCARE_PUBLIC_KEY,
   previewStep: true,
   multiple: false,
@@ -12,7 +16,7 @@ uploadcare.defaults({
   clearable: true,
   crop: '1:1', // Square crop for profile photos
   imageShrink: '600x600', // Resize to 600x600 for faster uploads
-});
+};
 
 /**
  * Upload a file to Uploadcare
@@ -26,12 +30,8 @@ export const uploadToUploadcare = (file: File): Promise<any> => {
     input.type = 'hidden';
     document.body.appendChild(input);
     
-    // Set the file to the input
-    const data = new FormData();
-    data.append('file', file);
-    
-    // Use Uploadcare's direct file upload
-    const widget = uploadcare.Widget(input);
+    // Use Uploadcare's direct file upload with config
+    const widget = uploadcare.Widget(input, uploadcareConfig);
     
     // Open dialog and handle result
     widget.onUploadComplete((info: any) => {
