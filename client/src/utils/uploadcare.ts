@@ -50,28 +50,38 @@ export const uploadToUploadcare = (file: File): Promise<any> => {
 };
 
 /**
- * Direct upload to Uploadcare using REST API
+ * Direct upload to Uploadcare using SDK
  * @param file - File object to upload
  * @returns Promise with uploaded file URL
  */
 export const directUploadToUploadcare = async (file: File): Promise<string> => {
   const formData = new FormData();
-  formData.append('UPLOADCARE_PUB_KEY', UPLOADCARE_PUBLIC_KEY);
   formData.append('file', file);
-  
+
   try {
-    const response = await fetch('https://upload.uploadcare.com/base/', {
+    const response = await fetch(`https://upload.uploadcare.com/files/?pub_key=${UPLOADCARE_PUBLIC_KEY}`, {
       method: 'POST',
       body: formData,
     });
-    
+
     if (!response.ok) {
-      throw new Error(`Upload failed with status ${response.status}`);
+      const errorText = await response.text();
+      console.error('Uploadcare error response:', errorText);
+      throw new Error(`Upload failed with status ${response.status}: ${errorText}`);
     }
-    
+
     const data = await response.json();
-    // Return the CDN URL for the uploaded file
-    return `https://ucarecdn.com/${data.file}/`;
+    console.log('Uploadcare response:', data);
+
+    // The response should contain file info with uuid
+    if (data.uuid) {
+      return `https://ucarecdn.com/${data.uuid}/`;
+    } else if (data.file_id) {
+      return `https://ucarecdn.com/${data.file_id}/`;
+    } else {
+      console.error('Unexpected response format:', data);
+      throw new Error('Invalid response from Uploadcare: no file ID found');
+    }
   } catch (error) {
     console.error('Uploadcare upload error:', error);
     throw error;

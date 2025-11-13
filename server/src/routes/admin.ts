@@ -12,7 +12,7 @@ import { Notification } from '../models/Notification';
 import { Service } from '../models/Service';
 import { sendSalonApprovalEmail, sendSalonRejectionEmail } from '../utils/emailService';
 import { uploadToCloudinary, uploadMultipleToCloudinary, uploadVideoToCloudinary } from '../utils/cloudinary';
-import { isValidUploadcareUrl } from '../utils/uploadcare';
+import { isValidUploadcareUrl, uploadToUploadcare } from '../utils/uploadcare';
 import Joi from 'joi';
 
 const router = express.Router();
@@ -1131,8 +1131,8 @@ router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profi
         console.error('Profile photo upload error:', uploadError);
         return res.status(500).json({ message: 'Failed to upload profile photo' });
       }
-    } else if (req.body.profilePhoto && isValidUploadcareUrl(req.body.profilePhoto)) {
-      // Handle Uploadcare URL
+    } else if (req.body.profilePhoto) {
+      // Handle any profile photo URL (Uploadcare, Cloudinary, etc.)
       updateData.profilePhoto = req.body.profilePhoto;
     }
 
@@ -2294,6 +2294,25 @@ router.delete('/salons/:salonId/services/:serviceId', authenticateToken, require
   } catch (error) {
     console.error('Delete service error:', error);
     res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Upload file to Uploadcare (admin only)
+router.post('/upload/uploadcare', authenticateToken, requireAdmin, upload.single('file'), async (req: AuthRequest, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const fileUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
+
+    res.json({
+      message: 'File uploaded successfully',
+      url: fileUrl,
+    });
+  } catch (error: any) {
+    console.error('Uploadcare upload error:', error);
+    res.status(500).json({ message: error.message || 'Failed to upload file' });
   }
 });
 

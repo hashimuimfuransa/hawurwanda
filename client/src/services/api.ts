@@ -311,6 +311,16 @@ export const adminService = {
   
   deleteSalonService: (salonId: string, serviceId: string) =>
     api.delete(`/admin/salons/${salonId}/services/${serviceId}`),
+
+  // File upload to Uploadcare via backend
+  uploadToUploadcare: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/admin/upload/uploadcare', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000, // 2 minute timeout
+    });
+  },
 };
 
 export const superAdminService = {

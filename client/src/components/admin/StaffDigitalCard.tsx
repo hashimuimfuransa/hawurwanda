@@ -5,7 +5,6 @@ import QRCode from 'qrcode';
 import { X, Download, Building2, Calendar, Star, Award, User, Phone, Mail, Scissors, Upload, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { adminService } from '../../services/api';
-import { directUploadToUploadcare } from '../../utils/uploadcare';
 
 interface StaffDigitalCardProps {
   staff: any;
@@ -128,14 +127,15 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
     setUploadingPhoto(true);
     try {
-      // Upload directly to Uploadcare
-      const imageUrl = await directUploadToUploadcare(file);
-      
+      // Upload to Uploadcare via backend to avoid CORS issues
+      const uploadResponse = await adminService.uploadToUploadcare(file);
+      const imageUrl = uploadResponse.data.url;
+
       // Use the admin service to update staff profile photo with retry mechanism
       let uploadSuccess = false;
       let attempts = 0;
       const maxAttempts = 3;
-      
+
       while (!uploadSuccess && attempts < maxAttempts) {
         try {
           await adminService.updateStaffProfilePhoto(staff._id, imageUrl);
