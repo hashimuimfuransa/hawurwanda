@@ -198,10 +198,10 @@ export const rwTranslations = {
   appointmentWith: 'Serivisi hamwe na',
   appointmentAt: 'Ku isaha ya',
   appointmentStatus: 'Imiterere y’Itegeko',
-  confirmed: 'Byemejwe',
-  cancelled: 'Byasibwe',
-  completed: 'Byarangiye',
-  pending: 'Birategereje',
+  bookingConfirmedStatus: 'Byemejwe',
+  bookingCancelledStatus: 'Byasibwe',
+  bookingCompletedStatus: 'Byarangiye',
+  bookingPendingStatus: 'Birategereje',
 
   // Programs
   ourPrograms: 'Porogaramu zacu',
@@ -295,6 +295,53 @@ export const rwTranslations = {
   bookingsWillAppear: 'Ubusabe buzagaragara hano abakiriya batangiye gusaba',
   bookingManagement: 'Kuyobora Ubusabe',
   monitorFilterBookings: 'Kurikirana, guteka no kuyobora ubusabe bwose bw\'ubwoko',
+
+  // Staff/Team Management
+  teamManagement: 'Kuyobora Itsinda',
+  manageSalonStaff: 'Yobora abakozi b\'ubwoko mu byiciro byose',
+  addStaffMember: 'Ongeraho Umukozi',
+  buildYourTeam: 'Baka Itsinda Ryawe',
+  noStaffAdded: 'Nta bakozi bongeyeho. Ongeraho abakozi kugira ngo utangire kwakira ubusabe no kwagura ubwoko.',
+  addFirstStaffMember: 'Ongeraho Umukozi Wa Mbere',
+  role: 'Uruhande:',
+  category: 'Icyiciro:',
+  status: 'Imiterere:',
+  staffListVerified: '✅ Byemejwe',
+  staffListPending: '⏳ Bitegerejwe',
+  staffListView: 'Reba',
+  staffListServices: 'Serivisi',
+  staffListEdit: 'Hindura',
+  moreSpecialties: '+{count} nyinshi',
+
+  // Services Management
+  serviceManagement: 'Kuyobora Serivisi',
+  manageSalonServices: 'Yobora serivisi z\'ubwoko n\'ibiciro',
+  addService: 'Ongeraho Serivisi',
+
+  // Earnings/Analytics
+  viewingEarnings: 'Kureba inyungu z\'{period}',
+  totalEarnings: 'Inyungu Zose',
+  noServicesYet: 'Nta serivisi z\'{period} buri ubu',
+  completedServices: 'Serivisi Zarangiye',
+  acrossBarbers: 'Mu {count} bakozi',
+  withWalkIns: ' • {count} abaje',
+  uniqueCustomers: 'Abakiriya Batandukanye',
+  totalClientsServed: 'Abakiriya bose bakozwe',
+  topBarber: 'Umukozi Wa Mbere',
+  servicesCount: 'serivisi',
+  bestService: 'Serivisi nziza: {service}',
+  completeServicesForRankings: 'Rangiza serivisi kugira ngo ubone ibiciro',
+  barberEarningsOverview: 'Incamake y\'Inyungu z\'Abakozi',
+  live: 'Biriho',
+  noCompletedServices: 'Nta serivisi zarangiye buri ubu',
+  rank: 'Icyiciro',
+  barber: 'Umukozi',
+  services: 'Serivisi',
+  customers: 'Abakiriya',
+  total: 'Igiteranyo',
+  avgPerService: 'Imyigaragambyo / Serivisi',
+  topService: 'Serivisi Nziza',
+  lastActivity: 'Igikorwa cya Nyuma',
 
   // Common / General
   loading: 'Tegereza gato...',
@@ -724,15 +771,28 @@ export const rwTranslations = {
   scanForQuickBookings: 'Gukuramo kugira ngo tegeke vuba',
   ownerLeadStylist: 'Umwinyamasaluni & Umukora imisatsi',
   
-  // Dashboard Owner - Navigation & Tabs
-  overview: 'Umurongo',
-  bookings: 'Gahunda',
-  customers: 'Abakiriya',
-  barbers: 'Abakozi',
-  services: 'Serivisi',
-  earnings: 'Amafaranga',
-  digitalCard: 'Karita y\'Edigital',
-  analytics: 'Imibare',
+  // Dashboard Navigation & Tabs
+  dashboardOverview: 'Incamake',
+  dashboardBookings: 'Ibyo wateguye',
+  dashboardCustomers: 'Abakiriya',
+  dashboardBarbers: 'Abakozi',
+  dashboardServices: 'Serivisi',
+  dashboardEarnings: 'Inyungu',
+  dashboardDigitalCard: 'Karita y\'Edigital',
+  dashboardAnalytics: 'Ibyegeranyo',
+  
+  // Dashboard - Owner Page - Additional Translations
+  ownerOverview: 'Incamake',
+  ownerBookings: 'Ibyo wateguye',
+  ownerCustomers: 'Abakiriya',
+  ownerTeam: 'Itsinda',
+  ownerServices: 'Serivisi',
+  leaderboard: 'Urutonde rw\'abakora neza',
+  ownerEarnings: 'Inyungu',
+  ownerDigitalCard: 'Karita y\'Edigital',
+  ownerNotifications: 'Amatangazo',
+  ownerAnalytics: 'Ibyegeranyo',
+  ownerSettings: 'Igenamiterere',
   
   // Dashboard Owner - Sidebar
   dashboardNavigation: 'Ikibaho cy\'ubwanshwa',
@@ -758,9 +818,9 @@ export const rwTranslations = {
   failedRefreshStatus: 'Kutangira kumwihinduza byanze',
   
   // Dashboard Owner - Verification Status
-  verified: 'Byemewe',
-  pending: 'Gakeza',
-  unknown: 'Bitakinnuje',
+  ownerVerified: 'Byemewe',
+  ownerPending: 'Gakeza',
+  ownerUnknown: 'Bitakinnuje',
   
   // Dashboard Owner - Dialog Messages
   confirmDeleteService: 'Wemeza kubisiba iri serivisi?',

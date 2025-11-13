@@ -204,7 +204,7 @@ const AdminPanel: React.FC = () => {
   const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
   const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.data?.bookings || bookingsData?.data || []);
   const staff = Array.isArray(staffData) ? staffData : (staffData?.data?.staff || staffData?.data || []);
-  const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.notifications || notificationsData?.data?.notifications || notificationsData?.data || []);
+  const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.data?.notifications || []);
   console.log('AdminPanel notifications data:', notificationsData);
   console.log('AdminPanel extracted notifications:', notifications);
   const reports = reportsData?.data || reportsData || {};
@@ -577,7 +577,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleCreateStaff = () => {
-    if (!staffFormData.name || !staffFormData.email || !staffFormData.phone || !staffFormData.password) {
+    if (!staffFormData.name || !staffFormData.phone || !staffFormData.password) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -590,7 +590,7 @@ const AdminPanel: React.FC = () => {
 
     const formData = new FormData();
     formData.append('name', staffFormData.name);
-    formData.append('email', staffFormData.email);
+    if (staffFormData.email) formData.append('email', staffFormData.email);
     formData.append('phone', staffFormData.phone);
     formData.append('password', staffFormData.password);
     if (staffFormData.salonId) formData.append('salonId', staffFormData.salonId);
@@ -2367,14 +2367,13 @@ const AdminPanel: React.FC = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email (Optional)</label>
                         <input
                           type="email"
                           value={staffFormData.email}
                           onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="john@example.com"
-                          required
                         />
                       </div>
 

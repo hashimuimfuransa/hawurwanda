@@ -2561,15 +2561,15 @@ const DashboardOwner: React.FC = () => {
           <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50 to-indigo-50/30">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Team Management</h2>
-                <p className="text-sm text-slate-600">Manage your salon staff across all categories</p>
+                <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">{t('teamManagement')}</h2>
+                <p className="text-sm text-slate-600">{t('manageSalonStaff')}</p>
               </div>
               <button 
                 onClick={() => setShowAddStaffForm(true)}
                 className="group flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl lg:rounded-2xl hover:from-blue-700 hover:to-indigo-800 w-full sm:w-auto justify-center shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 font-semibold"
               >
                 <UserPlus className="h-4 w-4 lg:h-5 lg:w-5 mr-2 group-hover:scale-110 transition-transform" />
-                Add Staff Member
+                {t('addStaffMember')}
               </button>
             </div>
           </div>
@@ -2586,16 +2586,16 @@ const DashboardOwner: React.FC = () => {
                     <UserPlus className="h-4 w-4 text-white" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">Build Your Team</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-3">{t('buildYourTeam')}</h3>
                 <p className="text-slate-600 mb-6 max-w-md mx-auto">
-                  No staff members added yet. Add team members to start accepting bookings and growing your salon.
+                  {t('noStaffAdded')}
                 </p>
                 <button 
                   onClick={() => setShowAddStaffForm(true)}
                   className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-800 transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-blue-500/25"
                 >
                   <UserPlus className="h-5 w-5" />
-                  <span>Add Your First Staff Member</span>
+                  <span>{t('addFirstStaffMember')}</span>
                 </button>
               </div>
             ) : (
@@ -2641,7 +2641,7 @@ const DashboardOwner: React.FC = () => {
                       <div className="space-y-3 mb-4">
                         {/* Category */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-600 font-medium">Role:</span>
+                          <span className="text-sm text-slate-600 font-medium">{t('role')}</span>
                           <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800">
                             {categoryInfo.icon} {categoryInfo.label}
                           </span>
@@ -2650,7 +2650,7 @@ const DashboardOwner: React.FC = () => {
                         {/* Staff Category (if different from role) */}
                         {staff.staffCategory && staff.staffCategory !== staff.role && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-600 font-medium">Category:</span>
+                            <span className="text-sm text-slate-600 font-medium">{t('category')}</span>
                             <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800">
                               {getCategoryInfo(staff.staffCategory).icon} {getCategoryInfo(staff.staffCategory).label}
                             </span>
@@ -2684,7 +2684,7 @@ const DashboardOwner: React.FC = () => {
                             ))}
                             {staff.specialties.length > 3 && (
                               <span className="text-xs text-slate-500 px-2 py-1">
-                                +{staff.specialties.length - 3} more
+                                {t('moreSpecialties', { count: staff.specialties.length - 3 })}
                               </span>
                             )}
                           </div>
@@ -2692,13 +2692,13 @@ const DashboardOwner: React.FC = () => {
                         
                         {/* Status */}
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-600 font-medium">Status:</span>
+                          <span className="text-sm text-slate-600 font-medium">{t('status')}</span>
                           <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                            staff.isVerified 
-                              ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800' 
+                            staff.isVerified
+                              ? 'bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800'
                               : 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800'
                           }`}>
-                            {staff.isVerified ? '✅ Verified' : '⏳ Pending'}
+                            {staff.isVerified ? t('verified') : t('pending')}
                           </span>
                         </div>
                       </div>
@@ -2710,21 +2710,21 @@ const DashboardOwner: React.FC = () => {
                           className="flex-1 px-4 py-2 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors text-sm font-semibold flex items-center justify-center space-x-1"
                         >
                           <Eye className="h-4 w-4" />
-                          <span>View</span>
+                          <span>{t('view')}</span>
                         </button>
                         <button 
                           onClick={() => handleAssignServices(staff)}
                           className="flex-1 px-4 py-2 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors text-sm font-semibold flex items-center justify-center space-x-1"
                         >
                           <Settings className="h-4 w-4" />
-                          <span>Services</span>
+                          <span>{t('services')}</span>
                         </button>
                         <button 
                           onClick={() => handleEditStaff(staff)}
                           className="flex-1 px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors text-sm font-semibold flex items-center justify-center space-x-1"
                         >
                           <Edit className="h-4 w-4" />
-                          <span>Edit</span>
+                          <span>{t('edit')}</span>
                         </button>
                         <button 
                           onClick={() => handleDeleteStaff(staff._id)}
@@ -3299,8 +3299,8 @@ const DashboardOwner: React.FC = () => {
       <div className="px-6 lg:px-8 py-6 border-b border-slate-200/60 bg-gradient-to-r from-purple-50 to-indigo-50/30">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Service Management</h2>
-            <p className="text-sm text-slate-600">Manage your salon services and pricing</p>
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">{t('serviceManagement')}</h2>
+            <p className="text-sm text-slate-600">{t('manageSalonServices')}</p>
           </div>
           <button 
             onClick={() => {
@@ -3320,7 +3320,7 @@ const DashboardOwner: React.FC = () => {
             className="group flex items-center px-4 lg:px-6 py-2.5 lg:py-3 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-xl lg:rounded-2xl hover:from-purple-700 hover:to-indigo-800 w-full sm:w-auto justify-center shadow-lg hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-300 hover:scale-105 font-semibold"
           >
             <Plus className="h-4 w-4 lg:h-5 lg:w-5 mr-2 group-hover:scale-110 transition-transform" />
-            Add Service
+            {t('addService')}
           </button>
         </div>
       </div>
@@ -3534,7 +3534,7 @@ const DashboardOwner: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm text-slate-600">
             <TrendingUpIcon className="h-5 w-5 text-blue-600" />
-            <span>Viewing {periodLabel} earnings</span>
+            <span>{t('viewingEarnings', { period: periodLabel })}</span>
           </div>
           <div className="flex items-center gap-1 bg-white/80 border border-slate-200/80 rounded-full p-1">
             {earningsPeriodOptions.map(option => (
@@ -3555,10 +3555,10 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-blue-50 to-blue-100/60 rounded-xl border border-blue-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-blue-600 font-semibold mb-2">Total Earnings</p>
+                <p className="text-sm text-blue-600 font-semibold mb-2">{t('totalEarnings')}</p>
                 <p className="text-3xl font-bold text-slate-900">{formatCurrency(earningsSummary.totalRevenue)}</p>
                 <p className="text-xs text-blue-600 mt-2">
-                  {breakdownText || `No ${periodLabel.toLowerCase()} services yet`}
+                  {breakdownText || t('noServicesYet', { period: periodLabel.toLowerCase() })}
                 </p>
               </div>
               <TrendingUpIcon className="h-8 w-8 text-blue-600 opacity-30" />
@@ -3568,10 +3568,10 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/60 rounded-xl border border-emerald-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-emerald-600 font-semibold mb-2">Completed Services</p>
+                <p className="text-sm text-emerald-600 font-semibold mb-2">{t('completedServices')}</p>
                 <p className="text-3xl font-bold text-slate-900">{earningsSummary.totalCount}</p>
                 <p className="text-xs text-emerald-600 mt-2">
-                  Across {staffEarnings.length} barbers{earningsSummary.walkInCount > 0 ? ` • ${earningsSummary.walkInCount} walk-ins` : ''}
+                  {t('acrossBarbers', { count: staffEarnings.length })}{earningsSummary.walkInCount > 0 ? t('withWalkIns', { count: earningsSummary.walkInCount }) : ''}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-emerald-600 opacity-30" />
@@ -3581,9 +3581,9 @@ const DashboardOwner: React.FC = () => {
           <div className="bg-gradient-to-br from-purple-50 to-purple-100/60 rounded-xl border border-purple-200/60 p-6 shadow-md">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-purple-600 font-semibold mb-2">Unique Customers</p>
+                <p className="text-sm text-purple-600 font-semibold mb-2">{t('uniqueCustomers')}</p>
                 <p className="text-3xl font-bold text-slate-900">{earningsSummary.totalCustomers}</p>
-                <p className="text-xs text-purple-600 mt-2">Total clients served</p>
+                <p className="text-xs text-purple-600 mt-2">{t('totalClientsServed')}</p>
               </div>
               <UserIcon className="h-8 w-8 text-purple-600 opacity-30" />
             </div>
@@ -3593,19 +3593,19 @@ const DashboardOwner: React.FC = () => {
             {leadBarber ? (
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-amber-600 font-semibold mb-2">Top Barber</p>
+                  <p className="text-sm text-amber-600 font-semibold mb-2">{t('topBarber')}</p>
                   <p className="text-lg font-bold text-slate-900">{leadBarber.staff.name}</p>
-                  <p className="text-xs text-amber-600 mt-2">{leadBarber.bookingCount} services • {formatCurrency(leadBarber.totalEarnings)}</p>
+                  <p className="text-xs text-amber-600 mt-2">{leadBarber.bookingCount} {t('servicesCount')} • {formatCurrency(leadBarber.totalEarnings)}</p>
                   {leadBarber.topService && (
-                    <p className="text-xs text-slate-500 mt-1">Best service: {leadBarber.topService.name}</p>
+                    <p className="text-xs text-slate-500 mt-1">{t('bestService', { service: leadBarber.topService.name })}</p>
                   )}
                 </div>
                 <Trophy className="h-10 w-10 text-amber-500" />
               </div>
             ) : (
               <div>
-                <p className="text-sm text-amber-600 font-semibold mb-2">Top Barber</p>
-                <p className="text-sm text-slate-600">Complete services to see rankings</p>
+                <p className="text-sm text-amber-600 font-semibold mb-2">{t('topBarber')}</p>
+                <p className="text-sm text-slate-600">{t('completeServicesForRankings')}</p>
               </div>
             )}
           </div>
@@ -3614,24 +3614,24 @@ const DashboardOwner: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg">
             <div className="px-6 py-6 border-b border-slate-200/60 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Barber Earnings Overview</h3>
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Live</span>
+              <h3 className="text-lg font-bold text-slate-900">{t('barberEarningsOverview')}</h3>
+              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{t('live')}</span>
             </div>
             {staffEarnings.length === 0 ? (
-              <div className="p-8 text-center text-sm text-slate-500">No completed services yet</div>
+              <div className="p-8 text-center text-sm text-slate-500">{t('noCompletedServices')}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50/60">
-                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Rank</th>
-                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Barber</th>
-                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Services</th>
-                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Customers</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-900">Total</th>
-                      <th className="text-right py-3 px-4 font-semibold text-slate-900">Avg / Service</th>
-                      <th className="text-left py-3 px-4 font-semibold text-slate-900">Top Service</th>
-                      <th className="text-center py-3 px-4 font-semibold text-slate-900">Last Activity</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('rank')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('barber')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">{t('services')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">{t('customers')}</th>
+                      <th className="text-right py-3 px-4 font-semibold text-slate-900">{t('total')}</th>
+                      <th className="text-right py-3 px-4 font-semibold text-slate-900">{t('avgPerService')}</th>
+                      <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('topService')}</th>
+                      <th className="text-center py-3 px-4 font-semibold text-slate-900">{t('lastActivity')}</th>
                     </tr>
                   </thead>
                   <tbody>

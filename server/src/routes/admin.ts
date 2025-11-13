@@ -39,6 +39,25 @@ const createUserSchema = Joi.object({
   gender: Joi.string().valid('male', 'female', 'other').optional(),
 });
 
+const createStaffSchema = Joi.object({
+  name: Joi.string().min(2).max(50).required(),
+  email: Joi.string().email().optional(), // Email is now optional for staff
+  phone: Joi.string().pattern(/^(\+250|250|0)?[0-9]{9}$/).required(),
+  password: Joi.string().min(6).required(),
+  salonId: Joi.string().optional(),
+  staffCategory: Joi.string().valid('barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'other').optional(),
+  gender: Joi.string().valid('male', 'female', 'other').optional(),
+  nationalId: Joi.string().optional(),
+  specialties: Joi.array().items(Joi.string()).optional(),
+  experience: Joi.string().optional(),
+  educationLevel: Joi.string().valid('primary', 'secondary', 'certificate', 'diploma', 'degree', 'masters', 'phd').optional(),
+  birthYearRange: Joi.string().valid('12-35', '35-60', '60+').optional(),
+  bio: Joi.string().max(500).optional(),
+  credentials: Joi.array().items(Joi.string()).optional(),
+  workSchedule: Joi.object().optional(),
+  assignedServices: Joi.array().items(Joi.string()).optional(),
+});
+
 const createAdminSalonSchema = Joi.object({
   name: Joi.string().min(2).max(100).required(),
   address: Joi.string().min(5).max(200).required(),
@@ -850,7 +869,7 @@ router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async 
 });
 
 // Create staff member and assign to salon (admin only)
-router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+router.post('/staff/create', authenticateToken, requireAdmin, validateRequest(createStaffSchema), upload.single('profilePhoto'), async (req: AuthRequest, res) => {
   try {
     const {
       name,
@@ -871,19 +890,26 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
       assignedServices
     } = req.body;
 
-    // Validate required fields
-    if (!name || !email || !phone || !password) {
-      return res.status(400).json({ message: 'Name, email, phone, and password are required' });
+    // Validate required fields (email is now optional)
+    if (!name || !phone || !password) {
+      return res.status(400).json({ message: 'Name, phone, and password are required' });
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { phone }],
-    });
+    const existingUserQuery: any = { phone };
+    if (email) {
+      existingUserQuery.$or = [{ email: email.toLowerCase() }, { phone }];
+    } else {
+      existingUserQuery.phone = phone;
+    }
+    
+    const existingUser = await User.findOne(existingUserQuery);
 
     if (existingUser) {
       return res.status(400).json({
-        message: 'User with this email or phone already exists',
+        message: email 
+          ? 'User with this email or phone already exists' 
+          : 'User with this phone already exists',
       });
     }
 
@@ -956,7 +982,7 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
     // Create staff member
     const staffMember = new User({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: email ? email.toLowerCase().trim() : undefined,
       phone: phone.trim(),
       nationalId: nationalId || undefined,
       passwordHash,
