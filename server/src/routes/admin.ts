@@ -869,7 +869,7 @@ router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async 
 });
 
 // Create staff member and assign to salon (admin only)
-router.post('/staff/create', authenticateToken, requireAdmin, validateRequest(createStaffSchema), upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), validateRequest(createStaffSchema), async (req: AuthRequest, res) => {
   try {
     const {
       name,

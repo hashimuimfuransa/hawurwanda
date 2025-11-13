@@ -553,10 +553,14 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                   type="tel"
                   required
                   value={formData.ownerContactPhone}
-                  onChange={handleChange}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                    setFormData(prev => ({ ...prev, ownerContactPhone: value }));
+                  }}
                   className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                  placeholder="Enter owner's phone number"
+                  placeholder="788 123 456"
                 />
+                <p className="text-xs text-gray-500 mt-1">Enter 9-digit Rwandan phone number (e.g., 788123456)</p>
               </div>
 
               <div className="md:col-span-2 space-y-1">
@@ -823,10 +827,14 @@ const AdminCreateSalon: React.FC<AdminCreateSalonProps> = ({ onClose }) => {
                     name="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 9);
+                      setFormData(prev => ({ ...prev, phone: value }));
+                    }}
                     className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring focus:ring-blue-100"
-                    placeholder="E.g. +250 788 123 456"
+                    placeholder="788 123 456"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Enter 9-digit Rwandan phone number (e.g., 788123456)</p>
                 </div>
                 <div className="space-y-1">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">

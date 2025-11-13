@@ -311,52 +311,6 @@ const AdminPanel: React.FC = () => {
   });
 
   // Staff management mutations
-  const updateStaffSalonMutation = useMutation({
-    mutationFn: ({ staffId, salonId }: { staffId: string; salonId: string }) => 
-      adminService.updateStaffSalon(staffId, salonId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
-      toast.success('Staff salon updated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update staff salon');
-    },
-  });
-
-  const deactivateStaffMutation = useMutation({
-    mutationFn: (staffId: string) => adminService.deactivateStaff(staffId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
-      toast.success('Staff deactivated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to deactivate staff');
-    },
-  });
-
-  const activateStaffMutation = useMutation({
-    mutationFn: (staffId: string) => adminService.activateStaff(staffId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
-      toast.success('Staff activated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to activate staff');
-    },
-  });
-
-  const updateStaffServicesMutation = useMutation({
-    mutationFn: ({ staffId, services }: { staffId: string; services: string[] }) => 
-      adminService.updateStaffServices(staffId, services),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
-      toast.success('Staff services updated successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update staff services');
-    },
-  });
-
   const createStaffMutation = useMutation({
     mutationFn: (staffData: FormData) => adminService.createStaffMember(staffData),
     onSuccess: () => {
@@ -382,7 +336,84 @@ const AdminPanel: React.FC = () => {
       });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create staff member');
+      console.error('Create staff error:', error);
+      console.log('Error response data:', error.response?.data);
+      console.log('Error status:', error.response?.status);
+      console.log('Error headers:', error.response?.headers);
+      // Log more details for debugging
+      if (error.response?.data?.errors) {
+        console.log('Validation errors:', error.response.data.errors);
+      }
+      if (error.response?.data?.details) {
+        console.log('Validation details:', error.response.data.details);
+      }
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create staff member';
+      // Show more detailed error information
+      if (error.response?.data?.details) {
+        toast.error(`Error: ${errorMessage}\n${error.response.data.details.join('\n')}`);
+      } else {
+        toast.error(`Error: ${errorMessage}`);
+      }
+    },
+  });
+
+  // Staff management mutations
+  const updateStaffSalonMutation = useMutation({
+    mutationFn: ({ staffId, salonId }: { staffId: string; salonId: string }) => 
+      adminService.updateStaffSalon(staffId, salonId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff salon updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update staff salon');
+    },
+  });
+
+  const deleteStaffMutation = useMutation({
+    mutationFn: (staffId: string) => adminService.deleteUser(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete staff');
+    },
+  });
+
+  const deactivateStaffMutation = useMutation({
+    mutationFn: (staffId: string) => adminService.deactivateStaff(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff deactivated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to deactivate staff');
+    },
+  });
+
+  const activateStaffMutation = useMutation({
+    mutationFn: (staffId: string) => adminService.activateStaff(staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff activated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to activate staff');
+    },
+  });
+
+
+
+  const updateStaffServicesMutation = useMutation({
+    mutationFn: ({ staffId, services }: { staffId: string; services: string[] }) => 
+      adminService.updateStaffServices(staffId, services),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+      toast.success('Staff services updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update staff services');
     },
   });
 
@@ -577,8 +608,31 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleCreateStaff = () => {
-    if (!staffFormData.name || !staffFormData.phone || !staffFormData.password) {
-      toast.error('Please fill in all required fields');
+    // Validate required fields
+    if (!staffFormData.name?.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    
+    if (!staffFormData.phone) {
+      toast.error('Phone number is required');
+      return;
+    }
+    
+    // Validate phone number format (9 digits)
+    const cleanPhone = staffFormData.phone.replace(/\D/g, ''); // Remove all non-digits
+    if (cleanPhone.length !== 9) {
+      toast.error('Phone number must be exactly 9 digits');
+      return;
+    }
+    
+    if (!staffFormData.password) {
+      toast.error('Password is required');
+      return;
+    }
+    
+    if (staffFormData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
@@ -589,21 +643,45 @@ const AdminPanel: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append('name', staffFormData.name);
-    if (staffFormData.email) formData.append('email', staffFormData.email);
-    formData.append('phone', staffFormData.phone);
+    formData.append('name', staffFormData.name.trim());
+    if (staffFormData.email) formData.append('email', staffFormData.email.trim());
+    // Ensure phone number is properly formatted for server validation (9 digits only)
+    formData.append('phone', cleanPhone);
     formData.append('password', staffFormData.password);
     if (staffFormData.salonId) formData.append('salonId', staffFormData.salonId);
-    formData.append('staffCategory', staffFormData.staffCategory);
+    formData.append('staffCategory', staffFormData.staffCategory || 'barber');
+    
+    // Only append optional fields if they have values
     if (staffFormData.gender) formData.append('gender', staffFormData.gender);
     if (staffFormData.nationalId) formData.append('nationalId', staffFormData.nationalId);
     if (staffFormData.experience) formData.append('experience', staffFormData.experience);
     if (staffFormData.educationLevel) formData.append('educationLevel', staffFormData.educationLevel);
     if (staffFormData.birthYearRange) formData.append('birthYearRange', staffFormData.birthYearRange);
     if (staffFormData.bio) formData.append('bio', staffFormData.bio);
-    if (staffFormData.specialties.length > 0) formData.append('specialties', JSON.stringify(staffFormData.specialties));
-    if (staffFormData.credentials.length > 0) formData.append('credentials', JSON.stringify(staffFormData.credentials));
+    
+    // For arrays, only append if they have values
+    if (staffFormData.specialties.length > 0) {
+      formData.append('specialties', JSON.stringify(staffFormData.specialties));
+    }
+    
+    if (staffFormData.credentials.length > 0) {
+      formData.append('credentials', JSON.stringify(staffFormData.credentials));
+    }
+    
+    // Don't send assignedServices unless specifically provided
+    // The server will handle default assignment based on salon if needed
+    
     if (staffFormData.profilePhoto) formData.append('profilePhoto', staffFormData.profilePhoto);
+
+    console.log('Sending staff creation data:', {
+      name: staffFormData.name.trim(),
+      phone: cleanPhone,
+      password: staffFormData.password,
+      salonId: staffFormData.salonId,
+      staffCategory: staffFormData.staffCategory || 'barber',
+      hasEmail: !!staffFormData.email,
+      hasProfilePhoto: !!staffFormData.profilePhoto
+    });
 
     createStaffMutation.mutate(formData);
   };
@@ -2386,11 +2464,12 @@ const AdminPanel: React.FC = () => {
                         <input
                           type="tel"
                           value={staffFormData.phone}
-                          onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value.replace(/\D/g, '').slice(0, 9) })}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="+250 XXX XXX XXX"
+                          placeholder="788 123 456"
                           required
                         />
+                        <p className="text-xs text-gray-500 mt-1">Enter 9-digit Rwandan phone number (e.g., 788123456)</p>
                       </div>
 
                       <div>

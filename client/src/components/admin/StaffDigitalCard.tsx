@@ -83,6 +83,13 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
             // Ensure proper styling is applied
             clonedCard.style.transform = 'none';
             clonedCard.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
+            
+            // Specifically handle the HAWU logo container
+            const logoContainers = clonedCard.getElementsByClassName('bg-white');
+            Array.from(logoContainers).forEach((container: Element) => {
+              (container as HTMLElement).style.backgroundColor = '#ffffff';
+              (container as HTMLElement).style.display = 'flex';
+            });
           }
         },
         removeContainer: true,
@@ -297,10 +304,12 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
                     {/* Contact Information */}
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold text-blue-100 mb-3">Contact Information</h3>
-                      <div className="flex items-center space-x-3 bg-white/15 backdrop-blur-sm rounded-lg p-3">
-                        <Mail className="h-5 w-5 text-white flex-shrink-0" />
-                        <span className="text-sm break-all">{staff.email}</span>
-                      </div>
+                      {staff.email && (
+                        <div className="flex items-center space-x-3 bg-white/15 backdrop-blur-sm rounded-lg p-3">
+                          <Mail className="h-5 w-5 text-white flex-shrink-0" />
+                          <span className="text-sm break-all">{staff.email}</span>
+                        </div>
+                      )}
                       <div className="flex items-center space-x-3 bg-white/15 backdrop-blur-sm rounded-lg p-3">
                         <Phone className="h-5 w-5 text-white flex-shrink-0" />
                         <span className="text-sm">{staff.phone}</span>
@@ -333,7 +342,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
             {cardView === 'back' && (
               <div
                 id="staff-card-back"
-                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl"
+                className="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl"
                 style={{ aspectRatio: '1.586 / 1' }}
               >
                 <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -463,6 +472,22 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
                     {/* Footer */}
                     <div className="text-center pt-3 lg:pt-4 border-t border-white/20">
                       <p className="text-slate-400 text-xs leading-tight">Professional ID Card • {staff.salonId?.name || 'Staff Member'}</p>
+                      <div className="flex items-center justify-center mt-3 space-x-2">
+                        <span className="text-slate-500 text-xs">Powered by</span>
+                        <div className="bg-white rounded-lg px-3 py-2 flex items-center space-x-2">
+                          <img 
+                            src="/images/logo.png" 
+                            alt="HAWU" 
+                            className="h-6 object-contain"
+                            crossOrigin="anonymous"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                          <span className="text-gray-900 font-bold text-sm">HAWU</span>
+                        </div>
+                      </div>
+                      <p className="text-slate-500 text-xs mt-1">Hairdressers Association of Rwanda</p>
                     </div>
                   </div>
                 </div>

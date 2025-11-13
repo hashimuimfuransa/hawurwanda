@@ -184,11 +184,12 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
                     type="tel"
                     id="phone"
                     value={formData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    onChange={(e) => handleInputChange('phone', e.target.value.replace(/\D/g, '').slice(0, 9))}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="+250 XXX XXX XXX"
+                    placeholder="788 123 456"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">Enter 9-digit Rwandan phone number (e.g., 788123456)</p>
                 </div>
 
                 {/* Gender */}
