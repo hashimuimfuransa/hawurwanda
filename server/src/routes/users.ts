@@ -2,6 +2,7 @@ import express from 'express';
 import { authenticateToken, requireAdmin, AuthRequest } from '../middlewares/auth';
 import { validateRequest, validateParams } from '../middlewares/validation';
 import { User } from '../models/User';
+import { Booking } from '../models/Booking';
 import { isValidUploadcareUrl } from '../utils/uploadcare';
 import Joi from 'joi';
 
@@ -194,17 +195,58 @@ router.patch('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, r
   }
 });
 
-// Delete user (admin only)
-router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res): Promise<void> => {
+// Delete user (admin and super admin)
+router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const userId = req.params.id;
+
+    // Prevent super admin from being deleted
+    const user = await User.findById(userId);
+    if (user && user.role === 'superadmin') {
+      res.status(403).json({ message: 'Cannot delete super admin accounts' });
+      return;
+    }
+
+    // Prevent self-deletion for super admins
+    if (req.user && userId === req.user._id.toString() && req.user.role === 'superadmin') {
+      res.status(403).json({ message: 'Cannot delete your own account' });
+      return;
+    }
 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
     }
 
-    res.json({ message: 'User deleted successfully' });
+    // Check if user has active bookings (only for super admins for more robust checking)
+    if (req.user && req.user.role === 'superadmin') {
+      const activeBookings = await Booking.countDocuments({
+        $or: [
+          { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
+          { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
+        ]
+      });
+
+      if (activeBookings > 0) {
+        res.status(400).json({ 
+          message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
+          activeBookings
+        });
+        return;
+      }
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      message: 'User deleted successfully',
+      deletedUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Internal server error' });

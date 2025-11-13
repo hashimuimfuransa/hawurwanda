@@ -3931,7 +3931,7 @@ const DashboardOwner: React.FC = () => {
             </h3>
             {topServices.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-slate-600 text-sm">No completed bookings yet</p>
+                <p className="text-slate-600 text-sm">{t('noCompletedBookingsYet')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -3942,7 +3942,7 @@ const DashboardOwner: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900 truncate">{service.name}</p>
-                      <p className="text-xs text-slate-600">{service.count} booking{service.count !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-slate-600">{t('bookingCount', { count: service.count })}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-slate-900">{service.count}</p>
@@ -3958,24 +3958,24 @@ const DashboardOwner: React.FC = () => {
         <div className="bg-gradient-to-br from-white via-white to-slate-50/50 rounded-2xl border border-slate-200/60 shadow-lg p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
             <TrendingUp className="h-5 w-5 mr-2 text-slate-600" />
-            All Bookings Overview
+            {t('allBookingsOverview')}
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Client</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Service</th>
-                  <th className="text-left py-3 px-4 font-semibold text-slate-900">Date</th>
-                  <th className="text-right py-3 px-4 font-semibold text-slate-900">Amount</th>
-                  <th className="text-center py-3 px-4 font-semibold text-slate-900">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('client')}</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('service')}</th>
+                  <th className="text-left py-3 px-4 font-semibold text-slate-900">{t('date')}</th>
+                  <th className="text-right py-3 px-4 font-semibold text-slate-900">{t('amount')}</th>
+                  <th className="text-center py-3 px-4 font-semibold text-slate-900">{t('status')}</th>
                 </tr>
               </thead>
               <tbody>
                 {allBookings.slice(0, 10).map((booking: any) => (
                   <tr key={booking._id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="py-3 px-4 text-slate-700">{booking.client?.name || 'Unknown'}</td>
-                    <td className="py-3 px-4 text-slate-700">{booking.service?.title || booking.service?.name || 'Unknown'}</td>
+                    <td className="py-3 px-4 text-slate-700">{booking.client?.name || t('unknown')}</td>
+                    <td className="py-3 px-4 text-slate-700">{booking.service?.title || booking.service?.name || t('unknown')}</td>
                     <td className="py-3 px-4 text-slate-700">{new Date(booking.createdAt).toLocaleDateString()}</td>
                     <td className="py-3 px-4 text-right font-semibold text-slate-900">{formatCurrency(
                       booking.amountTotal ??

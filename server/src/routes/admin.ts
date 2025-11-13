@@ -1732,8 +1732,8 @@ router.patch('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asyn
   }
 });
 
-// Delete user (super admin only)
-router.delete('/superadmin/users/:id', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Delete user (admin and super admin)
+router.delete('/superadmin/users/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const userId = req.params.id;
 
@@ -1743,8 +1743,8 @@ router.delete('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asy
       return res.status(403).json({ message: 'Cannot delete super admin accounts' });
     }
 
-    // Prevent self-deletion
-    if (userId === req.user!._id.toString()) {
+    // Prevent self-deletion for super admins
+    if (req.user && userId === req.user._id.toString() && req.user.role === 'superadmin') {
       return res.status(403).json({ message: 'Cannot delete your own account' });
     }
 
@@ -1752,19 +1752,21 @@ router.delete('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asy
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if user has active bookings
-    const activeBookings = await Booking.countDocuments({
-      $or: [
-        { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
-        { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
-      ]
-    });
-
-    if (activeBookings > 0) {
-      return res.status(400).json({ 
-        message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
-        activeBookings
+    // Check if user has active bookings (only for super admins for more robust checking)
+    if (req.user && req.user.role === 'superadmin') {
+      const activeBookings = await Booking.countDocuments({
+        $or: [
+          { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
+          { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
+        ]
       });
+
+      if (activeBookings > 0) {
+        return res.status(400).json({ 
+          message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
+          activeBookings
+        });
+      }
     }
 
     await User.findByIdAndDelete(userId);
