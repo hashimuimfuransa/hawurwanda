@@ -1998,12 +1998,12 @@ const DashboardOwner: React.FC = () => {
               {salon.verified ? (
                 <>
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Byemejwe
+                  {t('verifiedStatus')}
                 </>
               ) : (
                 <>
                   <Clock className="h-4 w-4 mr-2" />
-                  Igenzura Ririmo
+                  {t('pendingStatus')}
                 </>
               )}
             </span>
@@ -2014,20 +2014,20 @@ const DashboardOwner: React.FC = () => {
             <div className="space-y-4">
               <h3 className="font-bold text-slate-900 text-lg mb-4 flex items-center">
                 <Building2 className="h-5 w-5 mr-2 text-blue-600" />
-                Ibisobanuro by'Ubwoko
+                {t('salonInformation')}
               </h3>
               <div className="space-y-3">
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <Building2 className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Izina</p>
+                    <p className="text-xs text-slate-500 font-medium">{t('name')}</p>
                     <p className="text-sm font-semibold text-slate-900">{salon.name}</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <MapPin className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Aderesi</p>
+                    <p className="text-xs text-slate-500 font-medium">{t('address')}</p>
                     <p className="text-sm font-semibold text-slate-900">{salon.address}</p>
                     <p className="text-xs text-slate-500">{salon.district}</p>
                   </div>
@@ -2035,15 +2035,15 @@ const DashboardOwner: React.FC = () => {
                 <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                   <Phone className="h-5 w-5 text-slate-400 mt-0.5" />
                   <div>
-                    <p className="text-xs text-slate-500 font-medium">Telefoni</p>
-                    <p className="text-sm font-semibold text-slate-900">{salon.phone || 'Ntishyizwe'}</p>
+                    <p className="text-xs text-slate-500 font-medium">{t('phone')}</p>
+                    <p className="text-sm font-semibold text-slate-900">{salon.phone || t('notSet')}</p>
                   </div>
                 </div>
                 {salon.email && (
                   <div className="flex items-start space-x-3 p-3 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
                     <Mail className="h-5 w-5 text-slate-400 mt-0.5" />
                     <div>
-                      <p className="text-xs text-slate-500 font-medium">Imeyili</p>
+                      <p className="text-xs text-slate-500 font-medium">{t('email')}</p>
                       <p className="text-sm font-semibold text-slate-900">{salon.email}</p>
                     </div>
                   </div>
@@ -2055,23 +2055,23 @@ const DashboardOwner: React.FC = () => {
             <div className="space-y-4">
               <h3 className="font-bold text-slate-900 text-lg mb-4 flex items-center">
                 <Activity className="h-5 w-5 mr-2 text-purple-600" />
-                Imibare y'Ibanga
+                {t('quickStats')}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
-                  <p className="text-xs text-blue-600 font-medium mb-1">Ubusabe Bwose</p>
+                  <p className="text-xs text-blue-600 font-medium mb-1">{t('totalRequests')}</p>
                   <p className="text-2xl font-bold text-blue-900">{bookings?.data?.bookings?.length || 0}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50">
-                  <p className="text-xs text-amber-600 font-medium mb-1">Bitegerejwe</p>
+                  <p className="text-xs text-amber-600 font-medium mb-1">{t('pending')}</p>
                   <p className="text-2xl font-bold text-amber-900">{pendingBookings.length}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50">
-                  <p className="text-xs text-emerald-600 font-medium mb-1">Byarangiye</p>
+                  <p className="text-xs text-emerald-600 font-medium mb-1">{t('completed')}</p>
                   <p className="text-2xl font-bold text-emerald-900">{completedBookings.length}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50">
-                  <p className="text-xs text-purple-600 font-medium mb-1">Inyungu</p>
+                  <p className="text-xs text-purple-600 font-medium mb-1">{t('revenue')}</p>
                   <p className="text-lg font-bold text-purple-900">{formatCurrency(totalRevenue)}</p>
                 </div>
               </div>
@@ -2086,21 +2086,21 @@ const DashboardOwner: React.FC = () => {
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Settings className="h-5 w-5 mr-2" />
-                <span>Hindura Igenamiterere ry'Ubwoko</span>
+                <span>{t('updateSalonSettings')}</span>
               </button>
               <button
                 onClick={() => handleTabChange('bookings')}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-700 to-green-700 text-white font-semibold shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Calendar className="h-5 w-5 mr-2" />
-                <span>Yobora Ubusabe</span>
+                <span>{t('manageBookings')}</span>
               </button>
               <button
                 onClick={() => handleTabChange('barbers')}
                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white font-semibold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:-translate-y-0.5 transition-all duration-200"
               >
                 <Users className="h-5 w-5 mr-2" />
-                <span>Yobora Abakozi</span>
+                <span>{t('manageStaff')}</span>
               </button>
             </div>
           </div>
@@ -2112,14 +2112,14 @@ const DashboardOwner: React.FC = () => {
         <div className="p-6 lg:p-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">Recent Bookings</h2>
-              <p className="text-sm text-slate-600">Latest booking requests and appointments</p>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1">{t('recentBookings')}</h2>
+              <p className="text-sm text-slate-600">{t('latestBookingRequests')}</p>
             </div>
             <button
               onClick={() => handleTabChange('bookings')}
               className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center space-x-1 hover:underline"
             >
-              <span>View All</span>
+              <span>{t('viewAll')}</span>
               <ArrowUp className="h-4 w-4 rotate-90" />
             </button>
           </div>
@@ -2128,8 +2128,8 @@ const DashboardOwner: React.FC = () => {
               <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <Calendar className="h-10 w-10 text-slate-400" />
               </div>
-              <p className="text-slate-600 font-medium">No bookings yet</p>
-              <p className="text-sm text-slate-500 mt-1">Bookings will appear here once customers start booking</p>
+              <p className="text-slate-600 font-medium">{t('noBookingsYet')}</p>
+              <p className="text-sm text-slate-500 mt-1">{t('bookingsWillAppear')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -2190,9 +2190,9 @@ const DashboardOwner: React.FC = () => {
               <div>
                 <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-1 flex items-center">
                   <Calendar className="h-6 w-6 mr-3 text-indigo-600" />
-                  Booking Management
+                  {t('bookingManagement')}
                 </h2>
-                <p className="text-sm text-slate-600">Monitor, filter, and manage all salon bookings</p>
+                <p className="text-sm text-slate-600">{t('monitorFilterBookings')}</p>
               </div>
               <div className="flex items-center space-x-3">
                 <button
