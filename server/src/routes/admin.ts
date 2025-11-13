@@ -1191,25 +1191,53 @@ router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profi
   }
 });
 
-// Delete user (super admin only)
-router.delete('/users/:id', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Delete user (admin and super admin)
+router.delete('/users/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const userId = req.params.id;
 
     // Prevent super admin from being deleted
     const user = await User.findById(userId);
     if (user && user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot delete super admin' });
+      return res.status(403).json({ message: 'Cannot delete super admin accounts' });
+    }
+
+    // Prevent self-deletion for super admins
+    if (req.user && userId === req.user._id.toString() && req.user.role === 'superadmin') {
+      return res.status(403).json({ message: 'Cannot delete your own account' });
     }
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Check if user has active bookings (only for super admins for more robust checking)
+    if (req.user && req.user.role === 'superadmin') {
+      const activeBookings = await Booking.countDocuments({
+        $or: [
+          { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
+          { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
+        ]
+      });
+
+      if (activeBookings > 0) {
+        return res.status(400).json({ 
+          message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
+          activeBookings
+        });
+      }
+    }
+
     await User.findByIdAndDelete(userId);
 
     res.json({
       message: 'User deleted successfully',
+      deletedUser: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('Delete user error:', error);

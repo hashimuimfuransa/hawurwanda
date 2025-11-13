@@ -7,11 +7,11 @@ import { salonService, bookingService, userService, notificationService, walkInC
 import BookingCard from '../components/BookingCard';
 import DashboardLayout from '../components/DashboardLayout';
 import StaffCustomerList from '../components/StaffCustomerList';
-import { 
-  Building2, 
-  Users, 
-  DollarSign, 
-  BarChart3, 
+import {
+  Building2,
+  Users,
+  DollarSign,
+  BarChart3,
   Plus,
   Settings,
   Calendar,
@@ -52,6 +52,7 @@ import {
   Download,
   Globe
 } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 
 const DashboardOwner: React.FC = () => {
@@ -3900,26 +3901,36 @@ const DashboardOwner: React.FC = () => {
               <BarChart3 className="h-5 w-5 mr-2 text-slate-600" />
               {t('bookingStatusDistribution')}
             </h3>
-            <div className="space-y-4">
-              {[
-                { label: t('completed'), count: completedBookings.length, color: 'bg-emerald-500', total: allBookings.length },
-                { label: t('confirmed'), count: confirmedBookings.length, color: 'bg-blue-500', total: allBookings.length },
-                { label: t('pending'), count: pendingBookings.length, color: 'bg-amber-500', total: allBookings.length },
-                { label: t('cancelled'), count: cancelledBookings.length, color: 'bg-red-500', total: allBookings.length }
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-semibold text-slate-700">{item.label}</span>
-                    <span className="text-sm font-bold text-slate-900">{item.count}</span>
-                  </div>
-                  <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className={`h-full ${item.color} rounded-full transition-all`}
-                      style={{ width: `${item.total > 0 ? (item.count / item.total) * 100 : 0}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: t('completed'), value: completedBookings.length, color: '#10b981' },
+                      { name: t('confirmed'), value: confirmedBookings.length, color: '#3b82f6' },
+                      { name: t('pending'), value: pendingBookings.length, color: '#f59e0b' },
+                      { name: t('cancelled'), value: cancelledBookings.length, color: '#ef4444' }
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {[
+                      { color: '#10b981' },
+                      { color: '#3b82f6' },
+                      { color: '#f59e0b' },
+                      { color: '#ef4444' }
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => [value, t('bookings')]} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
@@ -3934,21 +3945,25 @@ const DashboardOwner: React.FC = () => {
                 <p className="text-slate-600 text-sm">{t('noCompletedBookingsYet')}</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {topServices.map((service, index) => (
-                  <div key={service.name} className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white text-sm">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-900 truncate">{service.name}</p>
-                      <p className="text-xs text-slate-600">{t('bookingCount', { count: service.count })}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-slate-900">{service.count}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={topServices} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      formatter={(value) => [value, t('bookings')]}
+                      labelFormatter={(label) => `${t('service')}: ${label}`}
+                    />
+                    <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </div>
@@ -3997,7 +4012,7 @@ const DashboardOwner: React.FC = () => {
             </table>
             {allBookings.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-slate-600">No bookings yet</p>
+                <p className="text-slate-600">{t('noBookingsYet')}</p>
               </div>
             )}
           </div>
