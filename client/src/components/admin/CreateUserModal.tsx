@@ -15,7 +15,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'client'
+    role: 'client',
+    gender: ''
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -34,13 +35,19 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
       return;
     }
 
-    onSubmit({
+    const submitData: any = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
       role: formData.role
-    });
+    };
+
+    if (formData.gender) {
+      submitData.gender = formData.gender;
+    }
+
+    onSubmit(submitData);
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -54,7 +61,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
       phone: '',
       password: '',
       confirmPassword: '',
-      role: 'client'
+      role: 'client',
+      gender: ''
     });
   };
 
@@ -181,6 +189,46 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({ showModal, onClose, o
                     placeholder="+250 XXX XXX XXX"
                     required
                   />
+                </div>
+
+                {/* Gender */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Gender (Optional)</label>
+                  <div className="flex space-x-6">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        checked={formData.gender === 'male'}
+                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Male</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        checked={formData.gender === 'female'}
+                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Female</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="other"
+                        checked={formData.gender === 'other'}
+                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Other</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Password */}

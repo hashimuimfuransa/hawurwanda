@@ -36,6 +36,7 @@ const createUserSchema = Joi.object({
   password: Joi.string().min(6).required(),
   role: Joi.string().valid('client', 'barber', 'owner', 'admin', 'superadmin').required(),
   salonId: Joi.string().optional(), // Optional salon ID for barber/owner roles
+  gender: Joi.string().valid('male', 'female', 'other').optional(),
 });
 
 const createAdminSalonSchema = Joi.object({
@@ -1005,7 +1006,7 @@ router.post('/staff/create', authenticateToken, requireAdmin, upload.single('pro
 // Create user (admin can create owner, barber, client)
 router.post('/users/create', authenticateToken, requireAdmin, validateRequest(createUserSchema), async (req: AuthRequest, res) => {
   try {
-    const { name, email, phone, password, role } = req.body;
+    const { name, email, phone, password, role, gender } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
@@ -1031,6 +1032,11 @@ router.post('/users/create', authenticateToken, requireAdmin, validateRequest(cr
       role,
       isVerified: role === 'owner' ? true : false, // Auto-verify owners created by admin
     };
+
+    // Add gender if provided
+    if (gender) {
+      userData.gender = gender;
+    }
 
     // Only add salonId for barbers if provided
     // Owners will create their salon later and get approved by admin

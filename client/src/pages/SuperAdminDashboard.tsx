@@ -311,7 +311,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const { data: notificationsData, isLoading: notificationsLoading } = useQuery({
     queryKey: ['super-admin-notifications'],
-    queryFn: () => notificationService.getNotifications(),
+    queryFn: () => adminService.getNotifications(),
   });
 
   const { data: notificationCount } = useQuery({
@@ -1545,7 +1545,7 @@ const SuperAdminDashboard: React.FC = () => {
               Loading notifications...
             </div>
           ) : (
-            (notificationsData?.data?.notifications || notificationsData || []).map((notification: any) => (
+            (notificationsData?.notifications || notificationsData?.data?.notifications || notificationsData || []).map((notification: any) => (
               <div key={notification._id} className={`p-6 ${!notification.read ? 'bg-blue-50' : ''}`}>
                 <div className="flex items-start space-x-4">
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -1563,10 +1563,10 @@ const SuperAdminDashboard: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900">
-                      {notification.title}
+                      {notification.payload.title}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
-                      {notification.message}
+                      {notification.payload.message}
                     </p>
                     <p className="text-xs text-gray-400 mt-2">
                       {new Date(notification.createdAt).toLocaleString()}

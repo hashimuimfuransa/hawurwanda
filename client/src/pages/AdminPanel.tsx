@@ -173,7 +173,7 @@ const AdminPanel: React.FC = () => {
 
   const { data: notificationsData } = useQuery({
     queryKey: ['admin-notifications'],
-    queryFn: () => notificationService.getNotifications(),
+    queryFn: () => adminService.getNotifications(),
   });
 
   const { data: activitiesData } = useQuery({
@@ -204,7 +204,9 @@ const AdminPanel: React.FC = () => {
   const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
   const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.data?.bookings || bookingsData?.data || []);
   const staff = Array.isArray(staffData) ? staffData : (staffData?.data?.staff || staffData?.data || []);
-  const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.data?.notifications || notificationsData?.data || []);
+  const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.notifications || notificationsData?.data?.notifications || notificationsData?.data || []);
+  console.log('AdminPanel notifications data:', notificationsData);
+  console.log('AdminPanel extracted notifications:', notifications);
   const reports = reportsData?.data || reportsData || {};
   const analytics = analyticsData?.data || analyticsData || {};
   const pendingSalons = Array.isArray(pendingSalonsData) ? pendingSalonsData : (pendingSalonsData?.data?.salons || pendingSalonsData?.data || []);
@@ -1479,16 +1481,16 @@ const AdminPanel: React.FC = () => {
                           #{notification._id.slice(-6)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {notification.recipientId?.name || 'N/A'}
+                          {notification.toUserId?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {notification.title}
+                          {notification.payload?.title || 'No Title'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {notification.message}
+                          {notification.payload?.message || 'No Message'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(notification.sentAt).toLocaleDateString()} {new Date(notification.sentAt).toLocaleTimeString()}
+                          {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() + ' ' + new Date(notification.createdAt).toLocaleTimeString() : 'Unknown'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
@@ -1819,10 +1821,10 @@ const AdminPanel: React.FC = () => {
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {notification.title || 'Notification'}
+                              {notification.payload?.title || 'Notification'}
                             </p>
                             <p className="text-sm text-gray-600 mt-1">
-                              {notification.message || notification.body}
+                              {notification.payload?.message || notification.body}
                             </p>
                           </div>
                           {!notification.read && (
@@ -1832,7 +1834,7 @@ const AdminPanel: React.FC = () => {
                           )}
                         </div>
                         <p className="text-xs text-gray-400 mt-2">
-                          {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Just now'}
+                          {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Unknown time'}
                         </p>
                       </div>
                     </div>

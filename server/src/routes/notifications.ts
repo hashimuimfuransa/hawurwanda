@@ -23,12 +23,14 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     const unreadCount = await Notification.countDocuments({ toUserId: req.user!._id, read: false });
 
     res.json({
-      notifications,
-      unreadCount,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
+      data: {
+        notifications,
+        unreadCount,
+        pagination: {
+          current: Number(page),
+          pages: Math.ceil(total / Number(limit)),
+          total,
+        },
       },
     });
   } catch (error) {

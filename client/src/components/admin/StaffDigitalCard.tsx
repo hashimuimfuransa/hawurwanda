@@ -333,41 +333,41 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
             {cardView === 'back' && (
               <div
                 id="staff-card-back"
-                className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-2xl p-8 text-white shadow-2xl"
+                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-4 sm:p-6 lg:p-8 text-white shadow-2xl"
                 style={{ aspectRatio: '1.586 / 1' }}
               >
-                <div className="h-full flex gap-6">
+                <div className="h-full grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                   {/* Left Side - Salon & QR Code */}
-                  <div className="w-1/3 flex flex-col justify-between">
+                  <div className="flex flex-col justify-between space-y-4">
                     {/* Salon Details */}
-                    <div className="space-y-4">
-                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                        <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center">
-                          <Building2 className="h-4 w-4 mr-2" />
+                    <div className="space-y-3 lg:space-y-4">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 lg:p-4 border border-white/20">
+                        <h3 className="text-xs lg:text-sm font-semibold text-slate-300 mb-2 lg:mb-3 flex items-center">
+                          <Building2 className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
                           Workplace
                         </h3>
                         {staff.salonId ? (
-                          <div className="space-y-2">
-                            <p className="font-bold text-lg break-words">{staff.salonId.name}</p>
+                          <div className="space-y-1 lg:space-y-2">
+                            <p className="font-bold text-sm lg:text-lg break-words leading-tight">{staff.salonId.name}</p>
                             {staff.salonId.address && (
-                              <p className="text-xs text-slate-300 break-words">{staff.salonId.address}</p>
+                              <p className="text-xs text-slate-300 break-words leading-tight">{staff.salonId.address}</p>
                             )}
                             {staff.salonId.district && (
-                              <p className="text-xs text-slate-300">{staff.salonId.district}</p>
+                              <p className="text-xs text-slate-300 leading-tight">{staff.salonId.district}</p>
                             )}
                           </div>
                         ) : (
-                          <p className="text-sm text-slate-400">No salon assigned</p>
+                          <p className="text-xs lg:text-sm text-slate-400">No salon assigned</p>
                         )}
                       </div>
 
                       {/* Member Since */}
-                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                        <h3 className="text-sm font-semibold text-slate-300 mb-2 flex items-center">
-                          <Calendar className="h-4 w-4 mr-2" />
+                      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 lg:p-4 border border-white/20">
+                        <h3 className="text-xs lg:text-sm font-semibold text-slate-300 mb-1 lg:mb-2 flex items-center">
+                          <Calendar className="h-3 w-3 lg:h-4 lg:w-4 mr-2" />
                           Member Since
                         </h3>
-                        <p className="font-bold text-lg">
+                        <p className="font-bold text-sm lg:text-lg leading-tight">
                           {new Date(staff.createdAt).toLocaleDateString('en-US', {
                             month: 'long',
                             year: 'numeric',
@@ -378,35 +378,39 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
 
                     {/* QR Code */}
                     {qrCodeUrl && (
-                      <div className="bg-white rounded-xl p-4 shadow-xl">
-                        <img src={qrCodeUrl} alt="Staff QR Code" className="w-full h-auto" />
-                        <p className="text-xs text-slate-600 text-center mt-2 font-medium">Scan for details</p>
+                      <div className="bg-white rounded-xl p-2 lg:p-3 shadow-xl flex flex-col items-center">
+                        <img
+                          src={qrCodeUrl}
+                          alt="Staff QR Code"
+                          className="w-16 h-16 lg:w-20 lg:h-20 object-contain rounded-lg"
+                        />
+                        <p className="text-xs text-slate-600 text-center mt-1 lg:mt-2 font-medium">Scan for details</p>
                       </div>
                     )}
                   </div>
 
                   {/* Right Side - Professional Info */}
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex flex-col justify-between space-y-4">
                     {/* Header */}
-                    <div className="border-b border-white/20 pb-4">
-                      <h2 className="text-2xl font-bold mb-1">Professional Profile</h2>
-                      <p className="text-slate-300 text-sm">{staff.name}</p>
+                    <div className="border-b border-white/20 pb-3 lg:pb-4">
+                      <h2 className="text-lg lg:text-2xl font-bold mb-1 leading-tight">Professional Profile</h2>
+                      <p className="text-slate-300 text-xs lg:text-sm">{staff.name}</p>
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 py-4 space-y-5">
+                    <div className="flex-1 space-y-3 lg:space-y-5 overflow-y-auto">
                       {/* Specialties */}
                       {staff.specialties && staff.specialties.length > 0 && (
                         <div>
-                          <h4 className="text-base font-semibold mb-3 flex items-center text-slate-200">
-                            <Star className="h-4 w-4 mr-2 text-yellow-400" />
+                          <h4 className="text-sm lg:text-base font-semibold mb-2 lg:mb-3 flex items-center text-slate-200">
+                            <Star className="h-3 w-3 lg:h-4 lg:w-4 mr-2 text-yellow-400" />
                             Specialties
                           </h4>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1.5 lg:gap-2">
                             {staff.specialties.map((specialty: string, index: number) => (
                               <span
                                 key={index}
-                                className="px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-200 border border-blue-400/30"
+                                className="px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-xs lg:text-sm font-medium bg-blue-500/20 text-blue-200 border border-blue-400/30"
                               >
                                 {specialty}
                               </span>
@@ -418,37 +422,37 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
                       {/* Experience */}
                       {staff.experience && (
                         <div>
-                          <h4 className="text-base font-semibold mb-2 flex items-center text-slate-200">
-                            <Award className="h-4 w-4 mr-2 text-yellow-400" />
+                          <h4 className="text-sm lg:text-base font-semibold mb-1 lg:mb-2 flex items-center text-slate-200">
+                            <Award className="h-3 w-3 lg:h-4 lg:w-4 mr-2 text-yellow-400" />
                             Experience
                           </h4>
-                          <p className="text-slate-300">{staff.experience} years of professional experience</p>
+                          <p className="text-slate-300 text-sm lg:text-base">{staff.experience} years of professional experience</p>
                         </div>
                       )}
 
                       {/* Bio */}
                       {staff.bio && (
                         <div>
-                          <h4 className="text-base font-semibold mb-2 flex items-center text-slate-200">
-                            <User className="h-4 w-4 mr-2 text-blue-400" />
+                          <h4 className="text-sm lg:text-base font-semibold mb-1 lg:mb-2 flex items-center text-slate-200">
+                            <User className="h-3 w-3 lg:h-4 lg:w-4 mr-2 text-blue-400" />
                             About
                           </h4>
-                          <p className="text-slate-300 text-sm leading-relaxed">{staff.bio}</p>
+                          <p className="text-slate-300 text-xs lg:text-sm leading-relaxed">{staff.bio}</p>
                         </div>
                       )}
 
                       {/* Credentials */}
                       {staff.credentials && staff.credentials.length > 0 && (
                         <div>
-                          <h4 className="text-base font-semibold mb-2 flex items-center text-slate-200">
-                            <Award className="h-4 w-4 mr-2 text-green-400" />
+                          <h4 className="text-sm lg:text-base font-semibold mb-1 lg:mb-2 flex items-center text-slate-200">
+                            <Award className="h-3 w-3 lg:h-4 lg:w-4 mr-2 text-green-400" />
                             Credentials
                           </h4>
                           <ul className="space-y-1">
                             {staff.credentials.map((credential: string, index: number) => (
-                              <li key={index} className="text-sm text-slate-300 flex items-center">
-                                <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2"></span>
-                                {credential}
+                              <li key={index} className="text-xs lg:text-sm text-slate-300 flex items-center">
+                                <span className="w-1.5 h-1.5 bg-green-400 rounded-full mr-2 flex-shrink-0"></span>
+                                <span className="break-words">{credential}</span>
                               </li>
                             ))}
                           </ul>
@@ -457,8 +461,8 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, isOpen, onCl
                     </div>
 
                     {/* Footer */}
-                    <div className="text-center pt-4 border-t border-white/20">
-                      <p className="text-slate-400 text-xs">Professional ID Card • {staff.salonId?.name || 'Staff Member'}</p>
+                    <div className="text-center pt-3 lg:pt-4 border-t border-white/20">
+                      <p className="text-slate-400 text-xs leading-tight">Professional ID Card • {staff.salonId?.name || 'Staff Member'}</p>
                     </div>
                   </div>
                 </div>
