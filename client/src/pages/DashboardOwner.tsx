@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useState, useEffect } from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/authStore';
@@ -49,13 +49,14 @@ import {
   TrendingUp as TrendingUpIcon,
   RefreshCw,
   AlertTriangle,
-  Download
+  Download,
+  Globe
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DashboardOwner: React.FC = () => {
   const { user } = useAuthStore();
-  const { language } = useTranslationStore();
+  const { language, toggleLanguage, t } = useTranslationStore();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,10 +74,10 @@ const DashboardOwner: React.FC = () => {
   ];
 
   const earningsPeriodLabels: Record<'day' | 'week' | 'month' | 'year', string> = {
-    day: 'Uyu Munsi',
-    week: 'Iyi Cyumweru',
-    month: 'Uku Kwezi',
-    year: 'Uyu Mwaka',
+    day: t('today'),
+    week: t('thisWeek'),
+    month: t('thisMonth'),
+    year: t('thisYear'),
   };
 
   type NormalizedEarningRecord = {
@@ -172,6 +173,12 @@ const DashboardOwner: React.FC = () => {
       setActiveTab('overview');
     }
   }, [location.pathname]);
+
+  // Force re-render when language changes
+  const [, setLanguageUpdate] = useState({});
+  useEffect(() => {
+    setLanguageUpdate({});
+  }, [language]);
 
   // Handle tab changes with URL navigation
   const handleTabChange = (tab: string) => {
@@ -1435,15 +1442,15 @@ const DashboardOwner: React.FC = () => {
 
   // Define sidebar items early so they can be used in pending state
   const sidebarItems = [
-    { id: 'overview', label: 'Incamake', icon: BarChart3, badge: undefined },
-    { id: 'customers', label: 'Abakiriya', icon: Users, badge: undefined },
-    { id: 'barbers', label: 'Itsinda', icon: Users, badge: undefined },
-    { id: 'services', label: 'Serivisi', icon: Package, badge: undefined },
-    { id: 'leaderboard', label: 'Urutonde', icon: Award, badge: undefined },
-    { id: 'earnings', label: 'Inyungu', icon: DollarSign, badge: undefined },
-    { id: 'notifications', label: 'Amatangazo', icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
-    { id: 'analytics', label: 'Ubusesenguzi', icon: TrendingUp, badge: undefined },
-    { id: 'settings', label: 'Igenamiterere', icon: Settings, badge: undefined },
+    { id: 'overview', label: t('overview'), icon: BarChart3, badge: undefined },
+    { id: 'customers', label: t('customers'), icon: Users, badge: undefined },
+    { id: 'barbers', label: t('team'), icon: Users, badge: undefined },
+    { id: 'services', label: t('services'), icon: Package, badge: undefined },
+    { id: 'leaderboard', label: t('leaderboard'), icon: Award, badge: undefined },
+    { id: 'earnings', label: t('earnings'), icon: DollarSign, badge: undefined },
+    { id: 'notifications', label: t('notifications'), icon: Bell, badge: notificationCount?.data?.unreadCount || undefined },
+    { id: 'analytics', label: t('analytics'), icon: TrendingUp, badge: undefined },
+    { id: 'settings', label: t('settings'), icon: Settings, badge: undefined },
   ];
 
   // Show pending approval state if salon exists but not verified
@@ -1482,7 +1489,7 @@ const DashboardOwner: React.FC = () => {
         headerActions={
           <div className="flex items-center space-x-2">
             <span className="hidden lg:inline-block text-sm text-slate-600">
-              Managing: <span className="font-semibold text-slate-900">{salon?.name}</span>
+              {t('managing')} <span className="font-semibold text-slate-900">{salon?.name}</span>
             </span>
           </div>
         }
@@ -1767,9 +1774,9 @@ const DashboardOwner: React.FC = () => {
               <span>+12%</span>
             </div>
           </div>
-          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Today's Bookings</h3>
+          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">{t('todayBookings')}</h3>
           <p className="text-2xl lg:text-3xl font-bold text-slate-900">{todayBookings.length}</p>
-          <p className="text-xs lg:text-sm text-slate-500 mt-2">{confirmedBookings.length} confirmed</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-2">{t('confirmedBookingsCount', { count: confirmedBookings.length })}</p>
         </div>
 
         {/* Total Revenue */}
@@ -1783,9 +1790,9 @@ const DashboardOwner: React.FC = () => {
               <span>+24%</span>
             </div>
           </div>
-          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Total Revenue</h3>
+          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">{t('totalRevenue')}</h3>
           <p className="text-2xl lg:text-3xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</p>
-          <p className="text-xs lg:text-sm text-slate-500 mt-2">RWF this month</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-2">{t('rwfThisMonth')}</p>
         </div>
 
         {/* Team Members */}
@@ -1796,12 +1803,12 @@ const DashboardOwner: React.FC = () => {
             </div>
             <div className="flex items-center space-x-1 text-emerald-600 text-sm font-semibold">
               <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-              <span>Active</span>
+              <span>{t('active')}</span>
             </div>
           </div>
-          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Team Members</h3>
+          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">{t('teamMembers')}</h3>
           <p className="text-2xl lg:text-3xl font-bold text-slate-900">{(staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.length || 0}</p>
-          <p className="text-xs lg:text-sm text-slate-500 mt-2">Barbers & Staff</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-2">{t('barbersAndStaff')}</p>
         </div>
 
         {/* Services */}
@@ -1814,9 +1821,9 @@ const DashboardOwner: React.FC = () => {
               <Plus className="h-5 w-5" />
             </button>
           </div>
-          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">Services</h3>
+          <h3 className="text-sm lg:text-base font-medium text-slate-600 mb-1">{t('services')}</h3>
           <p className="text-2xl lg:text-3xl font-bold text-slate-900">{(services?.data?.services || (services as any)?.services || [])?.length || 0}</p>
-          <p className="text-xs lg:text-sm text-slate-500 mt-2">Active offerings</p>
+          <p className="text-xs lg:text-sm text-slate-500 mt-2">{t('activeOfferings')}</p>
         </div>
       </div>
 
@@ -1827,9 +1834,9 @@ const DashboardOwner: React.FC = () => {
             <div>
               <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2 flex items-center">
                 <Zap className="h-6 w-6 mr-2 text-blue-600" />
-                Ibikorwa Byihuse
+                {t('quickActions')}
               </h2>
-              <p className="text-sm lg:text-base text-slate-600">Jya ahantu h'ingirakamaro mu iyoborwa ry'ubwoko bwawe</p>
+              <p className="text-sm lg:text-base text-slate-600">{t('streamlineSalonManagement')}</p>
             </div>
           </div>
 
@@ -1851,8 +1858,8 @@ const DashboardOwner: React.FC = () => {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Reba Ubusabe</h3>
-                <p className="text-sm text-blue-100">Yobora amateraniro n'igishushanyo mbonera</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('viewBookings')}</h3>
+                <p className="text-sm text-blue-100">{t('manageAppointmentsAndCalendar')}</p>
               </div>
             </button>
 
@@ -1871,8 +1878,8 @@ const DashboardOwner: React.FC = () => {
                     {(staffMembers?.data?.staff || (staffMembers as any)?.staff || [])?.length || 0}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Yobora Itsinda</h3>
-                <p className="text-sm text-purple-100">Ongeraho kandi uyobore abahanzi bawe</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('manageTeam')}</h3>
+                <p className="text-sm text-purple-100">{t('addAndManageYourBarbers')}</p>
               </div>
             </button>
 
@@ -1891,8 +1898,8 @@ const DashboardOwner: React.FC = () => {
                     {salonCustomersSummary.totalCustomers}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Reba Abakiriya</h3>
-                <p className="text-sm text-sky-100">Reba ubusabe n'abakiriya binjira</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('viewCustomers')}</h3>
+                <p className="text-sm text-sky-100">{t('viewAppointmentsAndWalkIns')}</p>
               </div>
             </button>
 
@@ -1911,8 +1918,8 @@ const DashboardOwner: React.FC = () => {
                     {(services?.data?.services || (services as any)?.services || [])?.length || 0}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Yobora Serivisi</h3>
-                <p className="text-sm text-emerald-100">Hindura ibyo utanga</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('manageServices')}</h3>
+                <p className="text-sm text-emerald-100">{t('updateWhatYouOffer')}</p>
               </div>
             </button>
 
@@ -1932,8 +1939,8 @@ const DashboardOwner: React.FC = () => {
                     <span>+24%</span>
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Reba Ubusesenguzi</h3>
-                <p className="text-sm text-amber-100">Kurikirana imikorere n'ubwenge</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('viewAnalytics')}</h3>
+                <p className="text-sm text-amber-100">{t('trackPerformanceAndInsights')}</p>
               </div>
             </button>
 
@@ -1949,8 +1956,8 @@ const DashboardOwner: React.FC = () => {
                     <Settings className="h-6 w-6 text-white" />
                   </div>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Igenamiterere ry'Ubwoko</h3>
-                <p className="text-sm text-slate-300">Tegura ibisobanuro by'ubwoko bwawe</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('salonSettings')}</h3>
+                <p className="text-sm text-slate-300">{t('customizeYourSalonDetails')}</p>
               </div>
             </button>
 
@@ -1967,8 +1974,8 @@ const DashboardOwner: React.FC = () => {
                   </div>
                   <Star className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">Reba Urupapuro rw'Ubwoko</h3>
-                <p className="text-sm text-rose-100">Reba profayili yawe ya rubanda y'ubwoko</p>
+                <h3 className="text-lg font-bold text-white mb-2">{t('viewSalonPage')}</h3>
+                <p className="text-sm text-rose-100">{t('viewYourPublicSalonProfile')}</p>
               </div>
             </button>
           </div>
@@ -1980,8 +1987,8 @@ const DashboardOwner: React.FC = () => {
         <div className="p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
-              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">Imiterere y'Ubwoko</h2>
-              <p className="text-sm lg:text-base text-slate-600">Incamake y'amakuru y'ubwoko bwawe</p>
+              <h2 className="text-xl lg:text-2xl font-bold text-slate-900 mb-2">{t('salonStatus')}</h2>
+              <p className="text-sm lg:text-base text-slate-600">{t('overviewOfYourSalonDetails')}</p>
             </div>
             <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold shadow-lg ${
               salon.verified
@@ -4084,10 +4091,20 @@ const DashboardOwner: React.FC = () => {
       onTabChange={setActiveTab}
       onNotificationClick={() => setActiveTab('notifications')}
       headerActions={
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <span className="hidden lg:inline-block text-sm text-slate-600">
-            Managing: <span className="font-semibold text-slate-900">{salon?.name}</span>
+            {t('managing')} <span className="font-semibold text-slate-900">{salon?.name}</span>
           </span>
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors"
+            aria-label="Switch language"
+          >
+            <Globe className="h-4 w-4 text-slate-600" />
+            <span className="text-sm font-medium text-slate-700">
+              {language === 'en' ? 'RW' : 'EN'}
+            </span>
+          </button>
         </div>
       }
     >

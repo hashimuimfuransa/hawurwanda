@@ -930,6 +930,16 @@ export const rwTranslations = {
   walkInService: 'Serivisi y\'Abagenzi ba Direkto',
   staffMember: 'Umukozi',
   switchLanguage: 'Guhindura Ururimi',
+  
+  // Dashboard Owner - Earnings Period
+  day: 'Uyu Munsi',
+  week: 'Iyi Cyumweru',
+  month: 'Uku Kwezi',
+  year: 'Uyu Mwaka',
+  today: 'Uyu Munsi',
+  thisWeek: 'Iyi Cyumweru',
+  thisMonth: 'Uku Kwezi',
+  thisYear: 'Uyu Mwaka',
 
   // Additional Dashboard Translations
   buildYourSalonProfile: 'Kurema profili y\'iyaaloniyaalonishya',
@@ -1055,4 +1065,5 @@ export const rwTranslations = {
   specifyCustomServicesWhenOther: 'Sobanura ibikorwa byihariye iyo uhitamo "Ibindi".',
   latitudeLongitudeMustBeValid: 'Latitude na longitude bigomba kuba imibare nyayo.',
   locationDetailsAutoFilled: 'Amakuru y\'aho salon iherereye yazuzujwe ku ikarita!',
+  
 };
