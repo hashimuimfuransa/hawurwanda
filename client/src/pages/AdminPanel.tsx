@@ -107,6 +107,8 @@ const AdminPanel: React.FC = () => {
     gender: '',
     specialties: [] as string[],
     experience: '',
+    educationLevel: '',
+    birthYearRange: '',
     bio: '',
     credentials: [] as string[],
     profilePhoto: null as File | null,
@@ -370,6 +372,8 @@ const AdminPanel: React.FC = () => {
         gender: '',
         specialties: [],
         experience: '',
+        educationLevel: '',
+        birthYearRange: '',
         bio: '',
         credentials: [],
         profilePhoto: null,
@@ -592,6 +596,8 @@ const AdminPanel: React.FC = () => {
     if (staffFormData.gender) formData.append('gender', staffFormData.gender);
     if (staffFormData.nationalId) formData.append('nationalId', staffFormData.nationalId);
     if (staffFormData.experience) formData.append('experience', staffFormData.experience);
+    if (staffFormData.educationLevel) formData.append('educationLevel', staffFormData.educationLevel);
+    if (staffFormData.birthYearRange) formData.append('birthYearRange', staffFormData.birthYearRange);
     if (staffFormData.bio) formData.append('bio', staffFormData.bio);
     if (staffFormData.specialties.length > 0) formData.append('specialties', JSON.stringify(staffFormData.specialties));
     if (staffFormData.credentials.length > 0) formData.append('credentials', JSON.stringify(staffFormData.credentials));
@@ -2397,6 +2403,49 @@ const AdminPanel: React.FC = () => {
                       </div>
 
                       <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Experience</label>
+                        <input
+                          type="text"
+                          value={staffFormData.experience}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, experience: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="5 years"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
+                        <select
+                          value={staffFormData.educationLevel}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, educationLevel: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Education Level</option>
+                          <option value="primary">Primary School</option>
+                          <option value="secondary">Secondary School</option>
+                          <option value="certificate">Certificate</option>
+                          <option value="diploma">Diploma</option>
+                          <option value="degree">Bachelor's Degree</option>
+                          <option value="masters">Master's Degree</option>
+                          <option value="phd">PhD</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Birth Year Range</label>
+                        <select
+                          value={staffFormData.birthYearRange}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, birthYearRange: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Birth Year Range</option>
+                          <option value="12-35">12-35 years</option>
+                          <option value="35-60">35-60 years</option>
+                          <option value="60+">60+ years</option>
+                        </select>
+                      </div>
+                      
+                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">National ID</label>
                         <input
                           type="text"
@@ -2495,7 +2544,39 @@ const AdminPanel: React.FC = () => {
                           placeholder="5 years"
                         />
                       </div>
-
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Education Level</label>
+                        <select
+                          value={staffFormData.educationLevel}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, educationLevel: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Education Level</option>
+                          <option value="primary">Primary School</option>
+                          <option value="secondary">Secondary School</option>
+                          <option value="certificate">Certificate</option>
+                          <option value="diploma">Diploma</option>
+                          <option value="degree">Bachelor's Degree</option>
+                          <option value="masters">Master's Degree</option>
+                          <option value="phd">PhD</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Birth Year Range</label>
+                        <select
+                          value={staffFormData.birthYearRange}
+                          onChange={(e) => setStaffFormData({ ...staffFormData, birthYearRange: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select Birth Year Range</option>
+                          <option value="12-35">12-35 years</option>
+                          <option value="35-60">35-60 years</option>
+                          <option value="60+">60+ years</option>
+                        </select>
+                      </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
                         <textarea

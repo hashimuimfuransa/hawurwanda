@@ -16,6 +16,8 @@ export interface IUser extends Document {
   staffCategory?: 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'other';
   specialties?: string[];
   experience?: string; // Years of experience
+  educationLevel?: 'primary' | 'secondary' | 'certificate' | 'diploma' | 'degree' | 'masters' | 'phd';
+  birthYearRange?: '12-35' | '35-60' | '60+';
   bio?: string;
   credentials?: string[]; // Array of certifications/credentials
   assignedServices?: Types.ObjectId[]; // Array of service IDs assigned to this staff member
@@ -110,6 +112,16 @@ const userSchema = new Schema<IUser>({
   experience: {
     type: String,
     trim: true,
+  },
+  educationLevel: {
+    type: String,
+    enum: ['primary', 'secondary', 'certificate', 'diploma', 'degree', 'masters', 'phd'],
+    required: false,
+  },
+  birthYearRange: {
+    type: String,
+    enum: ['12-35', '35-60', '60+'],
+    required: false,
   },
   bio: {
     type: String,
