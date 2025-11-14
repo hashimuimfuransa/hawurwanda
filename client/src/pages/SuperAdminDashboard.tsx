@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
@@ -188,9 +188,28 @@ const SuperAdminDashboard: React.FC = () => {
     queryFn: () => superAdminService.getStats(),
   });
 
-  const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['super-admin-users'],
-    queryFn: () => superAdminService.getAllUsers(),
+  const {
+    data: usersData,
+    fetchNextPage: fetchNextUsersPage,
+    hasNextPage: hasNextUsersPage,
+    isFetchingNextPage: isFetchingNextUsersPage,
+    isLoading: usersLoading,
+    refetch: refetchUsers
+  } = useInfiniteQuery({
+    queryKey: ['super-admin-users', searchTerm, selectedRole],
+    queryFn: ({ pageParam = 1 }) => superAdminService.getAllUsers({
+      page: pageParam,
+      limit: 20, // Load 20 users at a time
+      search: searchTerm || undefined,
+      role: selectedRole || undefined
+    }),
+    getNextPageParam: (lastPage, allPages) => {
+      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      const totalPages = pagination?.pages || 0;
+      const currentPage = pagination?.current || 1;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   const { data: salonsData } = useQuery({
@@ -790,7 +809,7 @@ const SuperAdminDashboard: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                (usersData?.data?.users || usersData || [])
+                (usersData?.pages?.flatMap(page => page?.users || page?.data?.users || []) || [])
                   .filter((user: IUser) => {
                     const matchesSearch = !searchTerm || 
                       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -860,6 +879,35 @@ const SuperAdminDashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Load More Users Button */}
+      {hasNextUsersPage && (
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={() => fetchNextUsersPage()}
+            disabled={isFetchingNextUsersPage || usersLoading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+          >
+            {isFetchingNextUsersPage ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Loading...</span>
+              </>
+            ) : (
+              <>
+                <span>Load More Users</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {usersLoading && (usersData?.pages?.flatMap(page => page?.users || page?.data?.users || []) || []).length === 0 && (
+        <div className="flex justify-center mt-6">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      )}
     </div>
   );
 

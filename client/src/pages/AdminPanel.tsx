@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
@@ -87,7 +87,14 @@ const AdminPanel: React.FC = () => {
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
   });
-  
+
+  // Pagination state for users
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersLimit] = useState(20); // Load 20 users at a time for better UX
+  const [allUsers, setAllUsers] = useState<any[]>([]);
+  const [hasMoreUsers, setHasMoreUsers] = useState(true);
+  const [isLoadingMoreUsers, setIsLoadingMoreUsers] = useState(false);
+
   // Staff management state
   const [showStaffDetailsModal, setShowStaffDetailsModal] = useState(false);
   const [showStaffEditModal, setShowStaffEditModal] = useState(false);
@@ -148,9 +155,28 @@ const AdminPanel: React.FC = () => {
     queryFn: () => adminService.getReports(),
   });
 
-  const { data: usersData } = useQuery({
-    queryKey: ['admin-users'],
-    queryFn: () => adminService.getUsers(),
+  const {
+    data: usersData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: usersLoading,
+    refetch: refetchUsers
+  } = useInfiniteQuery({
+    queryKey: ['admin-users', searchTerm, selectedRole],
+    queryFn: ({ pageParam = 1 }) => adminService.getUsers({
+      page: pageParam,
+      limit: usersLimit,
+      search: searchTerm || undefined,
+      role: selectedRole || undefined
+    }),
+    getNextPageParam: (lastPage, allPages) => {
+      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      const totalPages = pagination?.pages || 0;
+      const currentPage = pagination?.current || 1;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   const { data: salonsData } = useQuery({
@@ -197,16 +223,46 @@ const AdminPanel: React.FC = () => {
   });
 
   // Staff management data
-  const { data: staffData, isLoading: staffLoading } = useQuery({
+  const {
+    data: staffData,
+    fetchNextPage: fetchNextStaffPage,
+    hasNextPage: hasNextStaffPage,
+    isFetchingNextPage: isFetchingNextStaffPage,
+    isLoading: staffLoading,
+    refetch: refetchStaff
+  } = useInfiniteQuery({
     queryKey: ['admin-staff', searchTerm, selectedRole, selectedGender],
-    queryFn: () => adminService.getAllStaff({ search: searchTerm, role: selectedRole, gender: selectedGender }),
+    queryFn: ({ pageParam = 1 }) => adminService.getAllStaff({
+      page: pageParam,
+      limit: usersLimit, // Use same limit as users
+      search: searchTerm || undefined,
+      role: selectedRole || undefined,
+      gender: selectedGender || undefined
+    }),
+    getNextPageParam: (lastPage, allPages) => {
+      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      const totalPages = pagination?.pages || 0;
+      const currentPage = pagination?.current || 1;
+      return currentPage < totalPages ? currentPage + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   // Extract data from API responses (handle both direct arrays and nested data structures)
-  const users = Array.isArray(usersData) ? usersData : (usersData?.data?.users || usersData?.data || []);
+  const users = usersData?.pages?.flatMap(page => {
+    // Handle different response formats
+    if (page?.users) return page.users;
+    if (page?.data?.users) return page.data.users;
+    return [];
+  }) || [];
   const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
   const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.data?.bookings || bookingsData?.data || []);
-  const staff = Array.isArray(staffData) ? staffData : (staffData?.data?.staff || staffData?.data || []);
+  const staff = staffData?.pages?.flatMap(page => {
+    // Handle different response formats
+    if (page?.staff) return page.staff;
+    if (page?.data?.staff) return page.data.staff;
+    return [];
+  }) || [];
   const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.data?.notifications || []);
   console.log('AdminPanel notifications data:', notificationsData);
   console.log('AdminPanel extracted notifications:', notifications);
@@ -475,8 +531,13 @@ const AdminPanel: React.FC = () => {
   });
 
   // Stats calculations
+  // Get total users from the last page's pagination data
+  const totalUsers = usersData?.pages?.[usersData.pages.length - 1]?.pagination?.total ||
+                    usersData?.pages?.[usersData.pages.length - 1]?.data?.pagination?.total ||
+                    users.length;
+
   const stats = {
-    totalUsers: users.length,
+    totalUsers,
     totalSalons: salons.length,
     totalBookings: bookings.length,
     pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verificationStatus === 'pending').length,
@@ -977,6 +1038,35 @@ const AdminPanel: React.FC = () => {
                 </table>
               </div>
             </div>
+
+            {/* Load More Button */}
+            {hasNextPage && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage || usersLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Load More Users</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Loading indicator */}
+            {usersLoading && users.length === 0 && (
+              <div className="flex justify-center mt-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            )}
           </div>
         );
 
@@ -1821,6 +1911,35 @@ const AdminPanel: React.FC = () => {
                 </table>
               </div>
             </div>
+
+            {/* Load More Staff Button */}
+            {hasNextStaffPage && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => fetchNextStaffPage()}
+                  disabled={isFetchingNextStaffPage || staffLoading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  {isFetchingNextStaffPage ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Load More Staff</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Loading indicator for staff */}
+            {staffLoading && staff.length === 0 && (
+              <div className="flex justify-center mt-6">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            )}
           </div>
         );
 
