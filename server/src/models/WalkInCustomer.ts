@@ -98,7 +98,6 @@ const walkInCustomerSchema = new Schema<IWalkInCustomer>({
 });
 
 // Indexes
-walkInCustomerSchema.index({ walkInId: 1 });
 walkInCustomerSchema.index({ barberId: 1 });
 walkInCustomerSchema.index({ salonId: 1 });
 walkInCustomerSchema.index({ createdAt: -1 });

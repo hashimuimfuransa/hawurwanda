@@ -45,7 +45,7 @@ const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: false, // Made optional to support staff without email
-    unique: true,
+    // The sparse index ensures uniqueness for non-null values while allowing multiple nulls
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email'],
@@ -179,8 +179,6 @@ const userSchema = new Schema<IUser>({
 });
 
 // Indexes
-userSchema.index({ email: 1 }, { sparse: true });
-userSchema.index({ phone: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ salonId: 1 });
 

@@ -66,7 +66,6 @@ const transactionSchema = new Schema<ITransaction>({
 });
 
 // Indexes
-transactionSchema.index({ transactionId: 1 });
 transactionSchema.index({ bookingId: 1 });
 transactionSchema.index({ barberId: 1 });
 transactionSchema.index({ salonId: 1 });

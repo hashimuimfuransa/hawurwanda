@@ -92,7 +92,6 @@ const bookingSchema = new Schema<IBooking>({
 });
 
 // Indexes
-bookingSchema.index({ bookingId: 1 });
 bookingSchema.index({ clientId: 1 });
 bookingSchema.index({ barberId: 1 });
 bookingSchema.index({ salonId: 1 });
