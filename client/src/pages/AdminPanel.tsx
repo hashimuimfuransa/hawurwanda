@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useTranslationStore } from '../stores/translationStore';
-import { adminService, bookingService, notificationService, salonService } from '../services/api';
+import { adminService, bookingService, notificationService, salonService, superAdminService } from '../services/api';
 import { 
   Users, 
   Building2, 
@@ -62,6 +62,8 @@ import AdminCreateSalon from '../components/admin/AdminCreateSalon';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ReportsDashboard from '../components/admin/ReportsDashboard';
 import CreateStaffModal from '../components/admin/CreateStaffModal';
+import EditSalonModal from '../components/admin/EditSalonModal';
+import DeleteSalonModal from '../components/admin/DeleteSalonModal';
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuthStore();
@@ -76,6 +78,8 @@ const AdminPanel: React.FC = () => {
   const [showEditUserModal, setShowEditUserModal] = useState(false);
   const [showSalonDetailsModal, setShowSalonDetailsModal] = useState(false);
   const [showCreateSalonModal, setShowCreateSalonModal] = useState(false);
+  const [showEditSalonModal, setShowEditSalonModal] = useState(false);
+  const [showDeleteSalonModal, setShowDeleteSalonModal] = useState(false);
   const [selectedSalonId, setSelectedSalonId] = useState<string | null>(null);
   const [selectedSalonData, setSelectedSalonData] = useState<any | null>(null);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
@@ -508,6 +512,35 @@ const AdminPanel: React.FC = () => {
     },
   });
 
+  // Notification management mutations
+  const deleteNotificationMutation = useMutation({
+    mutationFn: (notificationId: string) => notificationService.deleteNotification(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
+      toast.success('Notification deleted successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete notification');
+    },
+  });
+
+  const deleteAllNotificationsMutation = useMutation({
+    mutationFn: async () => {
+      // Delete all notifications in parallel
+      const deletePromises = notifications.map((notification: any) => 
+        notificationService.deleteNotification(notification._id)
+      );
+      await Promise.all(deletePromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
+      toast.success(`Successfully deleted ${notifications.length} notifications`);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete all notifications');
+    },
+  });
+
   // Filter functions
   const filteredUsers = users.filter((u: any) => {
     const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -724,6 +757,24 @@ const AdminPanel: React.FC = () => {
   const handleDeleteBooking = (bookingId: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
       deleteBookingMutation.mutate(bookingId);
+    }
+  };
+
+  // Notification management handlers
+  const handleDeleteNotification = (notificationId: string) => {
+    if (window.confirm('Are you sure you want to delete this notification?')) {
+      deleteNotificationMutation.mutate(notificationId);
+    }
+  };
+
+  const handleDeleteAllNotifications = () => {
+    if (notifications.length === 0) {
+      toast('No notifications to delete');
+      return;
+    }
+    
+    if (window.confirm(`Are you sure you want to delete ALL ${notifications.length} notifications? This action cannot be undone.`)) {
+      deleteAllNotificationsMutation.mutate();
     }
   };
 
@@ -1253,6 +1304,24 @@ const AdminPanel: React.FC = () => {
                       >
                         View Details
                       </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSalonData(salon);
+                          setShowEditSalonModal(true);
+                        }}
+                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                      >
+                        <Edit className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedSalonData(salon);
+                          setShowDeleteSalonModal(true);
+                        }}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
                       {salon.verificationStatus === 'pending' && (
                         <>
                           <button
@@ -1575,9 +1644,29 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
-              <p className="text-gray-600 mt-1">View and manage all notifications</p>
+            <div className="flex justify-between items-center flex-wrap gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
+                <p className="text-gray-600 mt-1">View and manage all notifications</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })}
+                  className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Refresh</span>
+                </button>
+                {notifications.length > 0 && (
+                  <button
+                    onClick={handleDeleteAllNotifications}
+                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Delete All Notifications</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notifications Table */}
@@ -1636,10 +1725,7 @@ const AdminPanel: React.FC = () => {
                               View
                             </button>
                             <button
-                              onClick={() => {
-                                // TODO: Implement delete notification functionality
-                                console.log('Delete notification:', notification._id);
-                              }}
+                              onClick={() => handleDeleteNotification(notification._id)}
                               className="text-red-600 hover:text-red-800 font-medium"
                             >
                               Delete
@@ -2874,6 +2960,32 @@ const AdminPanel: React.FC = () => {
         onClose={() => {
           setShowStaffCardModal(false);
           setSelectedStaffForCard(null);
+        }}
+      />
+
+      {/* Edit Salon Modal */}
+      <EditSalonModal
+        salon={selectedSalonData}
+        isOpen={showEditSalonModal}
+        onClose={() => {
+          setShowEditSalonModal(false);
+          setSelectedSalonData(null);
+        }}
+        onUpdate={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
+        }}
+      />
+
+      {/* Delete Salon Modal */}
+      <DeleteSalonModal
+        salon={selectedSalonData}
+        isOpen={showDeleteSalonModal}
+        onClose={() => {
+          setShowDeleteSalonModal(false);
+          setSelectedSalonData(null);
+        }}
+        onDeleted={() => {
+          queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
         }}
       />
     </div>
