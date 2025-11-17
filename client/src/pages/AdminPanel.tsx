@@ -199,9 +199,9 @@ const AdminPanel: React.FC = () => {
     },
   });
 
-  const { data: bookingsData } = useQuery({
+  const { data: bookingsData, error: bookingsError, isLoading: bookingsLoading } = useQuery({
     queryKey: ['admin-bookings'],
-    queryFn: () => adminService.getAllBookings(),
+    queryFn: () => adminService.getAllBookings({ limit: 500 }), // Increase limit to get more bookings
   });
 
   const { data: notificationsData } = useQuery({
@@ -259,8 +259,16 @@ const AdminPanel: React.FC = () => {
     if (page?.data?.users) return page.data.users;
     return [];
   }) || [];
+  
+  // Debug logging for users
+  React.useEffect(() => {
+    console.log('AdminPanel: usersData:', usersData);
+    console.log('AdminPanel: extracted users:', users);
+    console.log('AdminPanel: users with role owner:', users.filter((u: any) => u.role === 'owner'));
+    console.log('AdminPanel: all user roles:', users.map((u: any) => u.role));
+  }, [usersData, users]);
   const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
-  const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.data?.bookings || bookingsData?.data || []);
+  const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
   const staff = staffData?.pages?.flatMap(page => {
     // Handle different response formats
     if (page?.staff) return page.staff;
@@ -275,8 +283,8 @@ const AdminPanel: React.FC = () => {
   const pendingSalons = Array.isArray(pendingSalonsData) ? pendingSalonsData : (pendingSalonsData?.data?.salons || pendingSalonsData?.data || []);
   const activities = Array.isArray(activitiesData) ? activitiesData : (activitiesData?.data?.activities || activitiesData?.data || []);
 
-  // Derived owners from users
-  const owners = (users || []).filter((u: any) => u.role === 'owner');
+  // Derived owners from users - include users with 'owner' or 'manager' role, or users with salonId assigned
+  const owners = (users || []).filter((u: any) => u.role === 'owner' || u.role === 'manager' || u.salonId);
 
   // Salon details query
   const { data: salonDetails, isLoading: salonDetailsLoading } = useQuery({
@@ -514,7 +522,7 @@ const AdminPanel: React.FC = () => {
 
   // Notification management mutations
   const deleteNotificationMutation = useMutation({
-    mutationFn: (notificationId: string) => notificationService.deleteNotification(notificationId),
+    mutationFn: (notificationId: string) => adminService.deleteNotification(notificationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-notifications'] });
       toast.success('Notification deleted successfully');
@@ -528,7 +536,7 @@ const AdminPanel: React.FC = () => {
     mutationFn: async () => {
       // Delete all notifications in parallel
       const deletePromises = notifications.map((notification: any) => 
-        notificationService.deleteNotification(notification._id)
+        adminService.deleteNotification(notification._id)
       );
       await Promise.all(deletePromises);
     },
@@ -569,15 +577,18 @@ const AdminPanel: React.FC = () => {
                     usersData?.pages?.[usersData.pages.length - 1]?.data?.pagination?.total ||
                     users.length;
 
+  // Get total bookings from the bookings data pagination
+  const totalBookingsFromPagination = bookingsData?.data?.pagination?.total || bookingsData?.pagination?.total || bookings.length;
+
   const stats = {
     totalUsers,
     totalSalons: salons.length,
-    totalBookings: bookings.length,
+    totalBookings: bookingsData?.data?.statistics?.totalBookings || bookingsData?.statistics?.totalBookings || totalBookingsFromPagination,
     pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verificationStatus === 'pending').length,
     verifiedSalons: salons.filter((s: any) => s.verificationStatus === 'verified').length,
-    activeBookings: bookings.filter((b: any) => b.status === 'confirmed').length,
-    completedBookings: bookings.filter((b: any) => b.status === 'completed').length,
-    revenue: bookings
+    activeBookings: bookingsData?.data?.statistics?.confirmedBookings || bookingsData?.statistics?.confirmedBookings || bookings.filter((b: any) => b.status === 'confirmed').length,
+    completedBookings: bookingsData?.data?.statistics?.completedBookings || bookingsData?.statistics?.completedBookings || bookings.filter((b: any) => b.status === 'completed').length,
+    revenue: bookingsData?.data?.statistics?.totalRevenue || bookingsData?.statistics?.totalRevenue || bookings
       .filter((b: any) => b.status === 'completed')
       .reduce((sum: number, b: any) => sum + (b.totalPrice || 0), 0),
   };
@@ -1007,6 +1018,7 @@ const AdminPanel: React.FC = () => {
                   <option value="">All Roles</option>
                   <option value="client">Client</option>
                   <option value="owner">Salon Owner</option>
+                  <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                   <option value="barber">Barber</option>
                 </select>
@@ -1044,6 +1056,7 @@ const AdminPanel: React.FC = () => {
                           <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                             u.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                             u.role === 'owner' ? 'bg-blue-100 text-blue-800' :
+                            u.role === 'manager' ? 'bg-indigo-100 text-indigo-800' :
                             u.role === 'barber' ? 'bg-green-100 text-green-800' :
                             'bg-gray-100 text-gray-800'
                           }`}>
@@ -1062,7 +1075,7 @@ const AdminPanel: React.FC = () => {
                               onClick={() => {
                                 const name = prompt('Update name', u.name || '');
                                 const phone = prompt('Update phone', u.phone || '');
-                                const role = prompt('Update role (client/owner/admin/barber)', u.role || 'client');
+                                const role = prompt('Update role (client/owner/manager/admin/barber)', u.role || 'client');
                                 if (name !== null || phone !== null || role !== null) {
                                   updateUserMutation.mutate({ userId: u._id, updates: { name, phone, role } });
                                 }

@@ -495,6 +495,10 @@ router.get('/reports', authenticateToken, requireAdmin, async (req: AuthRequest,
 // Get all bookings (admin only)
 router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
+    console.log('Admin bookings request received');
+    console.log('Query params:', req.query);
+    console.log('User:', req.user);
+    
     const { 
       status, 
       salonId, 
@@ -502,22 +506,30 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest
       startDate, 
       endDate, 
       page = 1, 
-      limit = 10 
+      limit = 100 
     } = req.query;
 
+    // Build query object - start with empty query to get all bookings
     const query: any = {};
 
     // Filter by status
-    if (status) query.status = status;
+    if (status && status !== 'all') query.status = status;
 
     // Filter by salon
-    if (salonId) query.salonId = salonId;
+    if (salonId && salonId !== 'all') query.salonId = salonId;
 
-    // Filter by date range
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate as string);
-      if (endDate) query.date.$lte = new Date(endDate as string);
+    // Filter by date range - only if both start and end dates are provided
+    if (startDate && endDate) {
+      query.date = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string)
+      };
+    } else if (startDate) {
+      // Only start date provided
+      query.date = { $gte: new Date(startDate as string) };
+    } else if (endDate) {
+      // Only end date provided
+      query.date = { $lte: new Date(endDate as string) };
     }
 
     // Search by client name or service
@@ -528,6 +540,8 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest
       ];
     }
 
+    console.log('Booking query:', query);
+    
     const bookings = await Booking.find(query)
       .populate('clientId', 'name email phone')
       .populate('salonId', 'name address district')
@@ -537,10 +551,15 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
 
+    console.log('Bookings found:', bookings.length);
+    
     const total = await Booking.countDocuments(query);
+    console.log('Total bookings matching query:', total);
 
     // Calculate booking statistics
     const totalBookings = await Booking.countDocuments();
+    console.log('Total bookings in database:', totalBookings);
+    
     const confirmedBookings = await Booking.countDocuments({ status: 'confirmed' });
     const completedBookings = await Booking.countDocuments({ status: 'completed' });
     const cancelledBookings = await Booking.countDocuments({ status: 'cancelled' });
@@ -551,6 +570,18 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest
       { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
     ]);
     const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+
+    console.log('Sending response with:', {
+      bookingsCount: bookings.length,
+      total,
+      statistics: {
+        totalBookings,
+        confirmedBookings,
+        completedBookings,
+        cancelledBookings,
+        totalRevenue
+      }
+    });
 
     res.json({
       bookings,
@@ -644,10 +675,114 @@ router.delete('/bookings/:bookingId', authenticateToken, requireAdmin, async (re
   }
 });
 
+// Create admin user (admin only)
+router.post('/users', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { name, email, phone, password, role = 'admin' } = req.body;
+    
+    // Validate required fields
+    if (!name || !phone || !password) {
+      return res.status(400).json({ message: 'Name, phone, and password are required' });
+    }
+    
+    // Check if phone already exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already exists' });
+    }
+    
+    // Check if email already exists (if provided)
+    if (email) {
+      const existingEmailUser = await User.findOne({ email });
+      if (existingEmailUser) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const user = new User({
+      name,
+      email: email || undefined,
+      phone,
+      passwordHash,
+      role,
+    });
+    
+    await user.save();
+    
+    // Remove passwordHash from response
+    const userResponse: any = user.toObject();
+    userResponse.passwordHash = undefined;
+    
+    res.status(201).json({ user: userResponse });
+  } catch (error) {
+    console.error('Create admin user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Create user (admin only)
+router.post('/users/create', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { name, email, phone, password, role, salonId, gender } = req.body;
+    
+    // Validate required fields
+    if (!name || !phone || !password || !role) {
+      return res.status(400).json({ message: 'Name, phone, password, and role are required' });
+    }
+    
+    // Check if phone already exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already exists' });
+    }
+    
+    // Check if email already exists (if provided)
+    if (email) {
+      const existingEmailUser = await User.findOne({ email });
+      if (existingEmailUser) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const user = new User({
+      name,
+      email: email || undefined,
+      phone,
+      passwordHash,
+      role,
+      salonId: salonId || undefined,
+      gender: gender || undefined,
+    });
+    
+    await user.save();
+    
+    // Remove passwordHash from response
+    const userResponse: any = user.toObject();
+    userResponse.passwordHash = undefined;
+    
+    res.status(201).json({ user: userResponse });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get all users (admin only)
 router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { role, search, page = 1, limit = 10 } = req.query;
+    console.log('Admin users request received');
+    console.log('Query params:', req.query);
+    console.log('User:', req.user);
+    
+    const { role, search, page = 1, limit = 100 } = req.query;
     const query: any = {};
 
     if (role) query.role = role;
@@ -659,6 +794,8 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
       ];
     }
 
+    console.log('Users query:', query);
+    
     const users = await User.find(query)
       .select('-passwordHash')
       .populate('salonId', 'name address')
@@ -666,7 +803,15 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
 
+    console.log('Users found:', users.length);
+    
     const total = await User.countDocuments(query);
+    console.log('Total users matching query:', total);
+
+    console.log('Sending response with:', {
+      usersCount: users.length,
+      total
+    });
 
     res.json({
       users,
@@ -674,6 +819,8 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
         current: Number(page),
         pages: Math.ceil(total / Number(limit)),
         total,
+        hasNext: Number(page) < Math.ceil(total / Number(limit)),
+        hasPrev: Number(page) > 1
       },
     });
   } catch (error) {
@@ -682,751 +829,150 @@ router.get('/users', authenticateToken, requireAdmin, async (req: AuthRequest, r
   }
 });
 
-// Get all staff members (admin only)
-router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Update user (admin only)
+router.put('/users/:userId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { search, role, gender, page = 1, limit = 10 } = req.query;
-    const query: any = {
-      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'] }
-    };
+    const { userId } = req.params;
+    const { name, email, phone, role, address, salonId } = req.body;
 
-    if (role) query.role = role;
-    if (gender) query.gender = gender;
-      
-    if (search) {
-      query.$or = [
-        { name: new RegExp(search as string, 'i') },
-        { email: new RegExp(search as string, 'i') },
-        { phone: new RegExp(search as string, 'i') },
-      ];
-    }
-
-    const staff = await User.find(query)
-      .select('-passwordHash')
-      .populate({
-        path: 'salonId',
-        select: 'name address district',
-        options: { strictPopulate: false }
-      })
-      .populate('assignedServices', 'title category')
-      .sort({ createdAt: -1 })
-      .limit(Number(limit) * 1)
-      .skip((Number(page) - 1) * Number(limit));
-
-    // For staff members without salonId, try to find their salon by searching in salon.barbers
-    const staffWithSalons = await Promise.all(
-      staff.map(async (staffMember) => {
-        if (!staffMember.salonId) {
-          // Find salon where this staff member is in the barbers array
-          const salon = await Salon.findOne({ barbers: staffMember._id })
-            .select('name address district');
-            
-          if (salon) {
-            // Update the staff member's salonId
-            staffMember.salonId = salon._id;
-            await staffMember.save();
-              
-            return {
-              ...staffMember.toObject(),
-              salonId: {
-                _id: salon._id,
-                name: salon.name,
-                address: salon.address,
-                district: salon.district
-              }
-            };
-          }
-        }
-        return staffMember;
-      })
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name, email, phone, role, address, salonId },
+      { new: true }
     );
 
-    const total = await User.countDocuments(query);
-
-    res.json({
-      staff: staffWithSalons,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
-      },
-    });
-  } catch (error) {
-    console.error('Get staff error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get staff details (admin only)
-router.get('/staff/:staffId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-
-    const staff = await User.findById(staffId)
-      .select('-passwordHash')
-      .populate('salonId', 'name address district')
-      .populate('assignedServices', 'title category durationMinutes price');
-
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({ staff });
-  } catch (error) {
-    console.error('Get staff details error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update staff salon (admin only)
-router.patch('/staff/:staffId/salon', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-    const { salonId } = req.body;
-
-    const staff = await User.findByIdAndUpdate(
-      staffId,
-      { salonId },
-      { new: true }
-    ).select('-passwordHash').populate('salonId', 'name address district');
-
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({ staff });
-  } catch (error) {
-    console.error('Update staff salon error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Deactivate staff (admin only)
-router.patch('/staff/:staffId/deactivate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-
-    const staff = await User.findByIdAndUpdate(
-      staffId,
-      { isActive: false },
-      { new: true }
-    ).select('-passwordHash').populate('salonId', 'name address district');
-
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({ staff });
-  } catch (error) {
-    console.error('Deactivate staff error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Activate staff (admin only)
-router.patch('/staff/:staffId/activate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-
-    const staff = await User.findByIdAndUpdate(
-      staffId,
-      { isActive: true },
-      { new: true }
-    ).select('-passwordHash').populate('salonId', 'name address district');
-
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({ staff });
-  } catch (error) {
-    console.error('Activate staff error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update staff services (admin only)
-router.patch('/staff/:staffId/services', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-    const { services } = req.body;
-
-    const staff = await User.findByIdAndUpdate(
-      staffId,
-      { assignedServices: services },
-      { new: true }
-    ).select('-passwordHash').populate('salonId', 'name address district').populate('assignedServices', 'title category');
-
-    if (!staff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({ staff });
-  } catch (error) {
-    console.error('Update staff services error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update staff member (admin only)
-router.patch('/staff/:staffId', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
-  try {
-    const { staffId } = req.params;
-    const updateData: any = { ...req.body };
-
-    // Handle password update separately
-    if (updateData.password) {
-      const saltRounds = 12;
-      updateData.passwordHash = await bcrypt.hash(updateData.password, saltRounds);
-      delete updateData.password; // Remove plain text password
-    }
-
-    // Parse JSON fields if they're strings
-    if (updateData.specialties && typeof updateData.specialties === 'string') {
-      try {
-        updateData.specialties = JSON.parse(updateData.specialties);
-      } catch (e) {
-        updateData.specialties = [];
-      }
-    }
-
-    if (updateData.credentials && typeof updateData.credentials === 'string') {
-      try {
-        updateData.credentials = JSON.parse(updateData.credentials);
-      } catch (e) {
-        updateData.credentials = [];
-      }
-    }
-
-    if (updateData.workSchedule && typeof updateData.workSchedule === 'string') {
-      try {
-        updateData.workSchedule = JSON.parse(updateData.workSchedule);
-      } catch (e) {
-        updateData.workSchedule = {};
-      }
-    }
-
-    // Handle profile photo upload if provided
-    if (req.file) {
-      try {
-        const profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
-        updateData.profilePhoto = profilePhotoUrl;
-      } catch (uploadError) {
-        console.error('Profile photo upload error:', uploadError);
-        return res.status(500).json({ message: 'Failed to upload profile photo' });
-      }
-    }
-
-    // Update staff member
-    const updatedStaff = await User.findByIdAndUpdate(
-      staffId,
-      updateData,
-      { new: true, runValidators: true }
-    ).select('-passwordHash')
-      .populate('salonId', 'name address district')
-      .populate('assignedServices', 'title category durationMinutes price');
-
-    if (!updatedStaff) {
-      return res.status(404).json({ message: 'Staff member not found' });
-    }
-
-    res.json({
-      message: 'Staff member updated successfully',
-      staff: updatedStaff,
-    });
-  } catch (error: any) {
-    console.error('Update staff error:', error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation error: ' + error.message });
-    }
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Create staff member and assign to salon (admin only)
-router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), validateRequest(createStaffSchema), async (req: AuthRequest, res) => {
-  try {
-    const {
-      name,
-      email,
-      phone,
-      nationalId,
-      password,
-      salonId,
-      staffCategory,
-      gender,
-      specialties,
-      experience,
-      educationLevel,
-      birthYearRange,
-      bio,
-      credentials,
-      workSchedule,
-      assignedServices
-    } = req.body;
-
-    // Validate required fields (email is now optional)
-    if (!name || !phone || !password) {
-      return res.status(400).json({ message: 'Name, phone, and password are required' });
-    }
-
-    // Check if user already exists
-    const existingUserQuery: any = { phone };
-    if (email) {
-      existingUserQuery.$or = [{ email: email.toLowerCase() }, { phone }];
-    } else {
-      existingUserQuery.phone = phone;
-    }
-    
-    const existingUser = await User.findOne(existingUserQuery);
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: email 
-          ? 'User with this email or phone already exists' 
-          : 'User with this phone already exists',
-      });
-    }
-
-    // Check if salon exists (only if salonId is provided)
-    let salon = null;
-    if (salonId) {
-      salon = await Salon.findById(salonId);
-      if (!salon) {
-        return res.status(404).json({ message: 'Salon not found' });
-      }
-    }
-
-    // Hash password
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Parse JSON fields if they're strings
-    let parsedSpecialties = specialties || [];
-    if (typeof specialties === 'string') {
-      try {
-        parsedSpecialties = JSON.parse(specialties);
-      } catch (e) {
-        parsedSpecialties = [];
-      }
-    }
-
-    let parsedCredentials = credentials || [];
-    if (typeof credentials === 'string') {
-      try {
-        parsedCredentials = JSON.parse(credentials);
-      } catch (e) {
-        parsedCredentials = [];
-      }
-    }
-
-    let parsedWorkSchedule = workSchedule || {};
-    if (typeof workSchedule === 'string') {
-      try {
-        parsedWorkSchedule = JSON.parse(workSchedule);
-      } catch (e) {
-        parsedWorkSchedule = {};
-      }
-    }
-
-    let parsedAssignedServices = assignedServices || [];
-    if (typeof assignedServices === 'string') {
-      try {
-        parsedAssignedServices = JSON.parse(assignedServices);
-      } catch (e) {
-        parsedAssignedServices = [];
-      }
-    }
-
-    // Handle profile photo upload if provided
-    let profilePhotoUrl = undefined;
-    if (req.file) {
-      try {
-        profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
-      } catch (uploadError) {
-        console.error('Profile photo upload error:', uploadError);
-        return res.status(500).json({ message: 'Failed to upload profile photo' });
-      }
-    }
-
-    // Create staff member
-    const staffMember = new User({
-      name: name.trim(),
-      email: email ? email.toLowerCase().trim() : null,
-      phone: phone.trim(),
-      nationalId: nationalId || null,
-      passwordHash,
-      role: staffCategory || 'barber',
-      salonId,
-      isVerified: true,
-      gender: gender || null,
-      staffCategory,
-      specialties: parsedSpecialties,
-      experience,
-      educationLevel,
-      birthYearRange,
-      bio,
-      credentials: parsedCredentials,
-      workSchedule: parsedWorkSchedule,
-      assignedServices: parsedAssignedServices.length > 0 ? parsedAssignedServices : (salon ? salon.services : []),
-      profilePhoto: profilePhotoUrl,
-    });
-
-    await staffMember.save();
-
-    // Add staff member to salon barbers list (only if salon is assigned)
-    if (salon && !salon.barbers.includes(staffMember._id as any)) {
-      salon.barbers.push(staffMember._id as any);
-      await salon.save();
-    }
-
-    // Return staff member without password hash
-    const staffMemberResponse = await User.findById(staffMember._id)
-      .select('-passwordHash')
-      .populate('salonId', 'name address district')
-      .populate('assignedServices', 'title category price');
-
-    res.status(201).json({
-      message: 'Staff member created successfully',
-      staff: staffMemberResponse,
-    });
-  } catch (error: any) {
-    console.error('Create staff error:', error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: 'Validation error: ' + error.message });
-    }
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Create user (admin can create owner, barber, client)
-router.post('/users/create', authenticateToken, requireAdmin, validateRequest(createUserSchema), async (req: AuthRequest, res) => {
-  try {
-    const { name, email, phone, password, role, gender } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: 'User with this email or phone already exists',
-      });
-    }
-
-    // Hash password
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Create user object with conditional salonId
-    const userData: any = {
-      name,
-      email: email || null,
-      phone,
-      passwordHash,
-      role,
-      isVerified: role === 'owner' ? true : false, // Auto-verify owners created by admin
-
-    };
-
-    // Add gender if provided
-    if (gender) {
-      userData.gender = gender;
-    }
-
-    // Only add salonId for barbers if provided
-    // Owners will create their salon later and get approved by admin
-    // Barbers will be assigned to salons later
-    if (req.body.salonId && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role)) {
-      userData.salonId = req.body.salonId;
-    }
-
-    const user = new User(userData);
-
-    await user.save();
-
-    res.status(201).json({
-      message: 'User created successfully',
-      user,
-    });
-  } catch (error) {
-    console.error('Create user error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Create admin user (super admin only)
-router.post('/users', authenticateToken, requireSuperAdmin, validateRequest(createAdminSchema), async (req: AuthRequest, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: 'User with this email or phone already exists',
-      });
-    }
-
-    // Hash password
-    const bcrypt = require('bcryptjs');
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Create admin user
-    const user = new User({
-      name,
-      email: email || null,
-      phone,
-      passwordHash,
-      role: 'admin',
-      isVerified: true,
-    });
-
-    await user.save();
-
-    res.status(201).json({
-      message: 'Admin user created successfully',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        isVerified: user.isVerified,
-      },
-    });
-  } catch (error) {
-    console.error('Create admin error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update user status (admin only)
-router.patch('/users/:id', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
-  try {
-    const { isVerified, role, name, phone } = req.body;
-    const userId = req.params.id;
-
-    // Prevent super admin from being modified
-    const user = await User.findById(userId);
-    if (user && user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot modify super admin' });
-    }
-
-    const updateData: any = {};
-    if (isVerified !== undefined) updateData.isVerified = isVerified;
-    if (role && req.user!.role === 'superadmin') updateData.role = role;
-    if (name) updateData.name = name;
-    if (phone) updateData.phone = phone;
-
-    // Handle profile photo upload or URL
-    if (req.file) {
-      try {
-        const profilePhotoUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
-        updateData.profilePhoto = profilePhotoUrl;
-      } catch (uploadError) {
-        console.error('Profile photo upload error:', uploadError);
-        return res.status(500).json({ message: 'Failed to upload profile photo' });
-      }
-    } else if (req.body.profilePhoto) {
-      // Handle any profile photo URL (Uploadcare, Cloudinary, etc.)
-      updateData.profilePhoto = req.body.profilePhoto;
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, runValidators: true }
-    ).select('-passwordHash');
-
-    if (!updatedUser) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({
-      message: 'User updated successfully',
-      user: updatedUser,
-    });
+    res.json({ user });
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Delete user (admin and super admin)
-router.delete('/users/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Update user (admin only) - PATCH version
+router.patch('/users/:userId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const userId = req.params.id;
+    const { userId } = req.params;
+    const updates = req.body;
 
-    // Prevent super admin from being deleted
-    const user = await User.findById(userId);
-    if (user && user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot delete super admin accounts' });
-    }
+    // Remove fields that shouldn't be updated directly
+    delete updates._id;
+    delete updates.createdAt;
+    delete updates.updatedAt;
+    delete updates.passwordHash;
 
-    // Prevent self-deletion for super admins
-    if (req.user && userId === req.user._id.toString() && req.user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot delete your own account' });
-    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      updates,
+      { new: true }
+    ).select('-passwordHash');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if user has active bookings (only for super admins for more robust checking)
-    if (req.user && req.user.role === 'superadmin') {
-      const activeBookings = await Booking.countDocuments({
-        $or: [
-          { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
-          { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
-        ]
-      });
+    res.json({ user });
+  } catch (error) {
+    console.error('Update user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
-      if (activeBookings > 0) {
-        return res.status(400).json({ 
-          message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
-          activeBookings
-        });
-      }
+// Delete user (admin only)
+router.delete('/users/:userId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    await User.findByIdAndDelete(userId);
-
-    res.json({
-      message: 'User deleted successfully',
-      deletedUser: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
+    res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Get comprehensive stats (admin and super admin)
-router.get('/stats/comprehensive', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+// Create salon (admin only)
+router.post('/salons', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    // User stats by role
-    const usersByRole = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } },
-    ]);
+    const { name, address, phone, email, openingHours, services } = req.body;
 
-    // Salon stats
-    const salonStats = await Salon.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalSalons: { $sum: 1 },
-          verifiedSalons: { $sum: { $cond: ['$verified', 1, 0] } },
-          pendingSalons: { $sum: { $cond: ['$verified', 0, 1] } },
-        }
-      }
-    ]);
-
-    // Booking stats for last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const bookingStats = await Booking.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Revenue stats for last 30 days
-    const revenueStats = await Transaction.aggregate([
-      { $match: { createdAt: { $gte: thirtyDaysAgo }, status: 'completed' } },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$amount' },
-          totalTransactions: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Staff gender distribution
-    const staffGenderDistribution = await User.aggregate([
-      {
-        $match: {
-          role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'] }
-        }
-      },
-      {
-        $group: {
-          _id: '$gender',
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Growth metrics (compare last 30 days vs previous 30 days)
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-    const [currentUsers, previousUsers] = await Promise.all([
-      User.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
-      User.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } })
-    ]);
-
-    const [currentBookings, previousBookings] = await Promise.all([
-      Booking.countDocuments({ createdAt: { $gte: thirtyDaysAgo } }),
-      Booking.countDocuments({ createdAt: { $gte: sixtyDaysAgo, $lt: thirtyDaysAgo } })
-    ]);
-
-    res.json({
-      usersByRole,
-      salonStats: salonStats[0] || { totalSalons: 0, verifiedSalons: 0, pendingSalons: 0 },
-      bookingStats,
-      revenueStats: revenueStats[0] || { totalRevenue: 0, totalTransactions: 0 },
-      staffGenderDistribution,
-      growth: {
-        users: {
-          current: currentUsers,
-          previous: previousUsers,
-          percentage: previousUsers > 0 ? ((currentUsers - previousUsers) / previousUsers * 100) : 0
-        },
-        bookings: {
-          current: currentBookings,
-          previous: previousBookings,
-          percentage: previousBookings > 0 ? ((currentBookings - previousBookings) / previousBookings * 100) : 0
-        }
-      }
+    const salon = new Salon({
+      name,
+      address,
+      phone,
+      email,
+      openingHours,
+      services,
     });
+
+    await salon.save();
+
+    res.status(201).json({ salon });
   } catch (error) {
-    console.error('Get comprehensive stats error:', error);
+    console.error('Create salon error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Note: Super admin activities endpoint is defined later as '/superadmin/activities'
+// Get salon details (admin and super admin)
+router.get('/salons/:salonId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { salonId } = req.params;
 
-// Get notifications (admin only)
+    const salon = await Salon.findById(salonId);
+
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    res.json({ salon });
+  } catch (error) {
+    console.error('Get salon details error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update salon (admin and super admin)
+router.put('/salons/:salonId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { salonId } = req.params;
+    const { name, address, phone, email, openingHours, services } = req.body;
+
+    const salon = await Salon.findByIdAndUpdate(
+      salonId,
+      { name, address, phone, email, openingHours, services },
+      { new: true }
+    );
+
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    res.json({ salon });
+  } catch (error) {
+    console.error('Update salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get notifications (admin and super admin)
 router.get('/notifications', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-
+    const { page = 1, limit = 20, sort = 'createdAt', order = 'desc' } = req.query;
+    
     const notifications = await Notification.find()
-      .populate('toUserId', 'name email role')
-      .sort({ createdAt: -1 })
+      .sort({ [sort as string]: order === 'desc' ? -1 : 1 })
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
-
+    
     const total = await Notification.countDocuments();
-
+    
     res.json({
       notifications,
       pagination: {
@@ -1441,111 +987,43 @@ router.get('/notifications', authenticateToken, requireAdmin, async (req: AuthRe
   }
 });
 
-// SUPER ADMIN SPECIFIC ENDPOINTS
-
-// Get super admin stats
-router.get('/superadmin/stats', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Delete notification (admin and super admin)
+router.delete('/notifications/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    // Basic counts
-    const totalUsers = await User.countDocuments();
-    const totalSalons = await Salon.countDocuments({ verified: true });
-    const adminCount = await User.countDocuments({ role: 'admin' });
-    
-    // Monthly bookings (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const monthlyBookings = await Booking.countDocuments({ 
-      createdAt: { $gte: thirtyDaysAgo } 
-    });
+    const notification = await Notification.findByIdAndDelete(req.params.id);
 
-    // Role distribution
-    const roleDistribution = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } },
-      { $sort: { count: -1 } }
-    ]);
-
-    // Active admins (those who logged in this month)
-    const activeAdmins = await User.countDocuments({ 
-      role: 'admin',
-      updatedAt: { $gte: thirtyDaysAgo }
-    });
-
-    res.json({
-      totalUsers,
-      totalSalons,
-      adminCount,
-      monthlyBookings,
-      roleDistribution,
-      activeAdmins,
-    });
-  } catch (error) {
-    console.error('Get super admin stats error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get all bookings (super admin only)
-router.get('/superadmin/bookings', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { page = 1, limit = 10, search, status } = req.query;
-    const query: any = {};
-
-    if (status) query.status = status;
-    if (search) {
-      // Add search functionality for bookings
-      const searchRegex = new RegExp(search as string, 'i');
-      query.$or = [
-        { 'clientId.name': searchRegex },
-        { 'barberId.name': searchRegex },
-        { 'salonId.name': searchRegex }
-      ];
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
     }
 
-    const bookings = await Booking.find(query)
-      .populate('clientId', 'name email phone')
-      .populate('barberId', 'name email phone')
-      .populate('salonId', 'name address phone')
-      .populate('serviceId', 'title price durationMinutes')
-      .sort({ createdAt: -1 })
-      .limit(Number(limit) * 1)
-      .skip((Number(page) - 1) * Number(limit));
-
-    const total = await Booking.countDocuments(query);
-
-    res.json({
-      bookings,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
-      },
-    });
+    res.json({ message: 'Notification deleted successfully' });
   } catch (error) {
-    console.error('Get all bookings error:', error);
+    console.error('Delete notification error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// Get all salons (super admin only)
-router.get('/superadmin/salons', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Get all salons (admin and super admin)
+router.get('/salons', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const { page = 1, limit = 10, search, verified } = req.query;
+    const { page = 1, limit = 10, verified, search } = req.query;
     const query: any = {};
 
-    if (verified !== undefined) query.verified = verified === 'true';
+    if (verified !== undefined) {
+      query.verified = verified === 'true';
+    }
+
     if (search) {
-      const searchRegex = new RegExp(search as string, 'i');
       query.$or = [
-        { name: searchRegex },
-        { address: searchRegex },
-        { 'ownerId.name': searchRegex }
+        { name: new RegExp(search as string, 'i') },
+        { address: new RegExp(search as string, 'i') },
       ];
     }
 
     const salons = await Salon.find(query)
       .populate('ownerId', 'name email phone')
-      .populate('barbers', 'name email phone')
       .populate('services', 'title price durationMinutes')
+      .populate('barbers', 'name email phone profilePhoto')
       .sort({ createdAt: -1 })
       .limit(Number(limit) * 1)
       .skip((Number(page) - 1) * Number(limit));
@@ -1566,8 +1044,106 @@ router.get('/superadmin/salons', authenticateToken, requireSuperAdmin, async (re
   }
 });
 
-// Delete salon (super admin only)
-router.delete('/superadmin/salons/:id', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Add service to salon (admin only)
+router.post('/salons/:id/services', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const salonId = req.params.id;
+    const serviceData = req.body;
+    
+    // Validate required fields
+    if (!serviceData.title || !serviceData.price || !serviceData.durationMinutes) {
+      return res.status(400).json({ message: 'Title, price, and duration are required' });
+    }
+    
+    // Create service
+    const service = new Service({
+      ...serviceData,
+      salonId,
+    });
+    
+    await service.save();
+    
+    // Add service to salon
+    const salon = await Salon.findByIdAndUpdate(
+      salonId,
+      { $addToSet: { services: service._id } },
+      { new: true }
+    ).populate('services', 'title price durationMinutes');
+    
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+    
+    res.status(201).json({ service, salon });
+  } catch (error) {
+    console.error('Add service to salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update salon service (admin only)
+router.patch('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    const serviceData = req.body;
+    
+    // Update service
+    const service = await Service.findByIdAndUpdate(
+      serviceId,
+      serviceData,
+      { new: true }
+    );
+    
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    
+    // Get updated salon
+    const salon = await Salon.findById(salonId).populate('services', 'title price durationMinutes');
+    
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+    
+    res.json({ service, salon });
+  } catch (error) {
+    console.error('Update salon service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete salon service (admin only)
+router.delete('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { salonId, serviceId } = req.params;
+    
+    // Delete service
+    const service = await Service.findByIdAndDelete(serviceId);
+    
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    
+    // Remove service from salon
+    const salon = await Salon.findByIdAndUpdate(
+      salonId,
+      { $pull: { services: serviceId } },
+      { new: true }
+    ).populate('services', 'title price durationMinutes');
+    
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+    
+    res.json({ message: 'Service deleted successfully', salon });
+  } catch (error) {
+    console.error('Delete salon service error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete salon (admin and super admin)
+router.delete('/superadmin/salons/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const salonId = req.params.id;
 
@@ -1598,8 +1174,40 @@ router.delete('/superadmin/salons/:id', authenticateToken, requireSuperAdmin, as
   }
 });
 
-// Update salon (super admin only)
-router.patch('/superadmin/salons/:id', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+// Delete salon (admin only)
+router.delete('/salons/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const salonId = req.params.id;
+
+    // Check if salon exists
+    const salon = await Salon.findById(salonId);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    // Delete all related bookings
+    await Booking.deleteMany({ salonId });
+
+    // Update users who were associated with this salon
+    await User.updateMany(
+      { salonId },
+      { $unset: { salonId: 1 }, role: 'client' }
+    );
+
+    // Delete the salon
+    await Salon.findByIdAndDelete(salonId);
+
+    res.json({
+      message: 'Salon deleted successfully',
+    });
+  } catch (error) {
+    console.error('Delete salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update salon (admin and super admin)
+router.patch('/superadmin/salons/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
     const salonId = req.params.id;
     const updates = req.body;
@@ -1628,6 +1236,255 @@ router.patch('/superadmin/salons/:id', authenticateToken, requireSuperAdmin, asy
     });
   } catch (error) {
     console.error('Update salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update salon (admin only)
+router.patch('/salons/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const salonId = req.params.id;
+    const updates = req.body;
+
+    // Remove fields that shouldn't be updated directly
+    delete updates._id;
+    delete updates.createdAt;
+    delete updates.updatedAt;
+
+    const salon = await Salon.findByIdAndUpdate(
+      salonId,
+      updates,
+      { new: true, runValidators: true }
+    )
+      .populate('ownerId', 'name email phone')
+      .populate('barbers', 'name email phone')
+      .populate('services', 'title price durationMinutes');
+
+    if (!salon) {
+      return res.status(404).json({ message: 'Salon not found' });
+    }
+
+    res.json({
+      message: 'Salon updated successfully',
+      salon,
+    });
+  } catch (error) {
+    console.error('Update salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete notification (admin and super admin)
+router.delete('/notifications/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const notification = await Notification.findByIdAndDelete(req.params.id);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    res.json({ message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// File upload to Uploadcare (admin only)
+router.post('/upload/uploadcare', authenticateToken, requireAdmin, upload.single('file'), async (req: AuthRequest, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const fileUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname || 'upload');
+    res.json({ fileUrl });
+  } catch (error: any) {
+    console.error('Upload to Uploadcare error:', error);
+    res.status(500).json({ message: error.message || 'Internal server error' });
+  }
+});
+
+// Get comprehensive stats (admin only)
+router.get('/stats/comprehensive', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    // Get basic statistics
+    const totalUsers = await User.countDocuments();
+    const totalSalons = await Salon.countDocuments();
+    const totalBookings = await Booking.countDocuments();
+    const totalTransactions = await Transaction.countDocuments();
+    
+    // Get verified salons count
+    const verifiedSalons = await Salon.countDocuments({ verified: true });
+    
+    // Get recent bookings count (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentBookings = await Booking.countDocuments({
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+    
+    // Get revenue statistics
+    const revenueStats = await Transaction.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+    ]);
+    
+    const totalRevenue = revenueStats.length > 0 ? revenueStats[0].total : 0;
+    
+    // Get users by role
+    const usersByRole = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+    
+    // Get bookings by status
+    const bookingsByStatus = await Booking.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+    
+    res.json({
+      totalUsers,
+      totalSalons,
+      totalBookings,
+      totalTransactions,
+      verifiedSalons,
+      recentBookings,
+      totalRevenue,
+      usersByRole,
+      bookingsByStatus,
+    });
+  } catch (error) {
+    console.error('Get comprehensive stats error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get reports (admin only)
+router.get('/reports', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { startDate, endDate, reportType } = req.query;
+    
+    // Set default dates if not provided
+    const start = startDate ? new Date(startDate as string) : new Date(new Date().setDate(new Date().getDate() - 30));
+    const end = endDate ? new Date(endDate as string) : new Date();
+    
+    // Initialize report data
+    let reportData: any = {};
+    
+    // Get bookings report
+    if (!reportType || reportType === 'bookings') {
+      const bookings = await Booking.find({
+        createdAt: { $gte: start, $lte: end }
+      })
+        .populate('clientId', 'name')
+        .populate('salonId', 'name')
+        .populate('barberId', 'name')
+        .populate('serviceId', 'title price');
+      
+      reportData.bookings = {
+        total: bookings.length,
+        data: bookings
+      };
+    }
+    
+    // Get revenue report
+    if (!reportType || reportType === 'revenue') {
+      const revenueData = await Booking.aggregate([
+        { $match: { 
+          createdAt: { $gte: start, $lte: end },
+          status: 'completed'
+        }},
+        { $group: { 
+          _id: { 
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' },
+            day: { $dayOfMonth: '$createdAt' }
+          },
+          totalAmount: { $sum: '$totalAmount' },
+          count: { $sum: 1 }
+        }},
+        { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 }}
+      ]);
+      
+      reportData.revenue = {
+        total: revenueData.reduce((sum, day) => sum + day.totalAmount, 0),
+        data: revenueData
+      };
+    }
+    
+    // Get user registration report
+    if (!reportType || reportType === 'users') {
+      const userRegistrations = await User.find({
+        createdAt: { $gte: start, $lte: end }
+      });
+      
+      reportData.users = {
+        total: userRegistrations.length,
+        data: userRegistrations
+      };
+    }
+    
+    res.json(reportData);
+  } catch (error) {
+    console.error('Get reports error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get activities (admin only)
+router.get('/activities', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    
+    // Get recent user registrations
+    const recentUsers = await User.find()
+      .select('name email role createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    // Get recent bookings
+    const recentBookings = await Booking.find()
+      .populate('clientId', 'name')
+      .populate('salonId', 'name')
+      .populate('barberId', 'name')
+      .select('clientId salonId barberId status amountTotal createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    // Get recent salon registrations
+    const recentSalons = await Salon.find()
+      .populate('ownerId', 'name')
+      .select('name ownerId verified createdAt')
+      .sort({ createdAt: -1 })
+      .limit(10);
+    
+    // Format activities
+    const activities = [
+      ...recentUsers.map(user => ({
+        type: 'user_registration',
+        message: `New ${user.role} registered: ${user.name}`,
+        timestamp: user.createdAt,
+        data: user
+      })),
+      ...recentBookings.map(booking => ({
+        type: 'booking_created',
+        message: `New booking for ${booking.amountTotal} at ${(booking.salonId as any)?.name || 'Unknown Salon'}`,
+        timestamp: booking.createdAt,
+        data: booking
+      })),
+      ...recentSalons.map(salon => ({
+        type: 'salon_registration',
+        message: `New salon registered: ${salon.name}`,
+        timestamp: salon.createdAt,
+        data: salon
+      }))
+    ]
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, Number(limit));
+    
+    res.json(activities);
+  } catch (error) {
+    console.error('Get activities error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1686,6 +1543,292 @@ router.get('/superadmin/activities', authenticateToken, requireSuperAdmin, async
     res.json(activities);
   } catch (error) {
     console.error('Get system activities error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get all staff (admin only)
+router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { search, page = 1, limit = 20, sort = 'createdAt', order = 'desc' } = req.query;
+    const query: any = {
+      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'] }
+    };
+
+    if (search) {
+      query.$or = [
+        { name: new RegExp(search as string, 'i') },
+        { email: new RegExp(search as string, 'i') },
+        { phone: new RegExp(search as string, 'i') },
+      ];
+    }
+
+    const staff = await User.find(query)
+      .select('-passwordHash')
+      .populate('salonId', 'name address')
+      .sort({ [sort as string]: order === 'desc' ? -1 : 1 })
+      .limit(Number(limit) * 1)
+      .skip((Number(page) - 1) * Number(limit));
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+      staff,
+      pagination: {
+        current: Number(page),
+        pages: Math.ceil(total / Number(limit)),
+        total,
+        hasNext: Number(page) < Math.ceil(total / Number(limit)),
+        hasPrev: Number(page) > 1
+      },
+    });
+  } catch (error) {
+    console.error('Get staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get staff details (admin only)
+router.get('/staff/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const staffId = req.params.id;
+    
+    const staff = await User.findById(staffId)
+      .select('-passwordHash')
+      .populate('salonId', 'name address phone email');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Get staff details error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff member (admin only)
+router.patch('/staff/:id', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+  try {
+    const staffId = req.params.id;
+    const updates: any = {};
+    
+    // Handle text fields
+    if (req.body.name) updates.name = req.body.name;
+    if (req.body.email) updates.email = req.body.email;
+    if (req.body.phone) updates.phone = req.body.phone;
+    if (req.body.salonId) updates.salonId = req.body.salonId;
+    if (req.body.staffCategory) updates.staffCategory = req.body.staffCategory;
+    if (req.body.gender) updates.gender = req.body.gender;
+    if (req.body.nationalId) updates.nationalId = req.body.nationalId;
+    if (req.body.experience) updates.experience = req.body.experience;
+    if (req.body.educationLevel) updates.educationLevel = req.body.educationLevel;
+    if (req.body.birthYearRange) updates.birthYearRange = req.body.birthYearRange;
+    if (req.body.bio) updates.bio = req.body.bio;
+    
+    // Handle arrays (specialties, credentials)
+    if (req.body.specialties) {
+      try {
+        updates.specialties = JSON.parse(req.body.specialties);
+      } catch (e) {
+        updates.specialties = req.body.specialties.split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+    }
+    
+    if (req.body.credentials) {
+      try {
+        updates.credentials = JSON.parse(req.body.credentials);
+      } catch (e) {
+        updates.credentials = req.body.credentials.split(',').map((c: string) => c.trim()).filter(Boolean);
+      }
+    }
+    
+    // Handle profile photo upload
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'users/profiles',
+        `profile-${staffId}-${Date.now()}`
+      );
+      updates.profilePhoto = result.secure_url;
+    }
+    
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      updates,
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Update staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff salon (admin only)
+router.patch('/staff/:id/salon', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { salonId } = req.body;
+    const staffId = req.params.id;
+    
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { salonId },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Update staff salon error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Deactivate staff (admin only)
+router.patch('/staff/:id/deactivate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const staffId = req.params.id;
+    
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { isActive: false },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Deactivate staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Activate staff (admin only)
+router.patch('/staff/:id/activate', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const staffId = req.params.id;
+    
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { isActive: true },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Activate staff error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Update staff services (admin only)
+router.patch('/staff/:id/services', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { services } = req.body;
+    const staffId = req.params.id;
+    
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { assignedServices: services },
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
+
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+
+    res.json({ staff });
+  } catch (error) {
+    console.error('Update staff services error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Create staff member (admin only)
+router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+  try {
+    const { name, email, phone, password, salonId, staffCategory, gender, nationalId, 
+            experience, educationLevel, birthYearRange, bio, specialties, credentials } = req.body;
+    
+    // Validate required fields
+    if (!name || !phone || !password) {
+      return res.status(400).json({ message: 'Name, phone, and password are required' });
+    }
+    
+    // Check if phone already exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Phone number already exists' });
+    }
+    
+    // Check if email already exists (if provided)
+    if (email) {
+      const existingEmailUser = await User.findOne({ email });
+      if (existingEmailUser) {
+        return res.status(400).json({ message: 'Email already exists' });
+      }
+    }
+    
+    // Hash password
+    const passwordHash = await bcrypt.hash(password, 10);
+    
+    // Prepare staff data
+    const staffData: any = {
+      name,
+      phone,
+      passwordHash,
+      role: staffCategory || 'barber',
+      gender,
+      nationalId,
+      experience,
+      educationLevel,
+      birthYearRange,
+      bio,
+      specialties: specialties ? (Array.isArray(specialties) ? specialties : specialties.split(',').map((s: string) => s.trim()).filter(Boolean)) : [],
+      credentials: credentials ? (Array.isArray(credentials) ? credentials : credentials.split(',').map((c: string) => c.trim()).filter(Boolean)) : [],
+      isActive: true
+    };
+    
+    if (email) staffData.email = email;
+    if (salonId) staffData.salonId = salonId;
+    if (staffCategory) staffData.staffCategory = staffCategory;
+    
+    // Handle profile photo upload
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        'users/profiles',
+        `profile-${Date.now()}`
+      );
+      staffData.profilePhoto = result.secure_url;
+    }
+    
+    const staff = new User(staffData);
+    await staff.save();
+    
+    // Remove passwordHash from response
+    const { passwordHash: _, ...staffResponse } = staff.toObject();
+    
+    res.status(201).json({ staff: staffResponse });
+  } catch (error) {
+    console.error('Create staff error:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -1770,8 +1913,8 @@ router.patch('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asyn
     const userId = req.params.id;
 
     // Prevent super admin from being modified by other super admins
-    const user = await User.findById(userId);
-    if (user && user.role === 'superadmin' && user._id.toString() !== req.user!._id.toString()) {
+    const existingUser = await User.findById(userId);
+    if (existingUser && existingUser.role === 'superadmin' && existingUser._id.toString() !== req.user!._id.toString()) {
       return res.status(403).json({ message: 'Cannot modify other super admins' });
     }
 
@@ -1784,667 +1927,24 @@ router.patch('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asyn
     if (salonId !== undefined) updateData.salonId = salonId;
 
     // Validate role-specific requirements
-    if (role && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId && !user?.salonId) {
-      return res.status(400).json({ 
-        message: 'Barbers and owners must be assigned to a salon' 
-      });
+    if (role && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId && !existingUser?.salonId) {
+      return res.status(400).json({ message: 'Salon ID is required for this role' });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateData,
-      { new: true, runValidators: true }
-    )
-      .select('-passwordHash')
-      .populate('salonId', 'name address');
+      { new: true }
+    ).select('-passwordHash').populate('salonId', 'name address');
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({
-      message: 'User updated successfully',
-      user: updatedUser,
-    });
-  } catch (error: any) {
+    res.json({ user: updatedUser });
+  } catch (error) {
     console.error('Update user error:', error);
-    
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map((err: any) => err.message);
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-
-    if (error.code === 11000) {
-      return res.status(409).json({ 
-        message: 'Email or phone already exists' 
-      });
-    }
-
     res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Delete user (admin and super admin)
-router.delete('/superadmin/users/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const userId = req.params.id;
-
-    // Prevent super admin from being deleted
-    const user = await User.findById(userId);
-    if (user && user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot delete super admin accounts' });
-    }
-
-    // Prevent self-deletion for super admins
-    if (req.user && userId === req.user._id.toString() && req.user.role === 'superadmin') {
-      return res.status(403).json({ message: 'Cannot delete your own account' });
-    }
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Check if user has active bookings (only for super admins for more robust checking)
-    if (req.user && req.user.role === 'superadmin') {
-      const activeBookings = await Booking.countDocuments({
-        $or: [
-          { clientId: userId, status: { $in: ['pending', 'confirmed'] } },
-          { barberId: userId, status: { $in: ['pending', 'confirmed'] } }
-        ]
-      });
-
-      if (activeBookings > 0) {
-        return res.status(400).json({ 
-          message: 'Cannot delete user with active bookings. Please cancel or complete them first.',
-          activeBookings
-        });
-      }
-    }
-
-    await User.findByIdAndDelete(userId);
-
-    res.json({
-      message: 'User deleted successfully',
-      deletedUser: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Delete user error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Bulk update users (super admin only)
-router.patch('/superadmin/users/bulk', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { userIds, updates } = req.body;
-
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
-      return res.status(400).json({ message: 'User IDs array is required' });
-    }
-
-    if (!updates || Object.keys(updates).length === 0) {
-      return res.status(400).json({ message: 'Updates object is required' });
-    }
-
-    // Prevent super admin accounts from being modified
-    const superAdmins = await User.find({ 
-      _id: { $in: userIds }, 
-      role: 'superadmin' 
-    }).select('_id name');
-
-    if (superAdmins.length > 0) {
-      return res.status(403).json({ 
-        message: 'Cannot modify super admin accounts',
-        superAdmins: superAdmins.map(sa => ({ id: sa._id, name: sa.name }))
-      });
-    }
-
-    const result = await User.updateMany(
-      { _id: { $in: userIds } },
-      updates,
-      { runValidators: true }
-    );
-
-    res.json({
-      message: 'Users updated successfully',
-      matched: result.matchedCount,
-      modified: result.modifiedCount
-    });
-  } catch (error: any) {
-    console.error('Bulk update users error:', error);
-    
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map((err: any) => err.message);
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Create new user (super admin only)
-router.post('/superadmin/users', authenticateToken, requireSuperAdmin, validateRequest(createAdminSchema), async (req: AuthRequest, res) => {
-  try {
-    const { name, email, phone, password, role = 'client', salonId, isVerified = true } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { phone }],
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        message: 'User with this email or phone already exists',
-      });
-    }
-
-    // Validate role-specific requirements
-    if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId) {
-      return res.status(400).json({
-        message: 'Barbers and owners must be assigned to a salon',
-      });
-    }
-
-    // Hash password
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Create user
-    const userData: any = {
-      name: name.trim(),
-      email: email ? email.toLowerCase().trim() : null,
-      phone: phone.trim(),
-      passwordHash,
-      role,
-      isVerified,
-    };
-
-    if (salonId) userData.salonId = salonId;
-
-    const user = new User(userData);
-    const savedUser = await user.save();
-
-    // Populate salon info if applicable
-    await savedUser.populate('salonId', 'name address');
-
-    res.status(201).json({
-      message: 'User created successfully',
-      user: {
-        _id: savedUser._id,
-        name: savedUser.name,
-        email: savedUser.email,
-        phone: savedUser.phone,
-        role: savedUser.role,
-        isVerified: savedUser.isVerified,
-        salonId: savedUser.salonId,
-        createdAt: savedUser.createdAt
-      },
-    });
-  } catch (error: any) {
-    console.error('Create user error:', error);
-    
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map((err: any) => err.message);
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Super Admin Create Admin endpoint (legacy - keeping for backward compatibility)
-router.post('/superadmin/create-admin', requireSuperAdmin, async (req, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
-
-    // Validate required fields
-    if (!name || !email || !phone || !password) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email.toLowerCase() }, { phone }]
-    });
-
-    if (existingUser) {
-      return res.status(409).json({ 
-        message: 'User with this email or phone already exists' 
-      });
-    }
-
-    // Hash password
-    const saltRounds = 12;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Create admin user
-    const adminUser = new User({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      phone: phone.trim(),
-      passwordHash,
-      role: 'admin',
-      isVerified: true // Auto-verify admin accounts created by super admin
-    });
-
-    const savedAdmin = await adminUser.save();
-
-    // Remove sensitive data from response
-    const adminResponse = {
-      _id: savedAdmin._id,
-      name: savedAdmin.name,
-      email: savedAdmin.email,
-      phone: savedAdmin.phone,
-      role: savedAdmin.role,
-      isVerified: savedAdmin.isVerified,
-      createdAt: savedAdmin.createdAt
-    };
-
-    res.status(201).json({
-      message: 'Admin created successfully',
-      admin: adminResponse
-    });
-  } catch (error: any) {
-    console.error('Create admin error:', error);
-    
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map((err: any) => err.message);
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: validationErrors
-      });
-    }
-
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get all bookings (admin only)
-router.get('/bookings', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { 
-      search, 
-      status, 
-      startDate, 
-      endDate, 
-      page = 1, 
-      limit = 20 
-    } = req.query;
-    
-    const query: any = {};
-    
-    // Filter by status
-    if (status) query.status = status;
-    
-    // Filter by date range
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate as string);
-      if (endDate) query.date.$lte = new Date(endDate as string);
-    }
-    
-    // Search by booking ID, client name, or salon name
-    if (search) {
-      const searchRegex = new RegExp(search as string, 'i');
-      
-      // Find users and salons that match the search term
-      const matchingUsers = await User.find({
-        $or: [
-          { name: searchRegex },
-          { email: searchRegex }
-        ]
-      }).select('_id');
-      
-      const matchingSalons = await Salon.find({
-        name: searchRegex
-      }).select('_id');
-      
-      query.$or = [
-        { bookingId: searchRegex },
-        { clientId: { $in: matchingUsers.map(u => u._id) } },
-        { salonId: { $in: matchingSalons.map(s => s._id) } }
-      ];
-    }
-    
-    const bookings = await Booking.find(query)
-      .populate('clientId', 'name email phone')
-      .populate('barberId', 'name email phone')
-      .populate('salonId', 'name address')
-      .populate('serviceId', 'title price durationMinutes')
-      .sort({ createdAt: -1 })
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
-    
-    const total = await Booking.countDocuments(query);
-    
-    res.json({
-      bookings,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
-      },
-    });
-  } catch (error) {
-    console.error('Get admin bookings error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get all notifications (admin only)
-router.get('/notifications', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { page = 1, limit = 20, unreadOnly = 'false' } = req.query;
-    
-    const query: any = {};
-    if (unreadOnly === 'true') {
-      query.read = false;
-    }
-    
-    const notifications = await Notification.find(query)
-      .populate('toUserId', 'name email role')
-      .sort({ createdAt: -1 })
-      .limit(Number(limit))
-      .skip((Number(page) - 1) * Number(limit));
-    
-    const total = await Notification.countDocuments(query);
-    const unreadCount = await Notification.countDocuments({ read: false });
-    
-    res.json({
-      notifications,
-      unreadCount,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(total / Number(limit)),
-        total,
-      },
-    });
-  } catch (error) {
-    console.error('Get admin notifications error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Get system activities (admin only)
-router.get('/activities', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    const { page = 1, limit = 50 } = req.query;
-    
-    // Get recent activities from multiple sources
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 7); // Last 7 days
-    
-    const recentBookings = await Booking.find({ 
-      createdAt: { $gte: yesterday } 
-    })
-      .populate('clientId', 'name')
-      .populate('salonId', 'name')
-      .populate('barberId', 'name')
-      .populate('serviceId', 'title')
-      .sort({ createdAt: -1 })
-      .limit(25);
-    
-    const recentTransactions = await Transaction.find({ 
-      createdAt: { $gte: yesterday } 
-    })
-      .populate('barberId', 'name')
-      .populate('salonId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(25);
-    
-    const recentSalons = await Salon.find({ 
-      createdAt: { $gte: yesterday } 
-    })
-      .populate('ownerId', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10);
-    
-    const recentUsers = await User.find({ 
-      createdAt: { $gte: yesterday },
-      role: { $ne: 'superadmin' }
-    })
-      .sort({ createdAt: -1 })
-      .limit(10);
-    
-    // Format activities
-    const activities = [
-      ...recentBookings.map(booking => ({
-        id: `booking-${booking._id}`,
-        type: 'booking',
-        description: `New booking: ${(booking.clientId as any)?.name || 'User'} booked ${(booking.serviceId as any)?.name || 'a service'} at ${(booking.salonId as any)?.name || 'salon'}`,
-        details: `Booking ID: ${booking.bookingId}, Status: ${booking.status}, Amount: ${booking.amountTotal} RWF`,
-        time: booking.createdAt,
-        status: booking.status,
-        icon: 'calendar'
-      })),
-      ...recentTransactions.map(transaction => ({
-        id: `transaction-${transaction._id}`,
-        type: 'transaction',
-        description: `Payment ${transaction.status}: ${transaction.amount} RWF via ${transaction.method}`,
-        details: `Transaction by ${(transaction.barberId as any)?.name || 'Unknown'} at ${(transaction.salonId as any)?.name || 'Unknown salon'}`,
-        time: transaction.createdAt,
-        status: transaction.status,
-        icon: 'dollar-sign'
-      })),
-      ...recentSalons.map(salon => ({
-        id: `salon-${salon._id}`,
-        type: 'salon',
-        description: `New salon registration: ${salon.name}`,
-        details: `Owner: ${(salon.ownerId as any)?.name || 'Unknown'}, Status: ${salon.verified ? 'Verified' : 'Pending verification'}`,
-        time: salon.createdAt,
-        status: salon.verified ? 'verified' : 'pending',
-        icon: 'building'
-      })),
-      ...recentUsers.map(user => ({
-        id: `user-${user._id}`,
-        type: 'user',
-        description: `New user registration: ${user.name}`,
-        details: `Role: ${user.role}, Email: ${user.email}, Status: ${user.isVerified ? 'Verified' : 'Unverified'}`,
-        time: user.createdAt,
-        status: user.isVerified ? 'verified' : 'unverified',
-        icon: 'user'
-      }))
-    ];
-    
-    // Sort all activities by time
-    const sortedActivities = activities
-      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-      .slice((Number(page) - 1) * Number(limit), Number(page) * Number(limit));
-    
-    res.json({
-      activities: sortedActivities,
-      pagination: {
-        current: Number(page),
-        pages: Math.ceil(activities.length / Number(limit)),
-        total: activities.length,
-      },
-    });
-  } catch (error) {
-    console.error('Get admin activities error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update user roles based on staffCategory (admin only)
-router.post('/update-user-roles', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-  try {
-    console.log('Starting user role update...');
-    
-    // Find all users with staffCategory but role is 'barber'
-    const usersToUpdate = await User.find({
-      staffCategory: { $exists: true, $ne: null },
-      role: 'barber'
-    });
-
-    console.log(`Found ${usersToUpdate.length} users to update`);
-
-    const updatedUsers = [];
-
-    for (const user of usersToUpdate) {
-      if (user.staffCategory && user.staffCategory !== 'barber') {
-        console.log(`Updating user ${user.name} (${user.email}) from 'barber' to '${user.staffCategory}'`);
-        
-        await User.findByIdAndUpdate(user._id, {
-          role: user.staffCategory
-        });
-        
-        updatedUsers.push({
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          oldRole: 'barber',
-          newRole: user.staffCategory
-        });
-        
-        console.log(`✓ Updated ${user.name} to role: ${user.staffCategory}`);
-      }
-    }
-
-    console.log('User role update completed!');
-
-    res.json({
-      message: 'User roles updated successfully',
-      updatedCount: updatedUsers.length,
-      updatedUsers
-    });
-  } catch (error) {
-    console.error('Error updating user roles:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Add service to salon (admin only)
-router.post('/salons/:id/services', authenticateToken, requireAdmin, validateObjectIdParam('id'), async (req: AuthRequest, res) => {
-  try {
-    const salonId = req.params.id;
-    const { title, description, durationMinutes, price, category, targetAudience } = req.body;
-
-    // Check if salon exists
-    const salon = await Salon.findById(salonId);
-    if (!salon) {
-      return res.status(404).json({ message: 'Salon not found' });
-    }
-
-    const service = new Service({
-      salonId,
-      title,
-      description,
-      durationMinutes,
-      price,
-      category,
-      targetAudience,
-    });
-
-    await service.save();
-
-    // Add service to salon
-    salon.services.push(service._id as any);
-    await salon.save();
-
-    res.status(201).json({
-      message: 'Service added successfully',
-      service,
-    });
-  } catch (error) {
-    console.error('Add service error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Update salon service (admin only)
-router.patch('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res) => {
-  try {
-    const { salonId, serviceId } = req.params;
-    const { title, description, durationMinutes, price, category, targetAudience, isActive } = req.body;
-
-    // Check if salon exists
-    const salon = await Salon.findById(salonId);
-    if (!salon) {
-      return res.status(404).json({ message: 'Salon not found' });
-    }
-
-    // Find and update the service
-    const service = await Service.findOneAndUpdate(
-      { _id: serviceId, salonId },
-      { title, description, durationMinutes, price, category, targetAudience, isActive },
-      { new: true, runValidators: true }
-    );
-
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    res.json({
-      message: 'Service updated successfully',
-      service,
-    });
-  } catch (error) {
-    console.error('Update service error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Delete salon service (admin only)
-router.delete('/salons/:salonId/services/:serviceId', authenticateToken, requireAdmin, validateObjectIdParam('salonId'), validateObjectIdParam('serviceId'), async (req: AuthRequest, res) => {
-  try {
-    const { salonId, serviceId } = req.params;
-
-    // Check if salon exists
-    const salon = await Salon.findById(salonId);
-    if (!salon) {
-      return res.status(404).json({ message: 'Salon not found' });
-    }
-
-    // Find and delete the service
-    const service = await Service.findOneAndDelete({ _id: serviceId, salonId });
-
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    // Remove service from salon's services array
-    salon.services = salon.services.filter(id => id.toString() !== serviceId);
-    await salon.save();
-
-    res.json({
-      message: 'Service deleted successfully',
-    });
-  } catch (error) {
-    console.error('Delete service error:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
-
-// Upload file to Uploadcare (admin only)
-router.post('/upload/uploadcare', authenticateToken, requireAdmin, upload.single('file'), async (req: AuthRequest, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const fileUrl = await uploadToUploadcare(req.file.buffer, req.file.originalname);
-
-    res.json({
-      message: 'File uploaded successfully',
-      url: fileUrl,
-    });
-  } catch (error: any) {
-    console.error('Uploadcare upload error:', error);
-    res.status(500).json({ message: error.message || 'Failed to upload file' });
   }
 });
 

@@ -12,7 +12,7 @@ import {
   Video,
   X
 } from 'lucide-react';
-import { superAdminService } from '../../services/api';
+import { adminService } from '../../services/api';
 import MapLocationPicker from '../MapLocationPicker';
 import {
   getAllProvinces,
@@ -70,7 +70,7 @@ const EditSalonModal: React.FC<EditSalonModalProps> = ({
 
   const updateSalonMutation = useMutation({
     mutationFn: ({ salonId, salonData }: { salonId: string; salonData: any }) => 
-      superAdminService.updateSalon(salonId, salonData),
+      adminService.updateSalon(salonId, salonData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       toast.success('Salon updated successfully');

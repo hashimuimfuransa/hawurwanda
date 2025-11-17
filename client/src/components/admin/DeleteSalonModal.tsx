@@ -6,7 +6,7 @@ import {
   X,
   AlertTriangle
 } from 'lucide-react';
-import { superAdminService } from '../../services/api';
+import { adminService } from '../../services/api';
 
 interface DeleteSalonModalProps {
   salon: any;
@@ -24,7 +24,7 @@ const DeleteSalonModal: React.FC<DeleteSalonModalProps> = ({
   const queryClient = useQueryClient();
 
   const deleteSalonMutation = useMutation({
-    mutationFn: (salonId: string) => superAdminService.deleteSalon(salonId),
+    mutationFn: (salonId: string) => adminService.deleteSalon(salonId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
       toast.success('Salon deleted successfully');

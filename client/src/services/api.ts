@@ -242,6 +242,9 @@ export const adminService = {
   
   getNotifications: (params?: any) =>
     api.get('/admin/notifications', { params }),
+  
+  deleteNotification: (id: string) =>
+    api.delete(`/admin/notifications/${id}`),
 
   getAllBookings: (params?: any) =>
     api.get('/admin/bookings', { params }),
@@ -326,6 +329,13 @@ export const adminService = {
       timeout: 120000, // 2 minute timeout
     });
   },
+  
+  // Salon management (admin only)
+  deleteSalon: (id: string) =>
+    api.delete(`/admin/salons/${id}`),
+  
+  updateSalon: (id: string, salonData: any) =>
+    api.patch(`/admin/salons/${id}`, salonData),
 };
 
 export const superAdminService = {
