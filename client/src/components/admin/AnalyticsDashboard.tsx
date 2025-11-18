@@ -91,92 +91,92 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Analytics Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
           <div>
-            <h3 className="text-xl font-bold text-gray-900">Analytics Dashboard</h3>
-            <p className="text-gray-600 mt-1">Comprehensive insights and metrics</p>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Analytics Dashboard</h3>
+            <p className="text-gray-600 mt-1 text-sm">Comprehensive insights and metrics</p>
           </div>
           <div className="flex items-center space-x-2">
             <button 
               onClick={onRefresh}
-              className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+              className="flex items-center space-x-1 sm:space-x-2 bg-gray-100 text-gray-700 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-gray-200 text-sm"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Refresh</span>
             </button>
             <button 
               onClick={onExport}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg hover:bg-blue-700 text-sm"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>Export</span>
             </button>
           </div>
         </div>
 
         {/* Analytics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+          <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 sm:p-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600">Total Revenue</p>
-                <p className="text-2xl font-bold text-blue-900">
+                <p className="text-xs sm:text-sm font-medium text-blue-600">Total Revenue</p>
+                <p className="text-lg sm:text-2xl font-bold text-blue-900 truncate">
                   {(analytics.totalRevenue || stats.revenue)?.toLocaleString() || 0} RWF
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-600" />
+              <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+            <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
               <span className="text-green-600">+12% from last month</span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 rounded-lg">
+          <div className="bg-gradient-to-r from-green-50 to-green-100 p-4 sm:p-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-600">Total Bookings</p>
-                <p className="text-2xl font-bold text-green-900">
+                <p className="text-xs sm:text-sm font-medium text-green-600">Total Bookings</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-900">
                   {analytics.totalBookings || stats.totalBookings}
                 </p>
               </div>
-              <Calendar className="h-8 w-8 text-green-600" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-green-600" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+            <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
               <span className="text-green-600">+8% from last month</span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-lg">
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 sm:p-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-purple-600">Active Salons</p>
-                <p className="text-2xl font-bold text-purple-900">
+                <p className="text-xs sm:text-sm font-medium text-purple-600">Active Salons</p>
+                <p className="text-lg sm:text-2xl font-bold text-purple-900">
                   {analytics.activeSalons || stats.verifiedSalons || 0}
                 </p>
               </div>
-              <Building2 className="h-8 w-8 text-purple-600" />
+              <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-purple-600" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+            <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
               <span className="text-green-600">+5% from last month</span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-6 rounded-lg">
+          <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 sm:p-6 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">Customer Satisfaction</p>
-                <p className="text-2xl font-bold text-orange-900">
+                <p className="text-xs sm:text-sm font-medium text-orange-600">Customer Satisfaction</p>
+                <p className="text-lg sm:text-2xl font-bold text-orange-900">
                   {analytics.satisfaction || '4.8'}/5.0
                 </p>
               </div>
-              <Star className="h-8 w-8 text-orange-600" />
+              <Star className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
             </div>
-            <div className="mt-4 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+            <div className="mt-3 sm:mt-4 flex items-center text-xs sm:text-sm">
+              <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 mr-1" />
               <span className="text-green-600">+0.2 from last month</span>
             </div>
           </div>

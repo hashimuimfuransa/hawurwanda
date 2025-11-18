@@ -793,164 +793,164 @@ const AdminPanel: React.FC = () => {
     switch (activeTab) {
       case 'overview':
         return (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Welcome Header */}
-            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-2xl p-8 text-white">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-white">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h1>
-                  <p className="text-blue-100 text-lg">Here's your system overview for today</p>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1">Welcome back, {user?.name}!</h1>
+                  <p className="text-blue-100 text-xs sm:text-sm">Here's your system overview for today</p>
                 </div>
-                <div className="mt-4 md:mt-0 flex items-center space-x-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:space-x-3">
                   <button 
                     onClick={() => window.location.reload()}
-                    className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-4 py-2 rounded-lg text-white transition-all duration-200 flex items-center space-x-2"
+                    className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-md sm:rounded-lg text-white transition-all duration-200 flex items-center space-x-1 text-xs sm:text-sm"
                   >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Refresh</span>
+                    <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden xs:inline">Refresh</span>
                   </button>
                   <div className="text-right text-blue-100">
-                    <p className="text-sm">Last updated</p>
-                    <p className="text-xs">{new Date().toLocaleTimeString()}</p>
+                    <p className="text-xs">Last updated</p>
+                    <p className="text-xs">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Users</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalUsers}</p>
+                    <p className="text-xs text-gray-600 font-medium">Total Users</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
                   </div>
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <Users className="h-8 w-8 text-blue-600" />
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Salons</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalSalons}</p>
+                    <p className="text-xs text-gray-600 font-medium">Total Salons</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.totalSalons}</p>
                   </div>
-                  <div className="p-3 bg-purple-100 rounded-xl">
-                    <Building2 className="h-8 w-8 text-purple-600" />
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Total Bookings</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalBookings}</p>
+                    <p className="text-xs text-gray-600 font-medium">Total Bookings</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.totalBookings}</p>
                   </div>
-                  <div className="p-3 bg-green-100 rounded-xl">
-                    <Calendar className="h-8 w-8 text-green-600" />
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 font-medium">Revenue</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats.revenue.toLocaleString()} RWF</p>
+                    <p className="text-xs text-gray-600 font-medium">Revenue</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.revenue.toLocaleString()} RWF</p>
                   </div>
-                  <div className="p-3 bg-amber-100 rounded-xl">
-                    <DollarSign className="h-8 w-8 text-amber-600" />
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                  <Zap className="h-5 w-5 text-yellow-500 mr-2" />
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200">
+              <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-200">
+                <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center">
+                  <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-yellow-500 mr-1.5" />
                   Quick Actions
                 </h3>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              <div className="p-3 sm:p-4">
+                <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
                   <button
                     onClick={() => setActiveTab('bookings')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-blue-50 hover:bg-blue-100 transition-all duration-200 border-2 border-transparent hover:border-blue-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-blue-50 hover:bg-blue-100 transition-all duration-200 border border-transparent hover:border-blue-200"
                   >
-                    <div className="p-3 bg-blue-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <Calendar className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-blue-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">View Bookings</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">View Bookings</span>
                   </button>
                   
                   <button
                     onClick={() => setActiveTab('salons')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-green-50 hover:bg-green-100 transition-all duration-200 border-2 border-transparent hover:border-green-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-green-50 hover:bg-green-100 transition-all duration-200 border border-transparent hover:border-green-200"
                   >
-                    <div className="p-3 bg-green-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <Building2 className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-green-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">Manage Salons</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">Manage Salons</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('users')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-purple-50 hover:bg-purple-100 transition-all duration-200 border-2 border-transparent hover:border-purple-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-purple-50 hover:bg-purple-100 transition-all duration-200 border border-transparent hover:border-purple-200"
                   >
-                    <div className="p-3 bg-purple-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <Users className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-purple-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">User Management</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">User Mgmt</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('staff')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-indigo-50 hover:bg-indigo-100 transition-all duration-200 border-2 border-transparent hover:border-indigo-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-all duration-200 border border-transparent hover:border-indigo-200"
                   >
-                    <div className="p-3 bg-indigo-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <Scissors className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-indigo-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <Scissors className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">Staff Cards</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">Staff Cards</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('analytics')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-orange-50 hover:bg-orange-100 transition-all duration-200 border-2 border-transparent hover:border-orange-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-orange-50 hover:bg-orange-100 transition-all duration-200 border border-transparent hover:border-orange-200"
                   >
-                    <div className="p-3 bg-orange-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <TrendingUp className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-orange-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">Analytics</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">Analytics</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('notifications')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-red-50 hover:bg-red-100 transition-all duration-200 border-2 border-transparent hover:border-red-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-red-50 hover:bg-red-100 transition-all duration-200 border border-transparent hover:border-red-200"
                   >
-                    <div className="p-3 bg-red-500 rounded-xl group-hover:scale-110 transition-transform relative">
-                      <Bell className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-red-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform relative">
+                      <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                       {notifications.filter((n: any) => !n.read).length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                        <span className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 text-[0.6rem] rounded-full h-3.5 w-3.5 sm:h-4 sm:w-4 flex items-center justify-center font-bold">
                           {notifications.filter((n: any) => !n.read).length}
                         </span>
                       )}
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">Notifications</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">Notifications</span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('reports')}
-                    className="group flex flex-col items-center p-4 rounded-xl bg-teal-50 hover:bg-teal-100 transition-all duration-200 border-2 border-transparent hover:border-teal-200"
+                    className="group flex flex-col items-center p-2 sm:p-3 rounded-md sm:rounded-lg bg-teal-50 hover:bg-teal-100 transition-all duration-200 border border-transparent hover:border-teal-200 col-span-3 sm:col-span-1"
                   >
-                    <div className="p-3 bg-teal-500 rounded-xl group-hover:scale-110 transition-transform">
-                      <FileText className="h-6 w-6 text-white" />
+                    <div className="p-1.5 sm:p-2 bg-teal-500 rounded-md sm:rounded-lg group-hover:scale-110 transition-transform">
+                      <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                     </div>
-                    <span className="mt-2 text-sm font-semibold text-gray-700">Reports</span>
+                    <span className="mt-1.5 text-xs font-semibold text-gray-700 text-center">Reports</span>
                   </button>
                 </div>
               </div>
@@ -958,18 +958,20 @@ const AdminPanel: React.FC = () => {
 
             {/* Pending Salons Alert */}
             {stats.pendingSalons > 0 && (
-              <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-lg">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-6 w-6 text-amber-600 mr-3" />
-                  <div>
-                    <h4 className="text-lg font-bold text-amber-900">Pending Salon Verifications</h4>
-                    <p className="text-amber-700 mt-1">
-                      You have {stats.pendingSalons} salon{stats.pendingSalons > 1 ? 's' : ''} waiting for verification.
-                    </p>
+              <div className="bg-amber-50 border-l-4 border-amber-500 p-3 sm:p-4 rounded-md sm:rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 mr-2 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm sm:text-base font-bold text-amber-900">Pending Salon Verifications</h4>
+                      <p className="text-xs sm:text-sm text-amber-700 mt-1">
+                        You have {stats.pendingSalons} salon{stats.pendingSalons > 1 ? 's' : ''} waiting for verification.
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => setActiveTab('verification')}
-                    className="ml-auto px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                    className="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-600 text-white rounded-md sm:rounded-lg hover:bg-amber-700 transition-colors text-xs sm:text-sm ml-auto sm:ml-0"
                   >
                     Review Now
                   </button>
@@ -981,39 +983,39 @@ const AdminPanel: React.FC = () => {
 
       case 'users':
         return (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-                <p className="text-gray-600 mt-1">Manage all users in the system</p>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">User Management</h2>
+                <p className="text-gray-600 mt-1 text-xs sm:text-sm">Manage all users in the system</p>
               </div>
               <button
                 onClick={() => setShowCreateUserModal(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm"
               >
-                <Plus className="h-5 w-5" />
+                <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span>Create User</span>
               </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search users..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <select
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Roles</option>
                   <option value="client">Client</option>
@@ -1026,34 +1028,34 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Users Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredUsers.map((u: any) => (
                       <tr key={u._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                              <span className="text-blue-600 font-semibold">{u.name?.charAt(0)}</span>
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                              <span className="text-blue-600 font-semibold text-sm sm:text-base">{u.name?.charAt(0)}</span>
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{u.name}</div>
-                              <div className="text-sm text-gray-500">{u.email}</div>
+                            <div className="ml-3 sm:ml-4">
+                              <div className="text-xs sm:text-sm font-medium text-gray-900">{u.name}</div>
+                              <div className="text-xs text-gray-500 hidden sm:block">{u.email}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 text-[0.6rem] sm:text-xs font-semibold rounded-full ${
                             u.role === 'admin' ? 'bg-purple-100 text-purple-800' :
                             u.role === 'owner' ? 'bg-blue-100 text-blue-800' :
                             u.role === 'manager' ? 'bg-indigo-100 text-indigo-800' :
@@ -1063,14 +1065,14 @@ const AdminPanel: React.FC = () => {
                             {u.role}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           {u.phone}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                           {new Date(u.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex items-center space-x-3">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
                             <button
                               onClick={() => {
                                 const name = prompt('Update name', u.name || '');
@@ -1080,9 +1082,9 @@ const AdminPanel: React.FC = () => {
                                   updateUserMutation.mutate({ userId: u._id, updates: { name, phone, role } });
                                 }
                               }}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-blue-600 hover:text-blue-900 p-1"
                             >
-                              <Edit className="h-5 w-5" />
+                              <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                             </button>
                             <button
                               onClick={() => {
@@ -1090,9 +1092,9 @@ const AdminPanel: React.FC = () => {
                                   deleteUserMutation.mutate(u._id);
                                 }
                               }}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 p-1"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                             </button>
                           </div>
                         </td>
@@ -1105,15 +1107,15 @@ const AdminPanel: React.FC = () => {
 
             {/* Load More Button */}
             {hasNextPage && (
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-4 sm:mt-6">
                 <button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage || usersLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                  className="px-4 py-1.5 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm sm:text-base"
                 >
                   {isFetchingNextPage ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
                       <span>Loading...</span>
                     </>
                   ) : (
@@ -1218,37 +1220,37 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Salon Management</h2>
-                <p className="text-gray-600 mt-1">Verify and manage salon registrations</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Salon Management</h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">Verify and manage salon registrations</p>
               </div>
               <button
                 onClick={() => setShowCreateSalonModal(true)}
-                className="flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg"
+                className="flex items-center px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-purple-600 to-indigo-700 text-white rounded-md sm:rounded-lg hover:from-purple-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg text-sm sm:text-base"
               >
-                <Plus className="h-5 w-5 mr-2" />
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-1.5" />
                 Create New Salon
               </button>
             </div>
 
             {/* Search & Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search salons..."
                     value={ownerSearchTerm}
                     onChange={(e) => setOwnerSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <select
                   value={salonStatusFilter}
                   onChange={(e) => setSalonStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Status</option>
                   <option value="verified">Verified</option>
@@ -1256,27 +1258,27 @@ const AdminPanel: React.FC = () => {
                   <option value="rejected">Rejected</option>
                 </select>
                 <div className="flex items-center justify-end">
-                  <button onClick={() => { setSalonStatusFilter(''); setOwnerSearchTerm(''); }} className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">Clear</button>
+                  <button onClick={() => { setSalonStatusFilter(''); setOwnerSearchTerm(''); }} className="px-3 py-1.5 text-sm border rounded-md sm:rounded-lg text-gray-700 hover:bg-gray-50">Clear</button>
                 </div>
               </div>
             </div>
 
             {/* Salons Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredSalons.map((salon: any) => (
-                <div key={salon._id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                <div key={salon._id} className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
                   {salon.coverImages && salon.coverImages[0] && (
-                    <div className="h-48 overflow-hidden">
+                    <div className="h-32 sm:h-48 overflow-hidden">
                       <img src={salon.coverImages[0]} alt={salon.name} className="w-full h-full object-cover" />
                     </div>
                   )}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
+                  <div className="p-4 sm:p-6">
+                    <div className="flex items-start justify-between mb-3 sm:mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">{salon.name}</h3>
-                        <p className="text-sm text-gray-600 mt-1">{salon.address}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-gray-900">{salon.name}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">{salon.address}</p>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 text-[0.6rem] sm:text-xs font-semibold rounded-full ${
                         salon.verificationStatus === 'verified' ? 'bg-green-100 text-green-800' :
                         salon.verificationStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -1285,35 +1287,35 @@ const AdminPanel: React.FC = () => {
                       </span>
                     </div>
                     <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Phone className="h-4 w-4 mr-2" />
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         {salon.phone}
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Mail className="h-4 w-4 mr-2" />
+                      <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                        <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                         {salon.email}
                       </div>
                       {/* Simple performance highlights derived from bookings */}
-                      <div className="grid grid-cols-3 gap-2 text-xs mt-2">
-                        <div className="bg-blue-50 text-blue-700 rounded px-2 py-1 text-center">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2 text-[0.6rem] sm:text-xs mt-2">
+                        <div className="bg-blue-50 text-blue-700 rounded px-1.5 py-0.5 sm:px-2 sm:py-1 text-center">
                           {bookings.filter((b: any) => b.salonId?._id === salon._id).length} bookings
                         </div>
-                        <div className="bg-green-50 text-green-700 rounded px-2 py-1 text-center">
+                        <div className="bg-green-50 text-green-700 rounded px-1.5 py-0.5 sm:px-2 sm:py-1 text-center">
                           {bookings.filter((b: any) => b.salonId?._id === salon._id && b.status === 'completed').length} completed
                         </div>
-                        <div className="bg-amber-50 text-amber-700 rounded px-2 py-1 text-center">
+                        <div className="bg-amber-50 text-amber-700 rounded px-1.5 py-0.5 sm:px-2 sm:py-1 text-center">
                           {bookings.filter((b: any) => b.salonId?._id === salon._id && b.status === 'confirmed').length} active
                         </div>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <button
                         onClick={() => {
                           setSelectedSalonId(salon._id);
                           setSelectedSalonData(salon);
                           setShowSalonDetailsModal(true);
                         }}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className="flex-1 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium"
                       >
                         View Details
                       </button>
@@ -1322,32 +1324,32 @@ const AdminPanel: React.FC = () => {
                           setSelectedSalonData(salon);
                           setShowEditSalonModal(true);
                         }}
-                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                        className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-yellow-600 text-white rounded-md sm:rounded-lg hover:bg-yellow-700 transition-colors"
                       >
-                        <Edit className="h-5 w-5" />
+                        <Edit className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                       </button>
                       <button
                         onClick={() => {
                           setSelectedSalonData(salon);
                           setShowDeleteSalonModal(true);
                         }}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white rounded-md sm:rounded-lg hover:bg-red-700 transition-colors"
                       >
-                        <Trash2 className="h-5 w-5" />
+                        <Trash2 className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                       </button>
                       {salon.verificationStatus === 'pending' && (
                         <>
                           <button
                             onClick={() => verifySalonMutation.mutate(salon._id)}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                            className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-md sm:rounded-lg hover:bg-green-700 transition-colors"
                           >
-                            <CheckCircle className="h-5 w-5" />
+                            <CheckCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                           </button>
                           <button
                             onClick={() => rejectSalonMutation.mutate(salon._id)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            className="px-2.5 py-1.5 sm:px-4 sm:py-2 bg-red-600 text-white rounded-md sm:rounded-lg hover:bg-red-700 transition-colors"
                           >
-                            <XCircle className="h-5 w-5" />
+                            <XCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                           </button>
                         </>
                       )}
@@ -1530,27 +1532,27 @@ const AdminPanel: React.FC = () => {
           <div className="space-y-6">
             {/* Header */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Booking Management</h2>
-              <p className="text-gray-600 mt-1">View and manage all bookings</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Booking Management</h2>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base">View and manage all bookings</p>
             </div>
 
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search bookings..."
                     value={bookingSearchTerm}
                     onChange={(e) => setBookingSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <select
                   value={bookingStatusFilter}
                   onChange={(e) => setBookingStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Status</option>
                   <option value="pending">Pending</option>
@@ -1562,37 +1564,43 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Bookings Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salon</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booking ID</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salon</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {filteredBookings.map((booking: any) => (
                       <tr key={booking._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           #{booking._id.slice(-6)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.clientId?.name || 'N/A'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                          <div className="max-w-[80px] sm:max-w-none truncate">
+                            {booking.clientId?.name || 'N/A'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {booking.salonId?.name || 'N/A'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                          <div className="max-w-[80px] sm:max-w-none truncate">
+                            {booking.salonId?.name || 'N/A'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(booking.date).toLocaleDateString()} {booking.time}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          <div className="max-w-[80px] sm:max-w-none truncate">
+                            {new Date(booking.date).toLocaleDateString()} {booking.time}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <span className={`px-1.5 py-0.5 sm:px-2 sm:py-1 text-[0.6rem] sm:text-xs font-semibold rounded-full ${
                             booking.status === 'completed' ? 'bg-green-100 text-green-800' :
                             booking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
                             booking.status === 'cancelled' ? 'bg-red-100 text-red-800' :
@@ -1601,14 +1609,14 @@ const AdminPanel: React.FC = () => {
                             {booking.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           {booking.totalPrice?.toLocaleString()} RWF
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                          <div className="flex flex-wrap gap-1">
                             <button
                               onClick={() => handleViewBooking(booking)}
-                              className="text-blue-600 hover:text-blue-800 font-medium"
+                              className="text-blue-600 hover:text-blue-800 font-medium px-2 py-1 text-xs"
                             >
                               View
                             </button>
@@ -1616,13 +1624,13 @@ const AdminPanel: React.FC = () => {
                               <>
                                 <button
                                   onClick={() => handleUpdateBookingStatus(booking._id, 'confirmed')}
-                                  className="text-green-600 hover:text-green-800 font-medium"
+                                  className="text-green-600 hover:text-green-800 font-medium px-2 py-1 text-xs"
                                 >
                                   Confirm
                                 </button>
                                 <button
                                   onClick={() => handleUpdateBookingStatus(booking._id, 'cancelled')}
-                                  className="text-red-600 hover:text-red-800 font-medium"
+                                  className="text-red-600 hover:text-red-800 font-medium px-2 py-1 text-xs"
                                 >
                                   Cancel
                                 </button>
@@ -1631,14 +1639,14 @@ const AdminPanel: React.FC = () => {
                             {booking.status === 'confirmed' && (
                               <button
                                 onClick={() => handleUpdateBookingStatus(booking._id, 'completed')}
-                                className="text-green-600 hover:text-green-800 font-medium"
+                                className="text-green-600 hover:text-green-800 font-medium px-2 py-1 text-xs"
                               >
                                 Complete
                               </button>
                             )}
                             <button
                               onClick={() => handleDeleteBooking(booking._id)}
-                              className="text-red-600 hover:text-red-800 font-medium"
+                              className="text-red-600 hover:text-red-800 font-medium px-2 py-1 text-xs"
                             >
                               Delete
                             </button>
@@ -1657,53 +1665,54 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex justify-between items-center flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Notification Management</h2>
-                <p className="text-gray-600 mt-1">View and manage all notifications</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Notification Management</h2>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">View and manage all notifications</p>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-notifications'] })}
-                  className="flex items-center space-x-2 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                  className="flex items-center space-x-1.5 bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg transition-colors font-medium text-sm sm:text-base"
                 >
-                  <RefreshCw className="h-4 w-4" />
+                  <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>Refresh</span>
                 </button>
                 {notifications.length > 0 && (
                   <button
                     onClick={handleDeleteAllNotifications}
-                    className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+                    className="flex items-center space-x-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg transition-colors font-medium text-sm sm:text-base"
                   >
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete All Notifications</span>
+                    <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <span className="hidden xs:inline">Delete All Notifications</span>
+                    <span className="xs:hidden">Delete All</span>
                   </button>
                 )}
               </div>
             </div>
 
             {/* Notifications Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Notification ID
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Recipient
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Title
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Message
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Sent At
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
                       </th>
                     </tr>
@@ -1711,35 +1720,43 @@ const AdminPanel: React.FC = () => {
                   <tbody className="divide-y divide-gray-200">
                     {notifications.map((notification: any) => (
                       <tr key={notification._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900">
                           #{notification._id.slice(-6)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {notification.toUserId?.name || 'N/A'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                          <div className="max-w-[80px] sm:max-w-none truncate">
+                            {notification.toUserId?.name || 'N/A'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {notification.payload?.title || 'No Title'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900">
+                          <div className="max-w-[80px] sm:max-w-none truncate">
+                            {notification.payload?.title || 'No Title'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {notification.payload?.message || 'No Message'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          <div className="max-w-[100px] sm:max-w-none truncate">
+                            {notification.payload?.message || 'No Message'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() + ' ' + new Date(notification.createdAt).toLocaleTimeString() : 'Unknown'}
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                          <div className="max-w-[100px] sm:max-w-none truncate">
+                            {notification.createdAt ? new Date(notification.createdAt).toLocaleDateString() + ' ' + new Date(notification.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Unknown'}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                          <div className="flex flex-wrap gap-1">
                             <button
                               onClick={() => {
                                 // TODO: Implement view notification functionality
                                 console.log('View notification:', notification);
                               }}
-                              className="text-blue-600 hover:text-blue-800 font-medium"
+                              className="text-blue-600 hover:text-blue-800 font-medium px-2 py-1 text-xs"
                             >
                               View
                             </button>
                             <button
                               onClick={() => handleDeleteNotification(notification._id)}
-                              className="text-red-600 hover:text-red-800 font-medium"
+                              className="text-red-600 hover:text-red-800 font-medium px-2 py-1 text-xs"
                             >
                               Delete
                             </button>
@@ -1830,49 +1847,50 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Staff Management Header */}
-            <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-2xl shadow-lg border border-gray-200 p-6">
-              <div className="flex justify-between items-center">
+            <div className="bg-gradient-to-br from-white via-white to-blue-50/50 rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Staff Management</h3>
-                  <p className="text-gray-600 mt-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Staff Management</h3>
+                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     Manage all salon staff members across the platform
                   </p>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   <button
                     onClick={() => setShowCreateStaffModal(true)}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-lg font-semibold"
+                    className="flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-md sm:rounded-lg transition-colors shadow-lg font-semibold text-sm sm:text-base"
                   >
-                    <Plus className="h-5 w-5" />
-                    <span>Add New Staff</span>
+                    <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="hidden xs:inline">Add New Staff</span>
+                    <span className="xs:hidden">Add Staff</span>
                   </button>
-                  <div className="p-3 bg-blue-500 rounded-xl">
-                    <UserCheck className="h-6 w-6 text-white" />
+                  <div className="p-2 sm:p-3 bg-blue-500 rounded-lg sm:rounded-xl">
+                    <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Search and Filter Controls */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex flex-col sm:flex-row gap-4">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 h-3.5 w-3.5" />
                     <input
                       type="text"
                       placeholder="Search staff by name, email, or salon..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
-                <div className="sm:w-48">
+                <div className="sm:w-40">
                   <select
                     value={selectedRole}
                     onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Roles</option>
                     <option value="barber">Barbers</option>
@@ -1885,11 +1903,11 @@ const AdminPanel: React.FC = () => {
                     <option value="owner">Owners</option>
                   </select>
                 </div>
-                <div className="sm:w-48">
+                <div className="sm:w-40">
                   <select
                     value={selectedGender}
                     onChange={(e) => setSelectedGender(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="">All Genders</option>
                     <option value="male">Male</option>
@@ -1901,105 +1919,105 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Staff Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 text-xs">
+                <table className="min-w-full divide-y divide-gray-200 text-[0.6rem] sm:text-xs">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Role</th>
-                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Salon</th>
-                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th scope="col" className="px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      <th scope="col" className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                      <th scope="col" className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Role</th>
+                      <th scope="col" className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Salon</th>
+                      <th scope="col" className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th scope="col" className="px-2 sm:px-3 py-1.5 sm:py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredStaff.map((member: any) => (
                       <tr key={member._id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 whitespace-nowrap">
+                        <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-8 w-8">
+                            <div className="flex-shrink-0 h-6 w-6 sm:h-8 sm:w-8">
                               {member.profilePhoto ? (
-                                <img className="h-8 w-8 rounded-full object-cover" src={member.profilePhoto} alt={member.name} />
+                                <img className="h-6 w-6 sm:h-8 sm:w-8 rounded-full object-cover" src={member.profilePhoto} alt={member.name} />
                               ) : (
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                                  <span className="text-white font-medium text-xs">
+                                <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                  <span className="text-white font-medium text-[0.6rem] sm:text-xs">
                                     {member.name?.charAt(0).toUpperCase()}
                                   </span>
                                 </div>
                               )}
                             </div>
-                            <div className="ml-2">
-                              <div className="font-medium text-gray-900 truncate max-w-[100px] md:max-w-[150px]">{member.name}</div>
-                              <div className="text-gray-500 truncate max-w-[100px] md:max-w-[150px] hidden md:block">{member.email}</div>
+                            <div className="ml-1.5 sm:ml-2">
+                              <div className="font-medium text-gray-900 truncate max-w-[70px] sm:max-w-[100px] md:max-w-[150px]">{member.name}</div>
+                              <div className="text-gray-500 truncate max-w-[70px] sm:max-w-[100px] md:max-w-[150px] hidden md:block">{member.email}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap hidden md:table-cell">
-                          <span className="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap hidden md:table-cell">
+                          <span className="px-1 py-0.5 sm:px-1.5 sm:py-0.5 text-[0.6rem] sm:text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                             {member.role}
                           </span>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap text-gray-500 hidden xl:table-cell">
-                          <div className="max-w-[120px] truncate">
+                        <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap text-gray-500 hidden xl:table-cell">
+                          <div className="max-w-[80px] sm:max-w-[120px] truncate">
                             {member.salonId?.name || 'Unassigned'}
                           </div>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
-                          <span className={`px-1.5 py-0.5 text-xs font-semibold rounded-full ${
+                        <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                          <span className={`px-1 py-0.5 sm:px-1.5 sm:py-0.5 text-[0.6rem] sm:text-xs font-semibold rounded-full ${
                             member.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
                             {member.isActive !== false ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap font-medium">
+                        <td className="px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap font-medium">
                           <div className="flex items-center space-x-0.5">
                             <button
                               onClick={() => handleViewStaff(member)}
-                              className="text-gray-600 hover:text-gray-900 p-1 rounded bg-gray-100 hover:bg-gray-200"
+                              className="text-gray-600 hover:text-gray-900 p-0.5 sm:p-1 rounded bg-gray-100 hover:bg-gray-200"
                               title="View Profile"
                             >
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </button>
                             <button
                               onClick={() => handleAssignServices(member)}
-                              className="text-green-600 hover:text-green-900 p-1 rounded"
+                              className="text-green-600 hover:text-green-900 p-0.5 sm:p-1 rounded"
                               title="Assign Services"
                             >
-                              <Scissors className="h-3.5 w-3.5" />
+                              <Scissors className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </button>
                             <button
                               onClick={() => handleMigrateStaff(member)}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded"
+                              className="text-blue-600 hover:text-blue-900 p-0.5 sm:p-1 rounded"
                               title="Change Salon"
                             >
-                              <Building2 className="h-3.5 w-3.5" />
+                              <Building2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </button>
                             <button
                               onClick={() => {
                                 setSelectedStaffForCard(member);
                                 setShowStaffCardModal(true);
                               }}
-                              className="text-purple-600 hover:text-purple-900 p-1 rounded bg-purple-50 hover:bg-purple-100"
+                              className="text-purple-600 hover:text-purple-900 p-0.5 sm:p-1 rounded bg-purple-50 hover:bg-purple-100"
                               title="View Digital Card"
                             >
-                              <CreditCard className="h-3.5 w-3.5" />
+                              <CreditCard className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                             </button>
                             {member.isActive !== false ? (
                               <button
                                 onClick={() => handleDeactivateStaff(member)}
-                                className="text-red-600 hover:text-red-900 p-1 rounded"
+                                className="text-red-600 hover:text-red-900 p-0.5 sm:p-1 rounded"
                                 title="Deactivate"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleActivateStaff(member)}
-                                className="text-green-600 hover:text-green-900 p-1 rounded"
+                                className="text-green-600 hover:text-green-900 p-0.5 sm:p-1 rounded"
                                 title="Activate"
                               >
-                                <CheckCircle className="h-3.5 w-3.5" />
+                                <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                               </button>
                             )}
                           </div>
@@ -2013,15 +2031,15 @@ const AdminPanel: React.FC = () => {
 
             {/* Load More Staff Button */}
             {hasNextStaffPage && (
-              <div className="flex justify-center mt-6">
+              <div className="flex justify-center mt-4 sm:mt-6">
                 <button
                   onClick={() => fetchNextStaffPage()}
                   disabled={isFetchingNextStaffPage || staffLoading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                  className="px-4 py-1.5 sm:px-6 sm:py-2 bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 text-sm sm:text-base"
                 >
                   {isFetchingNextStaffPage ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
                       <span>Loading...</span>
                     </>
                   ) : (
@@ -2046,38 +2064,38 @@ const AdminPanel: React.FC = () => {
         return (
           <div className="space-y-6">
             {/* Notifications Header */}
-            <div className="bg-gradient-to-br from-white via-white to-red-50/50 rounded-2xl shadow-lg border border-gray-200 p-6">
-              <div className="flex justify-between items-center">
+            <div className="bg-gradient-to-br from-white via-white to-red-50/50 rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Notifications</h3>
-                  <p className="text-gray-600 mt-1">
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Notifications</h3>
+                  <p className="text-gray-600 mt-1 text-sm sm:text-base">
                     {notifications.filter((n: any) => !n.read).length} unread notifications
                   </p>
                 </div>
-                <button onClick={() => markAllNotificationsRead.mutate()} className="text-blue-600 hover:text-blue-700 font-medium">
+                <button onClick={() => markAllNotificationsRead.mutate()} className="text-blue-600 hover:text-blue-700 font-medium text-sm sm:text-base">
                   Mark all as read
                 </button>
               </div>
             </div>
 
             {/* Notifications List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-200">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 divide-y divide-gray-200">
               {notifications.length > 0 ? (
                 notifications.map((notification: any, index: number) => (
                   <div
                     key={notification._id || index}
-                    className={`p-6 hover:bg-gray-50 transition-colors ${
+                    className={`p-4 sm:p-6 hover:bg-gray-50 transition-colors ${
                       !notification.read ? 'bg-blue-50/50' : ''
                     }`}
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className={`flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
                         notification.type === 'success' ? 'bg-green-100' :
                         notification.type === 'warning' ? 'bg-yellow-100' :
                         notification.type === 'error' ? 'bg-red-100' :
                         'bg-blue-100'
                       }`}>
-                        <Bell className={`h-5 w-5 ${
+                        <Bell className={`h-4 w-4 sm:h-5 sm:w-5 ${
                           notification.type === 'success' ? 'text-green-600' :
                           notification.type === 'warning' ? 'text-yellow-600' :
                           notification.type === 'error' ? 'text-red-600' :
@@ -2085,32 +2103,32 @@ const AdminPanel: React.FC = () => {
                         }`} />
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
                               {notification.payload?.title || 'Notification'}
                             </p>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-xs sm:text-sm text-gray-600 mt-1">
                               {notification.payload?.message || notification.body}
                             </p>
                           </div>
                           {!notification.read && (
-                            <button onClick={() => notification._id && markNotificationRead.mutate(notification._id)} className="text-xs text-blue-600 hover:underline">
+                            <button onClick={() => notification._id && markNotificationRead.mutate(notification._id)} className="text-xs text-blue-600 hover:underline self-start">
                               Mark read
                             </button>
                           )}
                         </div>
                         <p className="text-xs text-gray-400 mt-2">
-                          {notification.createdAt ? new Date(notification.createdAt).toLocaleString() : 'Unknown time'}
+                          {notification.createdAt ? new Date(notification.createdAt).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit'}) : 'Unknown time'}
                         </p>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="p-12 text-center">
-                  <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No notifications yet</p>
+                <div className="p-8 sm:p-12 text-center">
+                  <Bell className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-gray-600 text-sm sm:text-base">No notifications yet</p>
                 </div>
               )}
             </div>
@@ -2153,14 +2171,14 @@ const AdminPanel: React.FC = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={() => window.location.reload()}
-              className="px-3 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
+              className="px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               Refresh
             </button>
           </div>
         }
       >
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6 pt-4 sm:pt-6">
           {renderContent()}
         </div>
       </DashboardLayout>

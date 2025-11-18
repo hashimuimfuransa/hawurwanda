@@ -101,106 +101,102 @@ const StaffDashboardSummary: React.FC = () => {
   console.log('StaffDashboardSummary - Today confirmed:', todayConfirmedBookings.length);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-3 sm:space-y-4">
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
         {/* Total Bookings */}
-        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
-              <Calendar className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+        <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-white/20 rounded-md sm:rounded-lg md:rounded-xl backdrop-blur-sm">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-blue-100 text-xs sm:text-sm font-medium">Ubusabe Bwose</div>
-              <div className="text-lg sm:text-2xl font-bold">{totalBookings}</div>
+              <div className="text-blue-100 text-xs font-medium">Ubusabe Bwose</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold">{totalBookings}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-blue-100 text-xs">
-            <Users className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Ubusabe Bwose</span>
-            <span className="sm:hidden">Byose</span>
+            <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
+            <span className="truncate">Ubusabe Bwose</span>
           </div>
         </div>
 
         {/* Completed Services */}
-        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
-              <CheckCircle className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-white/20 rounded-md sm:rounded-lg md:rounded-xl backdrop-blur-sm">
+              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-green-100 text-xs sm:text-sm font-medium">Byarangiye</div>
-              <div className="text-lg sm:text-2xl font-bold">{completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length}</div>
+              <div className="text-green-100 text-xs font-medium">Byarangiye</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold">{completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-green-100 text-xs">
-            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Serivisi Zarangiye</span>
-            <span className="sm:hidden">Byarangiye</span>
+            <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
+            <span className="truncate">Serivisi Zarangiye</span>
           </div>
         </div>
 
         {/* Pending Bookings */}
-        <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
-              <Clock className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+        <div className="bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-white/20 rounded-md sm:rounded-lg md:rounded-xl backdrop-blur-sm">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-yellow-100 text-xs sm:text-sm font-medium">Bitegerejwe</div>
-              <div className="text-lg sm:text-2xl font-bold">{todayPendingBookings.length}</div>
+              <div className="text-yellow-100 text-xs font-medium">Bitegerejwe</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold">{todayPendingBookings.length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-yellow-100 text-xs">
-            <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Bitegerejwe Kwemezwa</span>
-            <span className="sm:hidden">Kwinjira</span>
+            <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
+            <span className="truncate">Bitegerejwe Kwemezwa</span>
           </div>
         </div>
 
         {/* Today's Revenue */}
-        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 sm:p-3 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
-              <DollarSign className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+        <div className="bg-gradient-to-br from-purple-500 to-violet-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-white/20 rounded-md sm:rounded-lg md:rounded-xl backdrop-blur-sm">
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-purple-100 text-xs sm:text-sm font-medium">Inyungu</div>
-              <div className="text-lg sm:text-2xl font-bold">{todayRevenue.toLocaleString()}</div>
+              <div className="text-purple-100 text-xs font-medium">Inyungu</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold">{todayRevenue.toLocaleString()}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-purple-100 text-xs">
-            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-            <span className="hidden sm:inline">Amafaranga RWF yinjijwe uyu munsi</span>
-            <span className="sm:hidden">RWF</span>
+            <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
+            <span className="truncate">Amafaranga RWF yinjijwe uyu munsi</span>
           </div>
         </div>
       </div>
 
       {/* Additional Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 md:gap-4">
         {/* Confirmed Bookings */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 dark:text-blue-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-md sm:rounded-lg">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-medium">Confirmed Bookings</div>
-              <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{allConfirmedBookings.length}</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">Confirmed Bookings</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white">{allConfirmedBookings.length}</div>
             </div>
           </div>
         </div>
 
         {/* Walk-in Customers */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 rounded-lg">
-              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600 dark:text-orange-400" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all duration-300">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="p-1.5 sm:p-2 md:p-3 bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/30 dark:to-orange-800/30 rounded-md sm:rounded-lg">
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm font-medium">Walk-in Customers</div>
-              <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{totalWalkIns}</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">Walk-in Customers</div>
+              <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white">{totalWalkIns}</div>
             </div>
           </div>
         </div>
@@ -208,17 +204,17 @@ const StaffDashboardSummary: React.FC = () => {
 
       {/* Commission Earned - Full Width */}
       {earnings && (
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between">
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <p className="text-indigo-100 text-sm font-medium">Commission Earned Today</p>
-              <p className="text-xl sm:text-3xl font-bold">{earnings.totalCommission.toLocaleString()} RWF</p>
-              <p className="text-indigo-200 text-xs sm:text-sm mt-1">
+              <p className="text-indigo-100 text-xs sm:text-sm font-medium">Commission Earned Today</p>
+              <p className="text-base sm:text-2xl md:text-3xl font-bold">{earnings.totalCommission.toLocaleString()} RWF</p>
+              <p className="text-indigo-200 text-xs mt-1">
                 From {earnings.totalBookings + earnings.totalWalkIns} services
               </p>
             </div>
-            <div className="p-3 sm:p-4 bg-white/20 rounded-xl backdrop-blur-sm">
-              <TrendingUp className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
+            <div className="p-2 sm:p-3 md:p-4 bg-white/20 rounded-lg sm:rounded-xl backdrop-blur-sm">
+              <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
             </div>
           </div>
         </div>

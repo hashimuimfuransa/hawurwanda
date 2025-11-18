@@ -157,24 +157,24 @@ const DashboardStaff: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Staff Dashboard</h1>
-              <p className="text-lg text-gray-600">Welcome back, {user.name}!</p>
-              <p className="text-sm text-gray-500 capitalize">{(user as any).staffCategory || user.role}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Staff Dashboard</h1>
+              <p className="text-base sm:text-lg text-gray-600">Welcome back, {user.name}!</p>
+              <p className="text-xs sm:text-sm text-gray-500 capitalize truncate">{(user as any).staffCategory || user.role}</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm text-gray-500">Today</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-500">Today</p>
+                <p className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                   {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
+                    weekday: 'short', 
                     year: 'numeric', 
-                    month: 'long', 
+                    month: 'short', 
                     day: 'numeric' 
                   })}
                 </p>
@@ -184,64 +184,64 @@ const DashboardStaff: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 sm:mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Today's Bookings</p>
-                <p className="text-2xl font-bold">{todayBookings.length}</p>
-                <p className="text-blue-200 text-xs mt-1">
+                <p className="text-blue-100 text-xs sm:text-sm font-medium">Today's Bookings</p>
+                <p className="text-xl sm:text-2xl font-bold">{todayBookings.length}</p>
+                <p className="text-blue-200 text-xs mt-1 truncate">
                   {todayBookings.filter((b: any) => b.status === 'completed').length} completed
                 </p>
               </div>
-              <Calendar className="h-8 w-8 text-blue-200" />
+              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-blue-200" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Upcoming</p>
-                <p className="text-2xl font-bold">{upcomingBookings.length}</p>
-                <p className="text-green-200 text-xs mt-1">
+                <p className="text-green-100 text-xs sm:text-sm font-medium">Upcoming</p>
+                <p className="text-xl sm:text-2xl font-bold">{upcomingBookings.length}</p>
+                <p className="text-green-200 text-xs mt-1 truncate">
                   {upcomingBookings.filter((b: any) => b.status === 'confirmed').length} confirmed
                 </p>
               </div>
-              <Clock className="h-8 w-8 text-green-200" />
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-green-200" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-6 text-white">
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Completed</p>
-                <p className="text-2xl font-bold">{completedBookings.length}</p>
-                <p className="text-purple-200 text-xs mt-1">
+                <p className="text-purple-100 text-xs sm:text-sm font-medium">Completed</p>
+                <p className="text-xl sm:text-2xl font-bold">{completedBookings.length}</p>
+                <p className="text-purple-200 text-xs mt-1 truncate">
                   This month: {completedBookings.length}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-purple-200" />
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-200" />
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-6 text-white">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg p-4 sm:p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Total Earnings</p>
-                <p className="text-2xl font-bold">{totalEarnings.toLocaleString()} RWF</p>
-                <p className="text-orange-200 text-xs mt-1">
+                <p className="text-orange-100 text-xs sm:text-sm font-medium">Total Earnings</p>
+                <p className="text-xl sm:text-2xl font-bold truncate">{totalEarnings.toLocaleString()} RWF</p>
+                <p className="text-orange-200 text-xs mt-1 truncate">
                   Commission: {(totalEarnings * 0.7).toLocaleString()} RWF
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-orange-200" />
+              <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-orange-200" />
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 overflow-x-auto">
+            <nav className="-mb-px flex space-x-4 sm:space-x-6 md:space-x-8 overflow-x-auto pb-2">
               {[
                 { id: 'overview', label: 'Overview', icon: Calendar },
                 { id: 'bookings', label: 'Bookings', icon: ClipboardList },
@@ -256,16 +256,16 @@ const DashboardStaff: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center whitespace-nowrap ${
+                    className={`py-2 px-1 border-b-2 font-medium text-xs sm:text-sm flex items-center whitespace-nowrap ${
                       activeTab === tab.id
                         ? 'border-blue-500 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <Icon className="h-4 w-4 mr-2" />
-                    {tab.label}
+                    <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                    <span className="truncate">{tab.label}</span>
                     {tab.badge && tab.badge > 0 && (
-                      <span className="ml-2 px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
+                      <span className="ml-1 sm:ml-2 px-1.5 py-0.5 sm:px-2 sm:py-1 text-xs font-semibold text-white bg-red-500 rounded-full">
                         {tab.badge}
                       </span>
                     )}
@@ -283,49 +283,57 @@ const DashboardStaff: React.FC = () => {
             <StaffDashboardSummary />
 
             {/* Today's Bookings */}
-            <div className="card">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Today's Bookings</h2>
-              {todayBookings.length === 0 ? (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No bookings for today</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {todayBookings.map((booking: any) => (
-                    <BookingCard
-                      key={booking._id}
-                      booking={booking}
-                      onStatusChange={handleBookingStatusChange}
-                      onPaymentRecord={handlePaymentRecord}
-                      userRole={user.role}
-                    />
-                  ))}
-                </div>
-              )}
+            <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Today's Bookings</h2>
+              </div>
+              <div className="p-3 sm:p-4">
+                {todayBookings.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8">
+                    <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">No bookings for today</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 sm:space-y-4">
+                    {todayBookings.map((booking: any) => (
+                      <BookingCard
+                        key={booking._id}
+                        booking={booking}
+                        onStatusChange={handleBookingStatusChange}
+                        onPaymentRecord={handlePaymentRecord}
+                        userRole={user.role}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Upcoming Bookings */}
-            <div className="card">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Upcoming Bookings</h2>
-              {upcomingBookings.length === 0 ? (
-                <div className="text-center py-8">
-                  <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No upcoming bookings</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {upcomingBookings.slice(0, 5).map((booking: any) => (
-                    <BookingCard
-                      key={booking._id}
-                      booking={booking}
-                      onStatusChange={handleBookingStatusChange}
-                      onPaymentRecord={handlePaymentRecord}
-                      userRole={user.role}
-                    />
-                  ))}
-                </div>
-              )}
+            <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Upcoming Bookings</h2>
+              </div>
+              <div className="p-3 sm:p-4">
+                {upcomingBookings.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8">
+                    <Clock className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">No upcoming bookings</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 sm:space-y-4">
+                    {upcomingBookings.slice(0, 5).map((booking: any) => (
+                      <BookingCard
+                        key={booking._id}
+                        booking={booking}
+                        onStatusChange={handleBookingStatusChange}
+                        onPaymentRecord={handlePaymentRecord}
+                        userRole={user.role}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -337,14 +345,14 @@ const DashboardStaff: React.FC = () => {
 
         {/* Walk-ins Tab */}
         {activeTab === 'walkins' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Walk-in Customers</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Walk-in Customers</h2>
               <button
                 onClick={() => setShowWalkInForm(true)}
-                className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors flex items-center"
+                className="px-3 py-2 sm:px-4 sm:py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md transition-colors flex items-center text-sm sm:text-base"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 Add Walk-in Customer
               </button>
             </div>
@@ -359,23 +367,25 @@ const DashboardStaff: React.FC = () => {
 
         {/* Schedule Tab */}
         {activeTab === 'schedule' && (
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Manage Schedule</h2>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="input"
-                />
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Manage Schedule</h2>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="input text-sm sm:text-base px-2 py-1 sm:px-3 sm:py-2"
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Schedule management coming soon!</p>
-              <p className="text-sm text-gray-500 mt-2">
+            <div className="p-4 sm:p-6 text-center py-6 sm:py-8">
+              <Clock className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Schedule management coming soon!</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2 sm:mt-3">
                 You'll be able to block/unblock time slots and manage your availability.
               </p>
             </div>
@@ -384,66 +394,70 @@ const DashboardStaff: React.FC = () => {
 
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Notifications</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Notifications</h2>
               {notificationsData?.data?.notifications?.filter((n: any) => !n.read).length > 0 && (
                 <button
                   onClick={() => markAllNotificationsReadMutation.mutate()}
-                  className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                  className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                   Mark all read
                 </button>
               )}
             </div>
 
-            {notificationsData?.data?.notifications?.length === 0 ? (
-              <div className="text-center py-12">
-                <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No notifications yet</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  You'll receive notifications about bookings, payments, and updates here.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {notificationsData?.data?.notifications?.map((notification: any) => (
-                  <div
-                    key={notification._id}
-                    className={`p-4 rounded-lg border-l-4 ${
-                      !notification.read ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-300'
-                    } cursor-pointer hover:shadow-md transition-all duration-200`}
-                    onClick={() => !notification.read && markNotificationReadMutation.mutate(notification._id)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className={`text-sm font-semibold ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
-                          {notification.payload.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">{notification.payload.message}</p>
-                        <p className="text-xs text-gray-500 mt-2">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </p>
+            <div className="p-3 sm:p-4">
+              {notificationsData?.data?.notifications?.length === 0 ? (
+                <div className="text-center py-8 sm:py-12">
+                  <Bell className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">No notifications yet</p>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    You'll receive notifications about bookings, payments, and updates here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {notificationsData?.data?.notifications?.map((notification: any) => (
+                    <div
+                      key={notification._id}
+                      className={`p-3 sm:p-4 rounded-lg border-l-4 ${
+                        !notification.read ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500' : 'bg-gray-50 dark:bg-gray-700/30 border-gray-300'
+                      } cursor-pointer hover:shadow-md transition-all duration-200`}
+                      onClick={() => !notification.read && markNotificationReadMutation.mutate(notification._id)}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className={`text-sm font-semibold ${!notification.read ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                            {notification.payload.title}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.payload.message}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.read && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                        )}
                       </div>
-                      {!notification.read && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                      )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && (
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Barber Settings</h2>
-            <div className="text-center py-8">
-              <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Settings panel coming soon!</p>
-              <p className="text-sm text-gray-500 mt-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Barber Settings</h2>
+            </div>
+            <div className="p-4 sm:p-6 text-center py-6 sm:py-8">
+              <Settings className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-3 sm:mb-4" />
+              <p className="text-gray-600 dark:text-gray-300 text-sm sm:text-base">Settings panel coming soon!</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-2">
                 You'll be able to update your profile, services, and preferences.
               </p>
             </div>

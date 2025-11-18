@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   Home,
-  QrCode
+  QrCode,
+  X
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
@@ -53,48 +54,46 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-30 w-72 sm:w-64 bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
+        fixed inset-y-0 left-0 z-30 w-64 sm:w-72 bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-slate-700">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 border-b border-slate-700">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Home className="w-6 h-6 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
+                <Home className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="ml-3 text-xl font-bold text-white">Urubuga rw'Abakozi</span>
+              <span className="ml-2 sm:ml-3 text-sm sm:text-xl font-bold text-white truncate">Urubuga rw'Abakozi</span>
             </div>
             <button
               onClick={onClose}
-              className="lg:hidden p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              className="lg:hidden p-1 sm:p-2 rounded-md text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
           {/* User Info */}
-          <div className="px-6 py-6 border-b border-slate-700">
+          <div className="px-4 sm:px-6 py-4 sm:py-6 border-b border-slate-700">
             <div className="flex items-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-lg font-bold text-white">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-base sm:text-lg font-bold text-white">
                   {user?.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-semibold text-white">{user?.name}</p>
-                <p className="text-xs text-slate-300 capitalize">{user?.role}</p>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <p className="text-xs sm:text-sm font-semibold text-white truncate">{user?.name}</p>
+                <p className="text-xs text-slate-300 capitalize truncate">{user?.role}</p>
                 {salon && (
-                  <p className="text-xs text-slate-400">{salon.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{salon.name}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 px-2 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
             {navigation.map((item) => {
               const Icon = item.icon;
               return (
@@ -103,7 +102,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
                   to={item.href}
                   onClick={onClose}
                   className={`
-                    group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200
+                    group flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium rounded-lg sm:rounded-xl transition-all duration-200
                     ${item.current
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
                       : 'text-slate-300 hover:bg-slate-700 hover:text-white hover:shadow-md'
@@ -112,24 +111,24 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
                 >
                   <Icon
                     className={`
-                      mr-4 h-5 w-5 flex-shrink-0
+                      mr-2 sm:mr-4 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0
                       ${item.current ? 'text-white' : 'text-slate-400 group-hover:text-white'}
                     `}
                   />
-                  {item.name}
+                  <span className="truncate">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="px-4 py-4 border-t border-slate-700">
+          <div className="px-2 sm:px-4 py-3 sm:py-4 border-t border-slate-700">
             <button
               onClick={handleLogout}
-              className="group flex items-center w-full px-4 py-3 text-sm font-medium text-slate-300 rounded-xl hover:bg-red-600 hover:text-white transition-all duration-200"
+              className="group flex items-center w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-300 rounded-lg sm:rounded-xl hover:bg-red-600 hover:text-white transition-all duration-200"
             >
-              <LogOut className="mr-4 h-5 w-5 text-slate-400 group-hover:text-white" />
-              Sohoka
+              <LogOut className="mr-2 sm:mr-4 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-hover:text-white" />
+              <span className="truncate">Sohoka</span>
             </button>
           </div>
         </div>
