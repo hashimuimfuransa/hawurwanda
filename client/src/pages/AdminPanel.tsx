@@ -251,6 +251,12 @@ const AdminPanel: React.FC = () => {
     },
     initialPageParam: 1,
   });
+  
+  // Fetch all staff data for gender statistics (without filters)
+  const { data: allStaffData } = useQuery({
+    queryKey: ['admin-all-staff'],
+    queryFn: () => adminService.getAllStaff({ limit: 1000 }), // Fetch all staff with high limit
+  });
 
   // Extract data from API responses (handle both direct arrays and nested data structures)
   const users = usersData?.pages?.flatMap(page => {
@@ -275,6 +281,17 @@ const AdminPanel: React.FC = () => {
     if (page?.data?.staff) return page.data.staff;
     return [];
   }) || [];
+  
+  // Extract all staff data for gender statistics (without filters)
+  const allStaff = allStaffData?.data?.staff || allStaffData?.staff || [];
+  
+  // Debug logging for staff data
+  React.useEffect(() => {
+    console.log('AdminPanel: staffData:', staffData);
+    console.log('AdminPanel: extracted staff:', staff);
+    console.log('AdminPanel: allStaffData:', allStaffData);
+    console.log('AdminPanel: extracted allStaff:', allStaff);
+  }, [staffData, staff, allStaffData, allStaff]);
   const notifications = Array.isArray(notificationsData) ? notificationsData : (notificationsData?.data?.notifications || []);
   console.log('AdminPanel notifications data:', notificationsData);
   console.log('AdminPanel extracted notifications:', notifications);
@@ -580,6 +597,19 @@ const AdminPanel: React.FC = () => {
   // Get total bookings from the bookings data pagination
   const totalBookingsFromPagination = bookingsData?.data?.pagination?.total || bookingsData?.pagination?.total || bookings.length;
 
+  // Calculate male and female staff counts
+  const maleStaff = allStaff.filter((s: any) => {
+    if (!s.gender) return false;
+    const gender = s.gender.toString().toLowerCase();
+    return gender === 'male' || gender === 'm' || gender === 'man' || gender === 'boy';
+  }).length;
+  
+  const femaleStaff = allStaff.filter((s: any) => {
+    if (!s.gender) return false;
+    const gender = s.gender.toString().toLowerCase();
+    return gender === 'female' || gender === 'f' || gender === 'woman' || gender === 'girl';
+  }).length;
+
   const stats = {
     totalUsers,
     totalSalons: salons.length,
@@ -591,6 +621,9 @@ const AdminPanel: React.FC = () => {
     revenue: bookingsData?.data?.statistics?.totalRevenue || bookingsData?.statistics?.totalRevenue || bookings
       .filter((b: any) => b.status === 'completed')
       .reduce((sum: number, b: any) => sum + (b.totalPrice || 0), 0),
+    totalStaff: staff.length,
+    maleStaff,
+    femaleStaff
   };
 
   // Report download handler
@@ -606,6 +639,9 @@ const AdminPanel: React.FC = () => {
           totalRevenue: stats.revenue,
           verifiedSalons: stats.verifiedSalons,
           pendingSalons: stats.pendingSalons,
+          totalStaff: stats.totalStaff,
+          maleStaff: stats.maleStaff,
+          femaleStaff: stats.femaleStaff,
         },
         userDistribution: reports.usersByRole || [],
         staffGenderDistribution: analytics.staffGenderDistribution || [],
@@ -625,6 +661,9 @@ const AdminPanel: React.FC = () => {
         `Total Revenue,${reportData.summary.totalRevenue} RWF`,
         `Verified Salons,${reportData.summary.verifiedSalons}`,
         `Pending Salons,${reportData.summary.pendingSalons}`,
+        `Total Staff,${reportData.summary.totalStaff}`,
+        `Male Staff,${reportData.summary.maleStaff}`,
+        `Female Staff,${reportData.summary.femaleStaff}`,
         '',
         'User Distribution:',
         'Role,Count',
@@ -818,7 +857,7 @@ const AdminPanel: React.FC = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4">
               <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -863,6 +902,30 @@ const AdminPanel: React.FC = () => {
                   </div>
                   <div className="p-2 bg-amber-100 rounded-lg">
                     <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">Male Staff</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.maleStaff || 0}</p>
+                  </div>
+                  <div className="p-2 bg-sky-100 rounded-lg">
+                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-sky-600" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">Female Staff</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stats.femaleStaff || 0}</p>
+                  </div>
+                  <div className="p-2 bg-pink-100 rounded-lg">
+                    <User className="h-5 w-5 sm:h-6 sm:w-6 text-pink-600" />
                   </div>
                 </div>
               </div>
@@ -1777,6 +1840,7 @@ const AdminPanel: React.FC = () => {
             analytics={analytics}
             stats={stats}
             bookings={bookings}
+            allStaff={allStaff} // Pass allStaff data
             onRefresh={() => window.location.reload()}
             onExport={handleDownloadReport}
           />
@@ -1788,6 +1852,7 @@ const AdminPanel: React.FC = () => {
             reports={reports}
             stats={stats}
             analytics={analytics}
+            allStaff={allStaff} // Pass allStaff data
             onDownloadReport={handleDownloadReport}
           />
         );

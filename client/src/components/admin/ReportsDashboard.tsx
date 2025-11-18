@@ -17,6 +17,7 @@ interface ReportsDashboardProps {
   reports: any;
   stats: any;
   analytics: any;
+  allStaff: any[]; // Add allStaff prop
   onDownloadReport: () => void;
 }
 
@@ -24,6 +25,7 @@ const ReportsDashboard: React.FC<ReportsDashboardProps> = ({
   reports, 
   stats,
   analytics,
+  allStaff, // Add allStaff prop
   onDownloadReport
 }) => {
   const handleDownloadPDF = () => {
@@ -78,22 +80,37 @@ const ReportsDashboard: React.FC<ReportsDashboardProps> = ({
       }
       
       // Staff Gender Distribution
-      if (analytics.staffGenderDistribution && analytics.staffGenderDistribution.length > 0) {
-        doc.setFontSize(16);
-        doc.text('Staff Gender Distribution', 20, (doc as any).lastAutoTable.finalY + 15);
-        
-        const genderDistributionData = [
-          ['Gender', 'Count'],
-          ...analytics.staffGenderDistribution.map((item: any) => [item._id || 'Not specified', item.count.toString()])
-        ];
-        
-        autoTable(doc, {
-          startY: (doc as any).lastAutoTable.finalY + 20,
-          head: [genderDistributionData[0]],
-          body: genderDistributionData.slice(1),
-          theme: 'grid'
-        });
-      }
+      // Calculate staff gender distribution from allStaff data
+      const maleCount = allStaff.filter((s: any) => {
+        if (!s.gender) return false;
+        const gender = s.gender.toString().toLowerCase();
+        return gender === 'male' || gender === 'm' || gender === 'man' || gender === 'boy';
+      }).length;
+      
+      const femaleCount = allStaff.filter((s: any) => {
+        if (!s.gender) return false;
+        const gender = s.gender.toString().toLowerCase();
+        return gender === 'female' || gender === 'f' || gender === 'woman' || gender === 'girl';
+      }).length;
+      
+      const otherCount = allStaff.length - maleCount - femaleCount;
+      
+      const genderDistributionData = [
+        ['Gender', 'Count'],
+        ['Male', maleCount.toString()],
+        ['Female', femaleCount.toString()],
+        ['Other/Not specified', otherCount.toString()]
+      ];
+      
+      doc.setFontSize(16);
+      doc.text('Staff Gender Distribution', 20, (doc as any).lastAutoTable.finalY + 15);
+      
+      autoTable(doc, {
+        startY: (doc as any).lastAutoTable.finalY + 20,
+        head: [genderDistributionData[0]],
+        body: genderDistributionData.slice(1),
+        theme: 'grid'
+      });
       
       // Booking Stats
       if (reports.bookingStats && reports.bookingStats.length > 0) {
@@ -234,13 +251,45 @@ const ReportsDashboard: React.FC<ReportsDashboardProps> = ({
             Staff Gender Distribution
           </h4>
           <div className="space-y-3">
-            {analytics.staffGenderDistribution && analytics.staffGenderDistribution.length > 0 ? (
-              analytics.staffGenderDistribution.map((item: any) => (
-                <div key={item._id || 'unknown'} className="flex justify-between items-center">
-                  <span className="text-gray-600 capitalize">{item._id || 'Not specified'}</span>
-                  <span className="font-semibold text-gray-900">{item.count}</span>
+            {allStaff && allStaff.length > 0 ? (
+              <>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 capitalize">Male</span>
+                  <span className="font-semibold text-gray-900">
+                    {allStaff.filter((s: any) => {
+                      if (!s.gender) return false;
+                      const gender = s.gender.toString().toLowerCase();
+                      return gender === 'male' || gender === 'm' || gender === 'man' || gender === 'boy';
+                    }).length}
+                  </span>
                 </div>
-              ))
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 capitalize">Female</span>
+                  <span className="font-semibold text-gray-900">
+                    {allStaff.filter((s: any) => {
+                      if (!s.gender) return false;
+                      const gender = s.gender.toString().toLowerCase();
+                      return gender === 'female' || gender === 'f' || gender === 'woman' || gender === 'girl';
+                    }).length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600 capitalize">Other/Not specified</span>
+                  <span className="font-semibold text-gray-900">
+                    {allStaff.length - 
+                      allStaff.filter((s: any) => {
+                        if (!s.gender) return false;
+                        const gender = s.gender.toString().toLowerCase();
+                        return gender === 'male' || gender === 'm' || gender === 'man' || gender === 'boy';
+                      }).length -
+                      allStaff.filter((s: any) => {
+                        if (!s.gender) return false;
+                        const gender = s.gender.toString().toLowerCase();
+                        return gender === 'female' || gender === 'f' || gender === 'woman' || gender === 'girl';
+                      }).length}
+                  </span>
+                </div>
+              </>
             ) : (
               <p className="text-gray-500 text-center py-2">No data available</p>
             )}

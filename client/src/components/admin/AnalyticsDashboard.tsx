@@ -31,6 +31,7 @@ interface AnalyticsDashboardProps {
   analytics: any;
   stats: any;
   bookings: any;
+  allStaff: any[]; // Add allStaff prop
   onRefresh: () => void;
   onExport: () => void;
 }
@@ -39,6 +40,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   analytics, 
   stats, 
   bookings,
+  allStaff, // Add allStaff prop
   onRefresh,
   onExport
 }) => {
@@ -67,21 +69,36 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     { name: 'Packages', value: 50 }
   ];
 
+  // Calculate staff gender distribution from allStaff data
+  const maleCount = allStaff.filter((s: any) => {
+    if (!s.gender) return false;
+    const gender = s.gender.toString().toLowerCase();
+    return gender === 'male' || gender === 'm' || gender === 'man' || gender === 'boy';
+  }).length;
+  
+  const femaleCount = allStaff.filter((s: any) => {
+    if (!s.gender) return false;
+    const gender = s.gender.toString().toLowerCase();
+    return gender === 'female' || gender === 'f' || gender === 'woman' || gender === 'girl';
+  }).length;
+  
+  const otherCount = allStaff.length - maleCount - femaleCount;
+  
   // Staff gender distribution data
   const staffGenderData = [
     { 
       name: 'Male', 
-      value: analytics.staffGenderDistribution?.find((item: any) => item._id === 'male')?.count || 0,
+      value: maleCount,
       color: '#3b82f6'
     },
     { 
       name: 'Female', 
-      value: analytics.staffGenderDistribution?.find((item: any) => item._id === 'female')?.count || 0,
+      value: femaleCount,
       color: '#ec4899'
     },
     { 
       name: 'Other/Not specified', 
-      value: analytics.staffGenderDistribution?.find((item: any) => !item._id)?.count || 0,
+      value: otherCount,
       color: '#9333ea'
     }
   ];
@@ -252,22 +269,30 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h4 className="text-lg font-semibold text-gray-900 mb-4">Staff Gender Distribution</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          {analytics.staffGenderDistribution ? (
-            analytics.staffGenderDistribution.map((item: any) => (
-              <div key={item._id || 'unknown'} className="text-center p-4 border border-gray-200 rounded-lg">
-                <div className="text-2xl font-bold text-gray-900">
-                  {item.count}
-                </div>
-                <div className="text-sm text-gray-600 mt-1 capitalize">
-                  {item._id || 'Not specified'}
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-3 text-center py-4 text-gray-500">
-              Loading gender distribution...
+          <div className="text-center p-4 border border-gray-200 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900">
+              {maleCount}
             </div>
-          )}
+            <div className="text-sm text-gray-600 mt-1 capitalize">
+              Male
+            </div>
+          </div>
+          <div className="text-center p-4 border border-gray-200 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900">
+              {femaleCount}
+            </div>
+            <div className="text-sm text-gray-600 mt-1 capitalize">
+              Female
+            </div>
+          </div>
+          <div className="text-center p-4 border border-gray-200 rounded-lg">
+            <div className="text-2xl font-bold text-gray-900">
+              {otherCount}
+            </div>
+            <div className="text-sm text-gray-600 mt-1 capitalize">
+              Other/Not specified
+            </div>
+          </div>
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
