@@ -214,6 +214,20 @@ const AdminPanel: React.FC = () => {
     queryFn: () => adminService.getActivities(),
   });
 
+  // Extract users data
+  const users = usersData?.pages?.flatMap(page => {
+    // Handle different response formats
+    if (page?.users) return page.users;
+    if (page?.data?.users) return page.data.users;
+    return [];
+  }) || [];
+
+  // Extract salons data
+  const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
+
+  // Extract bookings data
+  const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
+
   // Pending salons for verification tab
   const { data: pendingSalonsData } = useQuery({
     queryKey: ['admin-pending-salons'],
@@ -258,32 +272,25 @@ const AdminPanel: React.FC = () => {
     queryFn: () => adminService.getAllStaff({ limit: 1000 }), // Fetch all staff with high limit
   });
 
-  // Extract data from API responses (handle both direct arrays and nested data structures)
-  const users = usersData?.pages?.flatMap(page => {
-    // Handle different response formats
-    if (page?.users) return page.users;
-    if (page?.data?.users) return page.data.users;
-    return [];
-  }) || [];
-  
-  // Debug logging for users
-  React.useEffect(() => {
-    console.log('AdminPanel: usersData:', usersData);
-    console.log('AdminPanel: extracted users:', users);
-    console.log('AdminPanel: users with role owner:', users.filter((u: any) => u.role === 'owner'));
-    console.log('AdminPanel: all user roles:', users.map((u: any) => u.role));
-  }, [usersData, users]);
-  const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
-  const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
-  const staff = staffData?.pages?.flatMap(page => {
-    // Handle different response formats
-    if (page?.staff) return page.staff;
-    if (page?.data?.staff) return page.data.staff;
-    return [];
-  }) || [];
-  
+  // Extract staff data
+  const staff = (() => {
+    if (!staffData || !staffData.pages) return [];
+    return staffData.pages.flatMap(page => {
+      // Handle different response formats
+      if (page?.staff) return page.staff;
+      if (page?.data?.staff) return page.data.staff;
+      return [];
+    }) || [];
+  })();
+
   // Extract all staff data for gender statistics (without filters)
-  const allStaff = allStaffData?.data?.staff || allStaffData?.staff || [];
+  const allStaff = (() => {
+    if (!allStaffData) return [];
+    // Handle different response formats
+    if (allStaffData.data && allStaffData.data.staff && Array.isArray(allStaffData.data.staff)) return allStaffData.data.staff;
+    if (allStaffData.staff && Array.isArray(allStaffData.staff)) return allStaffData.staff;
+    return [];
+  })();
   
   // Debug logging for staff data
   React.useEffect(() => {
@@ -300,8 +307,36 @@ const AdminPanel: React.FC = () => {
   const pendingSalons = Array.isArray(pendingSalonsData) ? pendingSalonsData : (pendingSalonsData?.data?.salons || pendingSalonsData?.data || []);
   const activities = Array.isArray(activitiesData) ? activitiesData : (activitiesData?.data?.activities || activitiesData?.data || []);
 
-  // Derived owners from users - include users with 'owner' or 'manager' role, or users with salonId assigned
-  const owners = (users || []).filter((u: any) => u.role === 'owner' || u.role === 'manager' || u.salonId);
+  // Fetch salon owners directly with 'owner' role
+  const {
+    data: ownersData,
+    isLoading: ownersLoading,
+    refetch: refetchOwners
+  } = useQuery({
+    queryKey: ['admin-owners', ownerSearchTerm],
+    queryFn: () => adminService.getUsers({
+      role: 'owner',
+      search: ownerSearchTerm || undefined,
+      limit: 1000
+    }),
+  });
+
+  // Extract owners data directly from backend
+  const owners = (() => {
+    if (!ownersData) return [];
+    // Handle different response formats
+    if (Array.isArray(ownersData)) return ownersData;
+    if (ownersData.data && Array.isArray(ownersData.data)) return ownersData.data;
+    if (ownersData.data && ownersData.data.users && Array.isArray(ownersData.data.users)) return ownersData.data.users;
+    if (ownersData.users && Array.isArray(ownersData.users)) return ownersData.users;
+    return [];
+  })();
+  
+  // Debug logging for owners data
+  React.useEffect(() => {
+    console.log('AdminPanel: ownersData:', ownersData);
+    console.log('AdminPanel: extracted owners:', owners);
+  }, [ownersData, owners]);
 
   // Salon details query
   const { data: salonDetails, isLoading: salonDetailsLoading } = useQuery({
