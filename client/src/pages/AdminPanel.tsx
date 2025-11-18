@@ -57,7 +57,7 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import CreateUserModal from '../components/admin/CreateUserModal';
 import SalonDetailsModal from '../components/admin/SalonDetailsModal';
-import StaffDigitalCard from '../components/admin/StaffDigitalCard';
+
 import AdminCreateSalon from '../components/admin/AdminCreateSalon';
 import AnalyticsDashboard from '../components/admin/AnalyticsDashboard';
 import ReportsDashboard from '../components/admin/ReportsDashboard';
@@ -107,8 +107,7 @@ const AdminPanel: React.FC = () => {
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [selectedSalonForMigration, setSelectedSalonForMigration] = useState<string>('');
   const [selectedStaffServices, setSelectedStaffServices] = useState<string[]>([]);
-  const [showStaffCardModal, setShowStaffCardModal] = useState(false);
-  const [selectedStaffForCard, setSelectedStaffForCard] = useState<any>(null);
+
   const [showCreateStaffModal, setShowCreateStaffModal] = useState(false);
   const [staffFormData, setStaffFormData] = useState({
     name: '',
@@ -3084,15 +3083,6 @@ const AdminPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Staff Digital Card Modal */}
-      <StaffDigitalCard 
-        staff={selectedStaffForCard}
-        isOpen={showStaffCardModal}
-        onClose={() => {
-          setShowStaffCardModal(false);
-          setSelectedStaffForCard(null);
-        }}
-      />
 
       {/* Edit Salon Modal */}
       <EditSalonModal

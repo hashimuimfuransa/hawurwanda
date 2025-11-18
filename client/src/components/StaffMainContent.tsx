@@ -190,7 +190,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                 </div>
                 <input
                   type="text"
-                  placeholder="Shakisha..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-32 sm:w-48 lg:w-64 pl-8 sm:pl-10 pr-3 py-1.5 sm:py-2 border border-gray-200 dark:border-gray-600 rounded-lg sm:rounded-xl leading-5 bg-white/70 dark:bg-gray-700/70 backdrop-blur-sm placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-xs sm:text-sm transition-all duration-200"
@@ -213,7 +213,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                   <form onSubmit={handleSearch} className="flex">
                     <input
                       type="text"
-                      placeholder="Shakisha..."
+                      placeholder={t('searchPlaceholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="flex-1 pl-3 pr-10 py-2 border border-gray-200 dark:border-gray-600 rounded-l-lg leading-5 bg-white/90 dark:bg-gray-700/90 backdrop-blur-sm placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
@@ -256,8 +256,12 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                   <div className="absolute right-0 mt-1 sm:mt-2 w-64 sm:w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md rounded-xl sm:rounded-2xl shadow-xl py-1.5 sm:py-2 z-50 border border-gray-200 dark:border-gray-700 max-h-80 sm:max-h-96 overflow-hidden">
                     <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-gray-100 dark:border-gray-700">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">Amamenyesha</h3>
-                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{unreadCount} unread</span>
+                        <h3 className="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">{t('notificationsTitle')}</h3>
+                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                                          {unreadCount === 1 
+                                            ? `${unreadCount} ${t('unreadNotifications')}` 
+                                            : `${unreadCount} ${t('unreadNotificationsPlural')}`}
+                                        </span>
                       </div>
                     </div>
                     
@@ -310,7 +314,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                       ) : (
                         <div className="px-4 py-6 sm:py-8 text-center">
                           <Bell className="h-8 w-8 sm:h-12 sm:w-12 text-gray-400 mx-auto mb-2 sm:mb-3" />
-                          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">No notifications yet</p>
+                          <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">{t('noNotificationsYet')}</p>
                         </div>
                       )}
                     </div>
@@ -318,7 +322,7 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                     {notifications.length > 0 && (
                       <div className="px-3 sm:px-4 py-1.5 sm:py-2 border-t border-gray-100 dark:border-gray-700">
                         <button className="w-full text-center text-xs sm:text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium">
-                          View all notifications
+                          {t('viewAll')}
                         </button>
                       </div>
                     )}
@@ -331,10 +335,10 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
             <button
               onClick={() => toggleLanguage()}
               className="hidden sm:flex items-center justify-center gap-1.5 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:shadow-lg transition-all duration-200 whitespace-nowrap font-medium text-xs sm:text-sm"
-              title={t('languageToggle')}
+              title={language === 'en' ? t('english') : t('kinyarwanda')}
             >
               <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden lg:inline">{language === 'en' ? 'EN' : 'RW'}</span>
+              <span className="hidden lg:inline">{language === 'en' ? t('englishShort') : t('kinyarwandaShort')}</span>
             </button>
 
             {/* User Menu */}
@@ -396,14 +400,14 @@ const StaffMainContent: React.FC<StaffMainContentProps> = ({
                       className="flex items-center w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
                     >
                       <Settings className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 group-hover:rotate-90 transition-transform" />
-                      Settings
+                      {t('settings')}
                     </button>
                     <button
                       onClick={handleLogout}
                       className="flex items-center w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors group"
                     >
                       <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-2 sm:mr-3 group-hover:scale-110 transition-transform" />
-                      Sign out
+                      {t('logout')}
                     </button>
                   </div>
                 </>

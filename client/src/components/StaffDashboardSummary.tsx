@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { walkInCustomerService, staffEarningsService, bookingService } from '../services/api';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslationStore } from '../stores/translationStore';
 import { 
   DollarSign, 
   Users, 
@@ -13,6 +14,7 @@ import {
 
 const StaffDashboardSummary: React.FC = () => {
   const { user } = useAuthStore();
+  const { language, t } = useTranslationStore();
 
   const todayKey = new Date().toISOString().split('T')[0];
   const todayLabel = React.useMemo(() => new Date().toDateString(), []);
@@ -111,13 +113,13 @@ const StaffDashboardSummary: React.FC = () => {
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-blue-100 text-xs font-medium">Ubusabe Bwose</div>
+              <div className="text-blue-100 text-xs font-medium">{t('totalBookings')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold">{totalBookings}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-blue-100 text-xs">
             <Users className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
-            <span className="truncate">Ubusabe Bwose</span>
+            <span className="truncate">{t('totalBookings')}</span>
           </div>
         </div>
 
@@ -128,13 +130,13 @@ const StaffDashboardSummary: React.FC = () => {
               <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-green-100 text-xs font-medium">Byarangiye</div>
+              <div className="text-green-100 text-xs font-medium">{t('completedServices')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold">{completedBookingsTotal.length + walkIns.filter((w: any) => w.status === 'completed' || w.paymentStatus === 'paid').length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-green-100 text-xs">
             <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
-            <span className="truncate">Serivisi Zarangiye</span>
+            <span className="truncate">{t('completedServices')}</span>
           </div>
         </div>
 
@@ -145,13 +147,13 @@ const StaffDashboardSummary: React.FC = () => {
               <Clock className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-yellow-100 text-xs font-medium">Bitegerejwe</div>
+              <div className="text-yellow-100 text-xs font-medium">{t('pending')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold">{todayPendingBookings.length}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-yellow-100 text-xs">
             <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
-            <span className="truncate">Bitegerejwe Kwemezwa</span>
+            <span className="truncate">{t('pendingConfirmations')}</span>
           </div>
         </div>
 
@@ -162,13 +164,13 @@ const StaffDashboardSummary: React.FC = () => {
               <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
             </div>
             <div className="text-right">
-              <div className="text-purple-100 text-xs font-medium">Inyungu</div>
+              <div className="text-purple-100 text-xs font-medium">{t('revenue')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold">{todayRevenue.toLocaleString()}</div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-purple-100 text-xs">
             <TrendingUp className="h-2.5 w-2.5 sm:h-3 sm:w-3 md:h-4 md:w-4" />
-            <span className="truncate">Amafaranga RWF yinjijwe uyu munsi</span>
+            <span className="truncate">{t('todayRevenue')}</span>
           </div>
         </div>
       </div>
@@ -182,7 +184,7 @@ const StaffDashboardSummary: React.FC = () => {
               <Calendar className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">Confirmed Bookings</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">{t('confirmedBookings')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white">{allConfirmedBookings.length}</div>
             </div>
           </div>
@@ -195,7 +197,7 @@ const StaffDashboardSummary: React.FC = () => {
               <Users className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 text-orange-600 dark:text-orange-400" />
             </div>
             <div>
-              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">Walk-in Customers</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs font-medium">{t('walkInCustomers')}</div>
               <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white">{totalWalkIns}</div>
             </div>
           </div>
@@ -207,7 +209,7 @@ const StaffDashboardSummary: React.FC = () => {
         <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-6 text-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl transition-all duration-300">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
-              <p className="text-indigo-100 text-xs sm:text-sm font-medium">Commission Earned Today</p>
+              <p className="text-indigo-100 text-xs sm:text-sm font-medium">{t('commissionEarnedToday')}</p>
               <p className="text-base sm:text-2xl md:text-3xl font-bold">{earnings.totalCommission.toLocaleString()} RWF</p>
               <p className="text-indigo-200 text-xs mt-1">
                 From {earnings.totalBookings + earnings.totalWalkIns} services

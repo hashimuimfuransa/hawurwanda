@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslationStore } from '../stores/translationStore';
 
 interface StaffSidebarProps {
   isOpen: boolean;
@@ -24,18 +25,18 @@ interface StaffSidebarProps {
 
 const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) => {
   const { user, logout } = useAuthStore();
+  const { language, t } = useTranslationStore();
   const location = useLocation();
 
   const navigation = [
-    { name: 'Inshamake', href: '/dashboard/staff', icon: LayoutDashboard, current: location.pathname === '/dashboard/staff' },
-    { name: 'Ubusabe', href: '/dashboard/staff/bookings', icon: Calendar, current: location.pathname === '/dashboard/staff/bookings' },
-    { name: 'Abakiriya', href: '/dashboard/staff/customers', icon: Users, current: location.pathname === '/dashboard/staff/customers' },
-    { name: 'Abaza ku Isonga', href: '/dashboard/staff/walkins', icon: UserPlus, current: location.pathname === '/dashboard/staff/walkins' },
-    { name: 'Amafaranga', href: '/dashboard/staff/earnings', icon: BarChart3, current: location.pathname === '/dashboard/staff/earnings' },
-    { name: 'Igenamigambi', href: '/dashboard/staff/schedule', icon: Clock, current: location.pathname === '/dashboard/staff/schedule' },
-    { name: 'Ikarita ya Dijitali', href: '/dashboard/staff/digital-card', icon: QrCode, current: location.pathname === '/dashboard/staff/digital-card' },
-    { name: 'Amamenyesha', href: '/dashboard/staff/notifications', icon: Bell, current: location.pathname === '/dashboard/staff/notifications' },
-    { name: 'Igenamiterere', href: '/dashboard/staff/settings', icon: Settings, current: location.pathname === '/dashboard/staff/settings' },
+    { name: t('overview'), href: '/dashboard/staff', icon: LayoutDashboard, current: location.pathname === '/dashboard/staff' },
+    { name: t('bookings'), href: '/dashboard/staff/bookings', icon: Calendar, current: location.pathname === '/dashboard/staff/bookings' },
+    { name: t('customers'), href: '/dashboard/staff/customers', icon: Users, current: location.pathname === '/dashboard/staff/customers' },
+    { name: t('walkInCustomers'), href: '/dashboard/staff/walkins', icon: UserPlus, current: location.pathname === '/dashboard/staff/walkins' },
+    { name: t('earnings'), href: '/dashboard/staff/earnings', icon: BarChart3, current: location.pathname === '/dashboard/staff/earnings' },
+    { name: t('schedule'), href: '/dashboard/staff/schedule', icon: Clock, current: location.pathname === '/dashboard/staff/schedule' },
+    { name: t('notifications'), href: '/dashboard/staff/notifications', icon: Bell, current: location.pathname === '/dashboard/staff/notifications' },
+    { name: t('settings'), href: '/dashboard/staff/settings', icon: Settings, current: location.pathname === '/dashboard/staff/settings' },
   ];
 
   const handleLogout = () => {
@@ -64,7 +65,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
                 <Home className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <span className="ml-2 sm:ml-3 text-sm sm:text-xl font-bold text-white truncate">Urubuga rw'Abakozi</span>
+              <span className="ml-2 sm:ml-3 text-sm sm:text-xl font-bold text-white truncate">{t('staffDashboard')}</span>
             </div>
             <button
               onClick={onClose}
@@ -128,7 +129,7 @@ const StaffSidebar: React.FC<StaffSidebarProps> = ({ isOpen, onClose, salon }) =
               className="group flex items-center w-full px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-slate-300 rounded-lg sm:rounded-xl hover:bg-red-600 hover:text-white transition-all duration-200"
             >
               <LogOut className="mr-2 sm:mr-4 h-4 w-4 sm:h-5 sm:w-5 text-slate-400 group-hover:text-white" />
-              <span className="truncate">Sohoka</span>
+              <span className="truncate">{t('logout')}</span>
             </button>
           </div>
         </div>

@@ -174,11 +174,11 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                Gucunga Ubusabe
+                {t('manageBookings')}
                 <Sparkles className="h-4 w-4 text-purple-500" />
               </h2>
               <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                Cunga ubusabe bwose wahawwe
+                {t('manageAllBookings')}
               </p>
             </div>
           </div>
@@ -191,7 +191,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                placeholder="Iminsi yose"
+                placeholder={t('allDays')}
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
@@ -203,21 +203,21 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white appearance-none"
               >
-                <option value="all">Imiterere Yose</option>
-                <option value="pending">Bitegerejwe</option>
-                <option value="confirmed">Byemejwe</option>
-                <option value="completed">Byarangiye</option>
-                <option value="cancelled">Byahagaritswe</option>
+                <option value="all">{t('allStatuses')}</option>
+                <option value="pending">{t('pending')}</option>
+                <option value="confirmed">{t('confirmed')}</option>
+                <option value="completed">{t('completed')}</option>
+                <option value="cancelled">{t('cancelled')}</option>
               </select>
             </div>
 
             <button
               onClick={() => queryClient.invalidateQueries({ queryKey: ['staff-bookings', user?.id] })}
               className="w-full px-4 py-2.5 bg-purple-500 hover:bg-purple-600 text-white rounded-xl transition-colors duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-              title="Hindura amafunguro"
+              title={t('refreshData')}
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Hindura</span>
+              <span>{t('refresh')}</span>
             </button>
           </div>
         </div>
@@ -234,14 +234,14 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
               </div>
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Nta busabe bwabonetse
+              {t('noBookingsFound')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm mx-auto">
-              Ubusabe buzagaragara hano iyo wahawwe. Garuka nyuma cyangwa gerageza guhindura muyunguruzi.
+              {t('noBookingsDescription')}
             </p>
             <div className="flex items-center justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <AlertCircle className="h-4 w-4" />
-              <span>Gerageza guhindura muyunguruzi w'itariki cyangwa imiterere</span>
+              <span>{t('tryAdjustingFilters')}</span>
             </div>
           </div>
         ) : (
@@ -308,19 +308,19 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                     <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-600">
                       <div className="flex items-center gap-2 mb-3">
                         <Scissors className="h-4 w-4 text-purple-500" />
-                        <span className="font-semibold text-gray-900 dark:text-white text-sm">Ibisobanuro bya Serivisi</span>
+                        <span className="font-semibold text-gray-900 dark:text-white text-sm">{t('serviceDetails')}</span>
                       </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Serivisi:</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('service')}:</span>
                           <span className="font-medium text-gray-900 dark:text-white">{booking.serviceId?.title || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Isaloni:</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('salon')}:</span>
                           <span className="font-medium text-gray-900 dark:text-white">{booking.salonId?.name || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600 dark:text-gray-400">Ubwishyu:</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('payment')}:</span>
                           <span className={`font-medium ${
                             booking.paymentStatus === 'paid' 
                               ? 'text-green-600 dark:text-green-400' 
@@ -333,7 +333,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                         </div>
                         {booking.notes && (
                           <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
-                            <span className="text-gray-600 dark:text-gray-400">Ibisobanuro: </span>
+                            <span className="text-gray-600 dark:text-gray-400">{t('notes')}: </span>
                             <span className="text-gray-900 dark:text-white">{booking.notes}</span>
                           </div>
                         )}
@@ -352,7 +352,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                           className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
                         >
                           <Star className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span>Emeza</span>
+                          <span>{t('confirm')}</span>
                         </button>
                       )}
                       
@@ -366,7 +366,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                           className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
                         >
                           <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span>Soza</span>
+                          <span>{t('complete')}</span>
                         </button>
                       )}
                       
@@ -380,7 +380,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                           className="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
                         >
                           <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
-                          <span>Hagarika</span>
+                          <span>{t('cancel')}</span>
                         </button>
                       )}
                       
@@ -389,7 +389,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                         className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-1"
                       >
                         <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
-                        <span>Ubwishyu</span>
+                        <span>{t('payment')}</span>
                       </button>
                     </div>
                   </div>
@@ -405,7 +405,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Andika Ubwishyu
+              {t('recordPayment')}
             </h3>
             {(() => {
               const booking = bookings.find(b => b._id === showPaymentModal);
@@ -413,19 +413,19 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                 <>
                   {booking && (
                     <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Ibisobanuro by'Ubwishingizi</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">{t('bookingDetails')}</p>
                       <p className="text-sm font-semibold text-gray-900 dark:text-white">{booking.clientId?.name || 'Unknown'}</p>
                       <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Igiteranyo: </span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('total')}: </span>
                           <span className="font-bold text-gray-900 dark:text-white">{booking.amountTotal} RWF</span>
                         </div>
                         <div>
-                          <span className="text-gray-600 dark:text-gray-400">Yishyuwe: </span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('paid')}: </span>
                           <span className="font-bold text-green-600 dark:text-green-400">{booking.depositPaid} RWF</span>
                         </div>
                         <div className="col-span-2">
-                          <span className="text-gray-600 dark:text-gray-400">Asigaye: </span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('remaining')}: </span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">{booking.balanceRemaining} RWF</span>
                         </div>
                       </div>
@@ -434,7 +434,7 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                   <form onSubmit={handlePaymentSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Amafaranga (RWF)
+                        {t('amount')} (RWF)
                       </label>
                       <input
                         type="number"
@@ -442,30 +442,30 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                         step="100"
                         value={paymentData.amount}
                         onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                        placeholder="Andika amafaranga"
+                        placeholder={t('enterAmount')}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         required
                       />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Asigaye: {booking?.balanceRemaining} RWF
+                        {t('remaining')}: {booking?.balanceRemaining} RWF
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Uburyo bwo Kwishyura
+                        {t('paymentMethod')}
                       </label>
                       <select
                         value={paymentData.method}
                         onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as 'cash' | 'airtel' })}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
-                        <option value="cash">Amafaranga</option>
-                        <option value="airtel">Airtel Money</option>
+                        <option value="cash">{t('cash')}</option>
+                        <option value="airtel">{t('airtelMoney')}</option>
                       </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Ibisobanuro (Bitari ngombwa)
+                        {t('notesOptional')}
                       </label>
                       <textarea
                         value={paymentData.note}
@@ -480,13 +480,13 @@ const StaffBookingManagement: React.FC<StaffBookingManagementProps> = ({ showSal
                         onClick={() => setShowPaymentModal(null)}
                         className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
-                        Hagarika
+                        {t('close')}
                       </button>
                       <button
                         type="submit"
                         className="flex-1 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors"
                       >
-                        Andika Ubwishyu
+                        {t('recordPayment')}
                       </button>
                     </div>
                   </form>
