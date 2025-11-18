@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useThemeStore } from '../stores/themeStore';
 import { useTranslationStore } from '../stores/translationStore';
+import { bookingService } from '../services/api';
 import { 
   GraduationCap, 
   Megaphone, 
@@ -41,6 +42,7 @@ const Home: React.FC = () => {
   const { user } = useAuthStore();
   const { isDarkMode, toggleTheme } = useThemeStore();
   const { language, toggleLanguage, t } = useTranslationStore();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
 
@@ -49,6 +51,61 @@ const Home: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Redirect authenticated users based on their role and booking status
+  useEffect(() => {
+    if (user) {
+      // For clients, check booking status to determine where to redirect
+      if (user.role === 'client') {
+        const checkClientRedirect = async () => {
+          try {
+            // Fetch client's bookings
+            const response = await bookingService.getBookings();
+            
+            // Extract bookings list
+            let bookingsList = [];
+            if (response.data?.bookings) {
+              bookingsList = response.data.bookings;
+            } else if (response.data) {
+              bookingsList = response.data;
+            } else if (Array.isArray(response)) {
+              bookingsList = response;
+            }
+            
+            // If client has bookings, go to profile page
+            // If client has no bookings, go to salon list page
+            if (bookingsList.length > 0) {
+              navigate('/profile', { replace: true });
+            } else {
+              navigate('/salons', { replace: true });
+            }
+          } catch (error) {
+            // If there's an error fetching bookings, default to profile page
+            navigate('/profile', { replace: true });
+          }
+        };
+
+        checkClientRedirect();
+      } else {
+        // For non-client roles, redirect to their respective dashboards
+        const roleDashboardMap: Record<string, string> = {
+          'barber': '/dashboard/staff',
+          'hairstylist': '/dashboard/staff',
+          'nail_technician': '/dashboard/staff',
+          'massage_therapist': '/dashboard/staff',
+          'esthetician': '/dashboard/staff',
+          'receptionist': '/dashboard/staff',
+          'manager': '/dashboard/staff',
+          'owner': '/dashboard/owner',
+          'admin': '/admin',
+          'superadmin': '/superadmin'
+        };
+
+        const userDashboard = roleDashboardMap[user.role] || '/profile';
+        navigate(userDashboard, { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   // Add scroll-triggered animations
   useEffect(() => {
@@ -72,7 +129,6 @@ const Home: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-
   const getLanguageDisplay = () => {
     return language === 'rw' ? '🇷🇼 RW' : '🇺🇸 EN';
   };
@@ -87,26 +143,26 @@ const Home: React.FC = () => {
 
   const updates = [
     {
-      category: t('event', language),
+      category: t('event'),
       date: 'March 15, 2024',
-      title: t('annualGeneralMeeting', language),
-      description: t('annualGeneralMeetingDesc', language),
+      title: t('annualGeneralMeeting'),
+      description: t('annualGeneralMeetingDesc'),
       image: '/images/new1.jpeg',
       color: 'from-blue-500 to-purple-600'
     },
     {
-      category: t('news', language),
+      category: t('news'),
       date: 'February 28, 2024',
-      title: t('trainingGraduationParty', language),
-      description: t('trainingGraduationPartyDesc', language),
+      title: t('trainingGraduationParty'),
+      description: t('trainingGraduationPartyDesc'),
       image: '/images/image0.jpeg',
       color: 'from-green-500 to-teal-600'
     },
     {
-      category: t('certification', language),
+      category: t('certification'),
       date: 'February 10, 2024',
-      title: t('certificationProgramLaunch', language),
-      description: t('certificationProgramLaunchDesc', language),
+      title: t('certificationProgramLaunch'),
+      description: t('certificationProgramLaunchDesc'),
       image: '/images/image1.jpeg',
       color: 'from-orange-500 to-red-600'
     }
@@ -115,25 +171,25 @@ const Home: React.FC = () => {
   const testimonials = [
     {
       name: 'Marie Mukamana',
-      role: t('salonOwner', language),
+      role: t('salonOwner'),
       location: 'Kigali',
-      content: t('testimonialMarie', language),
+      content: t('testimonialMarie'),
       rating: 5,
       icon: Store
     },
     {
       name: 'Jean Baptiste',
-      role: t('professionalBarber', language),
+      role: t('professionalBarber'),
       location: 'Huye',
-      content: t('testimonialJean', language),
+      content: t('testimonialJean'),
       rating: 5,
       icon: Scissors
     },
     {
       name: 'Grace Uwimana',
-      role: t('beautyTherapist', language),
+      role: t('beautyTherapist'),
       location: 'Musanze',
-      content: t('testimonialGrace', language),
+      content: t('testimonialGrace'),
       rating: 5,
       icon: Wand2
     }
@@ -171,12 +227,12 @@ const Home: React.FC = () => {
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex space-x-8">
               {[
-                { to: '/', label: t('home', language) },
-                { to: '/about', label: t('about', language) },
-                { to: '/salons', label: t('salons', language) },
-                { to: '/programs', label: t('programs', language) },
-                { to: '/publications', label: t('publications', language) },
-                { to: '/contact', label: t('contact', language) }
+                { to: '/', label: t('home') },
+                { to: '/about', label: t('about') },
+                { to: '/salons', label: t('salons') },
+                { to: '/programs', label: t('programs') },
+                { to: '/publications', label: t('publications') },
+                { to: '/contact', label: t('contact') }
               ].map((item) => (
                 <Link
                   key={item.to}
@@ -220,16 +276,16 @@ const Home: React.FC = () => {
                   to="/profile" 
                   className="hidden sm:inline-flex px-3 sm:px-6 py-2 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-semibold rounded-full hover:from-emerald-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-xs sm:text-base"
                 >
-                  <span className="hidden sm:inline">{t('dashboard', language)}</span>
-                  <span className="sm:hidden">{t('dashboard', language)}</span>
+                  <span className="hidden sm:inline">{t('dashboard')}</span>
+                  <span className="sm:hidden">{t('dashboard')}</span>
                 </Link>
               ) : (
                 <Link 
                   to="/login" 
                   className="hidden sm:inline-flex px-3 sm:px-6 py-2 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-semibold rounded-full hover:from-emerald-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-xs sm:text-base"
                 >
-                  <span className="hidden sm:inline">{t('login', language)}</span>
-                  <span className="sm:hidden">{t('login', language)}</span>
+                  <span className="hidden sm:inline">{t('login')}</span>
+                  <span className="sm:hidden">{t('login')}</span>
                 </Link>
               )}
 
@@ -252,13 +308,13 @@ const Home: React.FC = () => {
             <div className="lg:hidden absolute top-16 left-0 right-0 bg-white dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-lg">
               <nav className="px-4 py-6 space-y-4">
                 {[
-                  { to: '/', label: t('home', language) },
-                  { to: '/about', label: t('about', language) },
-                  { to: '/salons', label: t('salons', language) },
-                  { to: '/programs', label: t('programs', language) },
-                  { to: '/news', label: t('news', language) },
-                  { to: '/publications', label: t('publications', language) },
-                  { to: '/contact', label: t('contact', language) }
+                  { to: '/', label: t('home') },
+                  { to: '/about', label: t('about') },
+                  { to: '/salons', label: t('salons') },
+                  { to: '/programs', label: t('programs') },
+                  { to: '/news', label: t('news') },
+                  { to: '/publications', label: t('publications') },
+                  { to: '/contact', label: t('contact') }
                 ].map((item) => (
                   <Link
                     key={item.to}
@@ -278,7 +334,7 @@ const Home: React.FC = () => {
                       className="block w-full text-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-blue-600 transition-all duration-300"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {t('dashboard', language)}
+                      {t('dashboard')}
                     </Link>
                   ) : (
                     <Link 
@@ -286,7 +342,7 @@ const Home: React.FC = () => {
                       className="block w-full text-center px-4 py-2 bg-gradient-to-r from-emerald-500 to-blue-500 text-white font-semibold rounded-lg hover:from-emerald-600 hover:to-blue-600 transition-all duration-300"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      {t('login', language)}
+                      {t('login')}
                     </Link>
                   )}
                 </div>
@@ -300,12 +356,12 @@ const Home: React.FC = () => {
                     {isDarkMode ? (
                       <>
                         <Sun className="h-5 w-5 text-yellow-500" />
-                        <span>{t('lightMode', language)}</span>
+                        <span>{t('lightMode')}</span>
                       </>
                     ) : (
                       <>
                         <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                        <span>{t('darkMode', language)}</span>
+                        <span>{t('darkMode')}</span>
                       </>
                     )}
                   </button>
@@ -340,17 +396,17 @@ const Home: React.FC = () => {
             <div className="space-y-10">
               <div className="inline-flex items-center px-6 py-3 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-lg shadow-emerald-500/10 backdrop-blur">
                 <Sparkles className="w-4 h-4 text-emerald-500 mr-2" />
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.28em] text-slate-600 dark:text-slate-200">{t('affiliatedToCestrar', language)}</span>
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-[0.28em] text-slate-600 dark:text-slate-200">{t('affiliatedToCestrar')}</span>
               </div>
 
               <div className="space-y-6">
                 <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.05]">
                   <span className="bg-gradient-to-r from-slate-900 via-emerald-600 to-indigo-700 bg-clip-text text-transparent dark:from-white dark:via-emerald-300 dark:to-sky-400">
-                    {t('heroTitle', language)}
+                    {t('heroTitle')}
                   </span>
                 </h1>
                 <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl">
-                  {t('heroSubtitle', language)}
+                  {t('heroSubtitle')}
                 </p>
               </div>
 
@@ -359,14 +415,14 @@ const Home: React.FC = () => {
                   to="/register"
                   className="group inline-flex items-center justify-center rounded-3xl px-8 py-4 text-sm font-semibold uppercase tracking-wide text-white bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600 transition-all duration-200"
                 >
-                  {t('becomeMember', language)}
+                  {t('becomeMember')}
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   to="/salons"
                   className="group inline-flex items-center justify-center rounded-3xl px-8 py-4 text-sm font-semibold uppercase tracking-wide border border-emerald-300 bg-white/70 text-emerald-600 hover:bg-emerald-500 hover:text-white hover:border-transparent transition-all duration-200 shadow-md shadow-emerald-500/15"
                 >
-                  {t('bookAppointment', language)}
+                  {t('bookAppointment')}
                   <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -374,15 +430,15 @@ const Home: React.FC = () => {
               <div className="flex flex-wrap gap-4 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-300">
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <CheckCircle className="h-5 w-5 text-emerald-500" />
-                  <span>{t('membersCount', language)}</span>
+                  <span>{t('membersCount')}</span>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <Shield className="h-5 w-5 text-sky-500" />
-                  <span>{t('trustedUnion', language)}</span>
+                  <span>{t('trustedUnion')}</span>
                 </div>
                 <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 shadow-sm">
                   <Award className="h-5 w-5 text-indigo-500" />
-                  <span>{t('yearsCount', language)}</span>
+                  <span>{t('yearsCount')}</span>
                 </div>
               </div>
             </div>
@@ -401,13 +457,13 @@ const Home: React.FC = () => {
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-900/0 via-slate-900/30 to-slate-900/70"></div>
 
                   <div className="absolute bottom-6 left-6 right-6 rounded-2xl bg-white/90 dark:bg-slate-900/85 px-5 py-4 shadow-lg shadow-emerald-500/10">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-1">{t('graduationCeremony', language)}</p>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('hawumembersAchievement', language)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-1">{t('graduationCeremony')}</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{t('hawumembersAchievement')}</p>
                   </div>
 
                   <div className="absolute top-6 right-6 flex flex-col gap-3">
-                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-emerald-500 shadow-md shadow-emerald-500/20">{t('membersCountShort', language)}</div>
-                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-sky-500 shadow-md shadow-sky-500/20">{t('districtsCount', language)}</div>
+                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-emerald-500 shadow-md shadow-emerald-500/20">{t('membersCountShort')}</div>
+                    <div className="rounded-2xl bg-white/90 dark:bg-slate-900/85 px-4 py-2 text-xs font-semibold text-sky-500 shadow-md shadow-sky-500/20">{t('districtsCount')}</div>
                   </div>
                 </div>
               </div>
@@ -435,13 +491,13 @@ const Home: React.FC = () => {
             <div className="space-y-10">
               <div className="space-y-6 max-w-2xl">
                 <span className="inline-flex items-center justify-start px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-                  {t('aboutHawu', language)}
+                  {t('aboutHawu')}
                 </span>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-                  {t('whoWeAre', language)}
+                  {t('whoWeAre')}
                 </h2>
                 <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300">
-                  {t('whoWeAreDesc', language)}
+                  {t('whoWeAreDesc')}
                 </p>
               </div>
 
@@ -454,10 +510,10 @@ const Home: React.FC = () => {
                     </div>
                     <div className="space-y-3">
                       <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                        {t('ourVisionHome', language)}
+                        {t('ourVisionHome')}
                       </h3>
                       <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-                        {t('ourVisionDescHome', language)}
+                        {t('ourVisionDescHome')}
                       </p>
                     </div>
                   </div>
@@ -471,10 +527,10 @@ const Home: React.FC = () => {
                     </div>
                     <div className="space-y-3">
                       <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">
-                        {t('ourMissionHome', language)}
+                        {t('ourMissionHome')}
                       </h3>
                       <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300">
-                        {t('ourMissionDescHome', language)}
+                        {t('ourMissionDescHome')}
                       </p>
                     </div>
                   </div>
@@ -497,10 +553,10 @@ const Home: React.FC = () => {
 
                   <div className="absolute bottom-6 left-6 right-6 rounded-2xl bg-white/90 dark:bg-slate-900/85 px-5 py-4 shadow-lg shadow-emerald-500/10">
                     <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 mb-1">
-                      {t('trainingGraduation', language)}
+                      {t('trainingGraduation')}
                     </p>
                     <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {t('professionalDevelopment', language)}
+                      {t('professionalDevelopment')}
                     </p>
                   </div>
 
@@ -527,13 +583,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 text-xs font-semibold uppercase tracking-[0.32em] text-white shadow-sm">
-              {t('ourProgrammesLabel', language)}
+              {t('ourProgrammesLabel')}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('empoweringOurMembers', language)}
+              {t('empoweringOurMembers')}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('empoweringOurMembersDesc', language)}
+              {t('empoweringOurMembersDesc')}
             </p>
           </div>
 
@@ -545,10 +601,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('skillsDevelopment', language)}
+                    {t('skillsDevelopment')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('skillsDevelopmentDesc', language)}
+                    {t('skillsDevelopmentDesc')}
                   </p>
                 </div>
               </div>
@@ -561,10 +617,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('advocacyRepresentation', language)}
+                    {t('advocacyRepresentation')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('advocacyRepresentationDesc', language)}
+                    {t('advocacyRepresentationDesc')}
                   </p>
                 </div>
               </div>
@@ -577,10 +633,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('collectiveBargaining', language)}
+                    {t('collectiveBargaining')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('collectiveBarganiningDesc', language)}
+                    {t('collectiveBarganiningDesc')}
                   </p>
                 </div>
               </div>
@@ -593,10 +649,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('memberWelfare', language)}
+                    {t('memberWelfare')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('memberWelfareDesc', language)}
+                    {t('memberWelfareDesc')}
                   </p>
                 </div>
               </div>
@@ -609,10 +665,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('businessSupport', language)}
+                    {t('businessSupport')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('businessSupportDesc', language)}
+                    {t('businessSupportDesc')}
                   </p>
                 </div>
               </div>
@@ -625,10 +681,10 @@ const Home: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('genderEquality', language)}
+                    {t('genderEquality')}
                   </h3>
                   <p className="text-sm text-slate-600 dark:text-slate-300">
-                    {t('genderEqualityDesc', language)}
+                    {t('genderEqualityDesc')}
                   </p>
                 </div>
               </div>
@@ -647,13 +703,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('partnerships', language)}
+              {t('partnerships')}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('strategicPartnerships', language)}
+              {t('strategicPartnerships')}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('partnershipsDesc', language)}
+              {t('partnershipsDesc')}
             </p>
           </div>
 
@@ -695,13 +751,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('latestNews', language)}
+              {t('latestNews')}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('stayUpdated', language)}
+              {t('stayUpdated')}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('latestNewsDesc', language)}
+              {t('latestNewsDesc')}
             </p>
           </div>
 
@@ -741,7 +797,7 @@ const Home: React.FC = () => {
                     to={`/news/${index}`}
                     className="mt-6 inline-flex items-center text-emerald-500 font-semibold text-sm sm:text-base transition-colors duration-200 hover:text-emerald-400"
                   >
-                    {t('readMore', language)}
+                    {t('readMore')}
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Link>
                 </div>
@@ -754,7 +810,7 @@ const Home: React.FC = () => {
               to="/publications"
               className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-emerald-400 via-sky-500 to-indigo-500 px-8 py-4 text-sm font-semibold uppercase tracking-[0.28em] text-white shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:from-emerald-500 hover:via-sky-600 hover:to-indigo-600"
             >
-              {t('viewAllNews', language)}
+              {t('viewAllNews')}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Link>
           </div>
@@ -770,13 +826,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
           <div className="inline-flex items-center justify-center rounded-full bg-white/15 px-6 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-white shadow-sm">
             <Sparkles className="mr-3 h-4 w-4" />
-            {t('joinUs', language)}
+            {t('joinUs')}
           </div>
           <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold">
-            {t('readyToJoin', language)}
+            {t('readyToJoin')}
           </h2>
           <p className="mt-4 text-base sm:text-lg text-white/90 max-w-3xl mx-auto">
-            {t('readyToJoinDesc', language)}
+            {t('readyToJoinDesc')}
           </p>
 
           <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
@@ -784,14 +840,14 @@ const Home: React.FC = () => {
               to="/register"
               className="group inline-flex items-center justify-center rounded-full bg-white px-8 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-emerald-600 shadow-lg shadow-white/25 transition-all duration-200 hover:shadow-xl hover:-translate-y-1"
             >
-              {t('becomeMember', language)}
+              {t('becomeMember')}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Link>
             <Link
               to="/contact"
               className="group inline-flex items-center justify-center rounded-full border border-white/80 px-8 py-4 text-sm font-semibold uppercase tracking-[0.24em] text-white transition-all duration-200 hover:bg-white/15"
             >
-              {t('contactUs', language)}
+              {t('contactUs')}
               <ArrowRight className="ml-3 h-5 w-5" />
             </Link>
           </div>
@@ -807,13 +863,13 @@ const Home: React.FC = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <span className="inline-flex items-center justify-center px-6 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-white/60 dark:border-slate-800/60 text-xs font-semibold uppercase tracking-[0.32em] text-emerald-500 shadow-sm">
-              {t('memberStories', language)}
+              {t('memberStories')}
             </span>
             <h2 className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
-              {t('whatOurMembersSay', language)}
+              {t('whatOurMembersSay')}
             </h2>
             <p className="mt-4 text-base sm:text-lg text-slate-600 dark:text-slate-300">
-              {t('whatOurMembersSayDesc', language)}
+              {t('whatOurMembersSayDesc')}
             </p>
           </div>
 
@@ -885,7 +941,7 @@ const Home: React.FC = () => {
           <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
             <Scissors className="h-10 w-10 text-white" />
           </div>
-          <p className="text-xl font-semibold text-gray-700 dark:text-gray-300">{t('loadingHawu', language)}</p>
+          <p className="text-xl font-semibold text-gray-700 dark:text-gray-300">{t('loadingHawu')}</p>
         </div>
       </div>
     </div>
@@ -893,4 +949,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
