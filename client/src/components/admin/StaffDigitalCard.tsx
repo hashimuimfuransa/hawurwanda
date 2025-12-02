@@ -301,14 +301,18 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
               <div className="mb-8">
                 <div className="bg-gray-900 p-4 rounded-xl inline-block">
                   <QRCode
-                    value={`HAWU-MEMBER-ID:${staff._id}\nNAME:${staff.name}\nROLE:${staff.staffCategory || staff.role || 'Staff'}`}
+                    value={`HAWU MEMBER PROFILE
+ID:${staff._id}
+Name:${staff.name}
+Role:${staff.staffCategory || staff.role || 'Staff'}
+Since:${formatDate(staff.createdAt)}`}
                     size={120}
                     bgColor="#111827"
                     fgColor="#ffffff"
                     level="H"
                   />
                 </div>
-                <p className="text-gray-600 text-sm mt-2">Scan for member details</p>
+                <p className="text-gray-600 text-sm mt-2">Scan to view member profile</p>
               </div>
 
               <div className="bg-gray-50 rounded-2xl p-6 w-full max-w-md">
