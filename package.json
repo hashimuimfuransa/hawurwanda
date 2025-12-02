@@ -29,5 +29,8 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
+  },
+  "dependencies": {
+    "html-to-image": "^1.11.13"
   }
 }
