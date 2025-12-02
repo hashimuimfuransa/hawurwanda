@@ -104,10 +104,11 @@ const AdminPanel: React.FC = () => {
   const [showStaffEditModal, setShowStaffEditModal] = useState(false);
   const [showStaffMigrationModal, setShowStaffMigrationModal] = useState(false);
   const [showServiceAssignmentModal, setShowServiceAssignmentModal] = useState(false);
+  const [showStaffCardModal, setShowStaffCardModal] = useState(false);
+  const [selectedStaffForCard, setSelectedStaffForCard] = useState<any>(null);
   const [selectedStaff, setSelectedStaff] = useState<any>(null);
   const [selectedSalonForMigration, setSelectedSalonForMigration] = useState<string>('');
   const [selectedStaffServices, setSelectedStaffServices] = useState<string[]>([]);
-
   const [showCreateStaffModal, setShowCreateStaffModal] = useState(false);
   const [staffFormData, setStaffFormData] = useState({
     name: '',
@@ -3097,6 +3098,90 @@ const AdminPanel: React.FC = () => {
         }}
       />
 
+      {/* Staff Card Modal */}
+      {showStaffCardModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-gray-900">Staff Digital Card</h3>
+                <button
+                  onClick={() => {
+                    setShowStaffCardModal(false);
+                    setSelectedStaffForCard(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              {selectedStaffForCard && (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    {selectedStaffForCard.profilePhoto ? (
+                      <img 
+                        src={selectedStaffForCard.profilePhoto} 
+                        alt={selectedStaffForCard.name}
+                        className="h-16 w-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <User className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="text-lg font-semibold">{selectedStaffForCard.name}</h4>
+                      <p className="text-gray-600">{selectedStaffForCard.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Phone</p>
+                      <p className="font-medium">{selectedStaffForCard.phone || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Staff ID</p>
+                      <p className="font-medium">{selectedStaffForCard._id}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Role</p>
+                      <p className="font-medium capitalize">{selectedStaffForCard.staffCategory || selectedStaffForCard.role}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Status</p>
+                      <p className={`font-medium ${selectedStaffForCard.isActive !== false ? 'text-green-600' : 'text-red-600'}`}>
+                        {selectedStaffForCard.isActive !== false ? 'Active' : 'Inactive'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {selectedStaffForCard.salonId && (
+                    <div>
+                      <p className="text-sm text-gray-500">Assigned Salon</p>
+                      <p className="font-medium">{selectedStaffForCard.salonId.name || selectedStaffForCard.salonId}</p>
+                    </div>
+                  )}
+                  
+                  <div className="pt-4">
+                    <button
+                      onClick={() => {
+                        setShowStaffCardModal(false);
+                        setSelectedStaffForCard(null);
+                      }}
+                      className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Salon Modal */}
       <DeleteSalonModal
         salon={selectedSalonData}
@@ -3109,8 +3194,7 @@ const AdminPanel: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ['admin-salons'] });
         }}
       />
-    </div>
-  );
+    </div>  );
 };
 
 export default AdminPanel;
