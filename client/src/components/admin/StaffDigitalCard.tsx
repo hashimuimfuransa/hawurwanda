@@ -1,18 +1,21 @@
 import React, { useState, useRef } from 'react';
-import { X, User, Mail, UserCheck, Camera, Download } from 'lucide-react';
+import { X, User, Mail, UserCheck, Camera, Download, Save, X as CloseIcon } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import * as htmlToImage from 'html-to-image';
+import { adminService } from '../../services/api'; // Added import for API service
 
 interface StaffDigitalCardProps {
   staff: any;
   onClose: () => void;
+  onUpdateStaff?: (updatedStaff: any) => void; // Added prop to update parent component
 }
 
-const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) => {
+const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onUpdateStaff }) => {
   if (!staff) return null;
 
   const [profilePhoto, setProfilePhoto] = useState<string | null>(staff.profilePhoto || null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
   const frontCardRef = useRef<HTMLDivElement>(null);
   const backCardRef = useRef<HTMLDivElement>(null);
 
@@ -29,10 +32,37 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) =
     }
   };
 
-  const savePhoto = () => {
-    if (tempPhoto) {
+  // New function to save the profile photo to the backend
+  const savePhotoToBackend = async () => {
+    if (!tempPhoto) return;
+    
+    setIsSaving(true);
+    try {
+      // Convert data URL to Blob
+      const blob = await fetch(tempPhoto).then(res => res.blob());
+      const file = new File([blob], `profile_${staff._id}.png`, { type: 'image/png' });
+      
+      // Create FormData
+      const formData = new FormData();
+      formData.append('profilePhoto', file);
+      
+      // Update staff member with new profile photo
+      const response = await adminService.updateStaffMember(staff._id, formData);
+      
+      // Update local state and notify parent component
       setProfilePhoto(tempPhoto);
       setTempPhoto(null);
+      
+      if (onUpdateStaff) {
+        onUpdateStaff(response.data.staff);
+      }
+      
+      alert('Profile photo updated successfully!');
+    } catch (error) {
+      console.error('Error saving profile photo:', error);
+      alert('Failed to update profile photo. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -146,10 +176,8 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) =
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden border-2 border-white/10">
         <div className="flex flex-col md:flex-row">
-
           {/* FRONT CARD */}
           <div ref={frontCardRef} className="w-full md:w-2/5 bg-gradient-to-br from-blue-900 to-indigo-800 p-8 flex flex-col items-center justify-center relative">
-
             <button
               onClick={onClose}
               className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10 download-hide"
@@ -217,11 +245,31 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) =
                 <span className="text-white font-mono text-sm">{staff._id?.substring(0, 8).toUpperCase()}</span>
               </div>
             </div>
+            
+            {/* Save/Cancel buttons for photo changes */}
+            {tempPhoto && (
+              <div className="flex space-x-2 mt-4 download-hide">
+                <button
+                  onClick={savePhotoToBackend}
+                  disabled={isSaving}
+                  className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4 mr-1" />
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={cancelPhoto}
+                  className="flex items-center px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <CloseIcon className="h-4 w-4 mr-1" />
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
 
           {/* BACK CARD */}
           <div ref={backCardRef} className="w-full md:w-3/5 bg-white p-8 flex flex-col">
-
             <button
               onClick={onClose}
               className="self-end text-gray-500 hover:text-gray-700 transition-colors z-10 download-hide"
@@ -238,7 +286,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) =
             </button>
 
             <div className="flex-grow flex flex-col items-center justify-center text-center">
-
               <div className="mb-8">
                 <div className="bg-white rounded-2xl p-4 inline-block shadow-lg mb-3">
                   <img
@@ -277,7 +324,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose }) =
                 <p>ID: {staff._id}</p>
                 <p>Joined: {formatDate(staff.createdAt)}</p>
               </div>
-
             </div>
           </div>
         </div>

@@ -3106,9 +3106,15 @@ const AdminPanel: React.FC = () => {
             setShowStaffCardModal(false);
             setSelectedStaffForCard(null);
           }}
+          onUpdateStaff={(updatedStaff) => {
+            // Update the selected staff card data
+            setSelectedStaffForCard(updatedStaff);
+            
+            // Invalidate the query to refresh the staff list
+            queryClient.invalidateQueries({ queryKey: ['admin-staff'] });
+          }}
         />
-      )}
-      {/* Delete Salon Modal */}
+      )}      {/* Delete Salon Modal */}
       <DeleteSalonModal
         salon={selectedSalonData}
         isOpen={showDeleteSalonModal}
