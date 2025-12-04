@@ -1,13 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, User, Mail, UserCheck, Camera, Download, Save, X as CloseIcon, Phone } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import * as htmlToImage from 'html-to-image';
-import { adminService } from '../../services/api'; // Added import for API service
+import { adminService } from '../../services/api';
+import ReactCrop, { centerCrop, makeAspectCrop, Crop, PixelCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 interface StaffDigitalCardProps {
   staff: any;
   onClose: () => void;
-  onUpdateStaff?: (updatedStaff: any) => void; // Added prop to update parent component
+  onUpdateStaff?: (updatedStaff: any) => void;
 }
 
 const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onUpdateStaff }) => {
@@ -15,8 +17,12 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
 
   const [profilePhoto, setProfilePhoto] = useState<string | null>(staff.profilePhoto || null);
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
+  const [isSaving, setIsSaving] = useState(false);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const frontCardRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -24,14 +30,68 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setTempPhoto(event.target.result as string);
+          setCropImage(event.target.result as string);
+          setCrop(undefined); // Reset crop when new image is selected
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // New function to save the profile photo to the backend
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { width, height } = e.currentTarget;
+    const crop = centerCrop(
+      makeAspectCrop(
+        {
+          unit: '%',
+          width: 90,
+        },
+        1, // Aspect ratio 1:1 for square crop
+        width,
+        height
+      ),
+      width,
+      height
+    );
+    setCrop(crop);
+  };
+
+  const saveCroppedImage = () => {
+    if (imgRef.current && completedCrop) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) return;
+      
+      const image = imgRef.current;
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+      
+      canvas.width = completedCrop.width;
+      canvas.height = completedCrop.height;
+      
+      ctx.drawImage(
+        image,
+        completedCrop.x * scaleX,
+        completedCrop.y * scaleY,
+        completedCrop.width * scaleX,
+        completedCrop.height * scaleY,
+        0,
+        0,
+        completedCrop.width,
+        completedCrop.height
+      );
+      
+      const dataUrl = canvas.toDataURL('image/png');
+      setTempPhoto(dataUrl);
+      setCropImage(null);
+    }
+  };
+
+  const cancelCrop = () => {
+    setCropImage(null);
+  };
+
   const savePhotoToBackend = async () => {
     if (!tempPhoto) return;
     
@@ -79,7 +139,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
     });
   };
 
-  // Ensure all images are loaded
   const waitForImages = (element: HTMLElement): Promise<void> =>
     new Promise((resolve) => {
       const images = element.querySelectorAll('img');
@@ -104,7 +163,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
       });
     });
 
-  // Hide buttons before capture
   const hideButtonsTemporarily = async (cardRef: HTMLElement, callback: () => Promise<void>) => {
     const elementsToHide = cardRef.querySelectorAll('.download-hide');
 
@@ -121,7 +179,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
     });
   };
 
-  // Download Front
   const downloadFrontCard = async () => {
     if (!frontCardRef.current) return;
 
@@ -129,13 +186,10 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
       await hideButtonsTemporarily(frontCardRef.current, async () => {
         await waitForImages(frontCardRef.current);
 
-        // Temporarily set background color on the card itself to ensure it's captured correctly
         const cardElement = frontCardRef.current;
         if (cardElement) {
-          // Store original background
           const originalBackground = cardElement.style.background;
           
-          // Set explicit white background for capture
           cardElement.style.background = '#ffffff';
           
           const dataUrl = await htmlToImage.toPng(cardElement, {
@@ -145,7 +199,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
             backgroundColor: '#ffffff',
           });
           
-          // Restore original background
           cardElement.style.background = originalBackground;
           
           const link = document.createElement('a');
@@ -191,27 +244,61 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           {/* PHOTO */}
           <div className="relative group mb-4">
             <div className="relative">
-              {(tempPhoto || profilePhoto) ? (
+              {cropImage ? (
+                <div className="flex flex-col items-center">
+                  <ReactCrop
+                    crop={crop}
+                    onChange={(_, percentCrop) => setCrop(percentCrop)}
+                    onComplete={(c) => setCompletedCrop(c)}
+                    aspect={1}
+                    circularCrop
+                  >
+                    <img
+                      ref={imgRef}
+                      src={cropImage}
+                      alt="Crop"
+                      onLoad={onImageLoad}
+                      className="max-h-64"
+                    />
+                  </ReactCrop>
+                  <div className="flex space-x-2 mt-4">
+                    <button
+                      onClick={saveCroppedImage}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Apply Crop
+                    </button>
+                    <button
+                      onClick={cancelCrop}
+                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : tempPhoto || profilePhoto ? (
                 <img
                   src={tempPhoto || profilePhoto}
                   alt={staff.name}
-                  className="h-24 w-24 rounded-lg object-cover object-center border-2 border-gray-200 shadow"
+                  className="h-32 w-32 rounded-xl object-cover object-center border-2 border-gray-200 shadow-md"
                   crossOrigin="anonymous"
                 />
               ) : (
-                <div className="h-24 w-24 rounded-lg bg-gray-50 flex items-center justify-center border-2 border-gray-200">
-                  <User className="h-12 w-12 text-gray-400" />
+                <div className="h-32 w-32 rounded-xl bg-gray-50 flex items-center justify-center border-2 border-gray-200">
+                  <User className="h-16 w-16 text-gray-400" />
                 </div>
               )}
 
-              <label className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer download-hide">
-                <Camera className="h-6 w-6 text-white" />
-                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-              </label>
+              {!cropImage && (
+                <label className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer download-hide">
+                  <Camera className="h-8 w-8 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                </label>
+              )}
             </div>
 
-            <div className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-1.5 shadow border border-white">
-              <UserCheck className="h-4 w-4 text-gray-900" />
+            <div className="absolute -bottom-2 -right-2 bg-amber-400 rounded-full p-2 shadow border border-white">
+              <UserCheck className="h-5 w-5 text-gray-900" />
             </div>
           </div>
 
@@ -261,7 +348,7 @@ Since:${formatDate(staff.createdAt)}`}
           </div>
 
           {/* Save/Cancel buttons for photo changes */}
-          {tempPhoto && (
+          {tempPhoto && !cropImage && (
             <div className="flex space-x-2 mt-4 download-hide">
               <button
                 onClick={savePhotoToBackend}
