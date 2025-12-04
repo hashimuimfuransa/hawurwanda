@@ -804,6 +804,11 @@ router.patch('/:salonId/staff/:staffId', authenticateToken, requireOwnerOrAdmin,
       }
     }
 
+    // Automatically sync role with staffCategory for staff members
+    if (updateData.staffCategory) {
+      updateData.role = updateData.staffCategory;
+    }
+
     // Update staff member
     const updatedStaff = await User.findByIdAndUpdate(
       staffId,

@@ -17,27 +17,28 @@ const updateUserRoles = async () => {
   try {
     console.log('Starting user role update...');
     
-    // Find all users with staffCategory but role is 'barber'
+    // Find all users with staffCategory
     const usersToUpdate = await User.find({
-      staffCategory: { $exists: true, $ne: null },
-      role: 'barber'
+      staffCategory: { $exists: true, $ne: null }
     });
 
     console.log(`Found ${usersToUpdate.length} users to update`);
 
+    let updateCount = 0;
     for (const user of usersToUpdate) {
-      if (user.staffCategory && user.staffCategory !== 'barber') {
-        console.log(`Updating user ${user.name} (${user.email}) from 'barber' to '${user.staffCategory}'`);
+      if (user.staffCategory && user.role !== user.staffCategory) {
+        console.log(`Updating user ${user.name} (${user.email}) from '${user.role}' to '${user.staffCategory}'`);
         
         await User.findByIdAndUpdate(user._id, {
           role: user.staffCategory
         });
         
         console.log(`✓ Updated ${user.name} to role: ${user.staffCategory}`);
+        updateCount++;
       }
     }
 
-    console.log('User role update completed!');
+    console.log(`User role update completed! Updated ${updateCount} users.`);
   } catch (error) {
     console.error('Error updating user roles:', error);
   } finally {

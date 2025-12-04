@@ -1676,7 +1676,11 @@ router.patch('/staff/:id', authenticateToken, requireAdmin, upload.single('profi
     if (req.body.email) updates.email = req.body.email;
     if (req.body.phone) updates.phone = req.body.phone;
     if (req.body.salonId) updates.salonId = req.body.salonId;
-    if (req.body.staffCategory) updates.staffCategory = req.body.staffCategory;
+    if (req.body.staffCategory) {
+      updates.staffCategory = req.body.staffCategory;
+      // Automatically sync role with staffCategory for staff members
+      updates.role = req.body.staffCategory;
+    }
     if (req.body.gender) updates.gender = req.body.gender;
     if (req.body.nationalId) updates.nationalId = req.body.nationalId;
     if (req.body.experience) updates.experience = req.body.experience;
