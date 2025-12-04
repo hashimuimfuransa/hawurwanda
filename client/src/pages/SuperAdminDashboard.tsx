@@ -72,6 +72,12 @@ interface SuperAdminStatsResponse {
     totalSalons: number;
     totalBookings: number;
     totalAdmins: number;
+    totalTransactions?: number;
+    verifiedSalons?: number;
+    recentBookings?: number;
+    totalRevenue?: number;
+    usersByRole?: { _id: string; count: number }[];
+    bookingsByStatus?: { _id: string; count: number }[];
 }
 
 // Custom error type for API calls

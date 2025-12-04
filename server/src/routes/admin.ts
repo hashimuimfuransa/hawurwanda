@@ -1547,6 +1547,64 @@ router.get('/superadmin/activities', authenticateToken, requireSuperAdmin, async
   }
 });
 
+// Get super admin stats (super admin only)
+router.get('/superadmin/stats', authenticateToken, requireSuperAdmin, async (req: AuthRequest, res) => {
+  try {
+    // Get basic statistics
+    const totalUsers = await User.countDocuments();
+    const totalSalons = await Salon.countDocuments();
+    const totalBookings = await Booking.countDocuments();
+    const totalTransactions = await Transaction.countDocuments();
+    
+    // Get verified salons count
+    const verifiedSalons = await Salon.countDocuments({ verified: true });
+    
+    // Get admin users count
+    const totalAdmins = await User.countDocuments({ role: { $in: ['admin', 'superadmin'] } });
+    
+    // Get recent bookings count (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentBookings = await Booking.countDocuments({
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+    
+    // Get revenue statistics
+    const revenueStats = await Transaction.aggregate([
+      { $match: { status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+    ]);
+    
+    const totalRevenue = revenueStats.length > 0 ? revenueStats[0].total : 0;
+    
+    // Get users by role
+    const usersByRole = await User.aggregate([
+      { $group: { _id: '$role', count: { $sum: 1 } } }
+    ]);
+    
+    // Get bookings by status
+    const bookingsByStatus = await Booking.aggregate([
+      { $group: { _id: '$status', count: { $sum: 1 } } },
+    ]);
+    
+    res.json({
+      totalUsers,
+      totalSalons,
+      totalBookings,
+      totalTransactions,
+      verifiedSalons,
+      totalAdmins,
+      recentBookings,
+      totalRevenue,
+      usersByRole,
+      bookingsByStatus,
+    });
+  } catch (error) {
+    console.error('Get super admin stats error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get all staff (admin only)
 router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
