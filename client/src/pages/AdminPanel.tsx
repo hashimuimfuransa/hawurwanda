@@ -175,7 +175,7 @@ const AdminPanel: React.FC = () => {
       role: selectedRole || undefined
     }),
     getNextPageParam: (lastPage, allPages) => {
-      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      const pagination = lastPage?.data?.pagination;
       const totalPages = pagination?.pages || 0;
       const currentPage = pagination?.current || 1;
       return currentPage < totalPages ? currentPage + 1 : undefined;
@@ -217,7 +217,6 @@ const AdminPanel: React.FC = () => {
   // Extract users data
   const users = usersData?.pages?.flatMap(page => {
     // Handle different response formats
-    if (page?.users) return page.users;
     if (page?.data?.users) return page.data.users;
     return [];
   }) || [];
@@ -226,7 +225,7 @@ const AdminPanel: React.FC = () => {
   const salons = Array.isArray(salonsData) ? salonsData : ((salonsData as any)?.data?.salons || (salonsData as any)?.data || []);
 
   // Extract bookings data
-  const bookings = bookingsData?.data?.bookings || bookingsData?.bookings || [];
+  const bookings = bookingsData?.data?.bookings || [];
 
   // Pending salons for verification tab
   const { data: pendingSalonsData } = useQuery({
@@ -258,7 +257,7 @@ const AdminPanel: React.FC = () => {
       gender: selectedGender || undefined
     }),
     getNextPageParam: (lastPage, allPages) => {
-      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      const pagination = lastPage?.data?.pagination;
       const totalPages = pagination?.pages || 0;
       const currentPage = pagination?.current || 1;
       return currentPage < totalPages ? currentPage + 1 : undefined;
@@ -277,7 +276,6 @@ const AdminPanel: React.FC = () => {
     if (!staffData || !staffData.pages) return [];
     return staffData.pages.flatMap(page => {
       // Handle different response formats
-      if (page?.staff) return page.staff;
       if (page?.data?.staff) return page.data.staff;
       return [];
     }) || [];
@@ -288,7 +286,6 @@ const AdminPanel: React.FC = () => {
     if (!allStaffData) return [];
     // Handle different response formats
     if (allStaffData.data && allStaffData.data.staff && Array.isArray(allStaffData.data.staff)) return allStaffData.data.staff;
-    if (allStaffData.staff && Array.isArray(allStaffData.staff)) return allStaffData.staff;
     return [];
   })();
   
@@ -325,10 +322,8 @@ const AdminPanel: React.FC = () => {
   const owners = (() => {
     if (!ownersData) return [];
     // Handle different response formats
-    if (Array.isArray(ownersData)) return ownersData;
     if (ownersData.data && Array.isArray(ownersData.data)) return ownersData.data;
     if (ownersData.data && ownersData.data.users && Array.isArray(ownersData.data.users)) return ownersData.data.users;
-    if (ownersData.users && Array.isArray(ownersData.users)) return ownersData.users;
     return [];
   })();
   
@@ -625,12 +620,11 @@ const AdminPanel: React.FC = () => {
 
   // Stats calculations
   // Get total users from the last page's pagination data
-  const totalUsers = usersData?.pages?.[usersData.pages.length - 1]?.pagination?.total ||
-                    usersData?.pages?.[usersData.pages.length - 1]?.data?.pagination?.total ||
+  const totalUsers = usersData?.pages?.[usersData.pages.length - 1]?.data?.pagination?.total ||
                     users.length;
 
   // Get total bookings from the bookings data pagination
-  const totalBookingsFromPagination = bookingsData?.data?.pagination?.total || bookingsData?.pagination?.total || bookings.length;
+  const totalBookingsFromPagination = bookingsData?.data?.pagination?.total || bookings.length;
 
   // Calculate male and female staff counts
   const maleStaff = allStaff.filter((s: any) => {
@@ -648,12 +642,12 @@ const AdminPanel: React.FC = () => {
   const stats = {
     totalUsers,
     totalSalons: salons.length,
-    totalBookings: bookingsData?.data?.statistics?.totalBookings || bookingsData?.statistics?.totalBookings || totalBookingsFromPagination,
+    totalBookings: bookingsData?.data?.statistics?.totalBookings || totalBookingsFromPagination,
     pendingSalons: pendingSalons.length || salons.filter((s: any) => s.verificationStatus === 'pending').length,
     verifiedSalons: salons.filter((s: any) => s.verificationStatus === 'verified').length,
-    activeBookings: bookingsData?.data?.statistics?.confirmedBookings || bookingsData?.statistics?.confirmedBookings || bookings.filter((b: any) => b.status === 'confirmed').length,
-    completedBookings: bookingsData?.data?.statistics?.completedBookings || bookingsData?.statistics?.completedBookings || bookings.filter((b: any) => b.status === 'completed').length,
-    revenue: bookingsData?.data?.statistics?.totalRevenue || bookingsData?.statistics?.totalRevenue || bookings
+    activeBookings: bookingsData?.data?.statistics?.confirmedBookings || bookings.filter((b: any) => b.status === 'confirmed').length,
+    completedBookings: bookingsData?.data?.statistics?.completedBookings || bookings.filter((b: any) => b.status === 'completed').length,
+    revenue: bookingsData?.data?.statistics?.totalRevenue || bookings
       .filter((b: any) => b.status === 'completed')
       .reduce((sum: number, b: any) => sum + (b.totalPrice || 0), 0),
     totalStaff: staff.length,
