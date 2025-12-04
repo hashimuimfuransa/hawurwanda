@@ -232,6 +232,40 @@ const SuperAdminDashboard: React.FC = () => {
     if (page?.data?.users) return page.data.users;
     return [];
   }) || [];
+
+  // Fetch salon owners directly with 'owner' role
+  const {
+    data: ownersData,
+    isLoading: ownersLoading,
+    refetch: refetchOwners
+  } = useQuery({
+    queryKey: ['superadmin-owners', ownerSearchTerm],
+    queryFn: () => adminService.getUsers({
+      role: 'owner',
+      search: ownerSearchTerm || undefined,
+      limit: 1000
+    }),
+  });
+
+  // Extract owners data directly from backend
+  const owners = (() => {
+    if (!ownersData) return [];
+    // Handle different response formats
+    if (ownersData.data && Array.isArray(ownersData.data)) return ownersData.data;
+    if (ownersData.data && ownersData.data.users && Array.isArray(ownersData.data.users)) return ownersData.data.users;
+    return [];
+  })();
+
+  // Debug logging for owners data
+  React.useEffect(() => {
+    console.log('SuperAdminDashboard: ownersData:', ownersData);
+    console.log('SuperAdminDashboard: extracted owners:', owners);
+  }, [ownersData, owners]);
+
+  // Refetch owners when search term changes
+  React.useEffect(() => {
+    refetchOwners();
+  }, [ownerSearchTerm, refetchOwners]);
   const { data: salonsData } = useQuery({
     queryKey: ['super-admin-salons'],
     queryFn: async () => {
@@ -298,16 +332,15 @@ const SuperAdminDashboard: React.FC = () => {
     },
   });
 
-  // Enhanced query for staff with salon data  
-  const { data: staffData } = useQuery({
+  // Enhanced query for staff with salon data - fetch all staff members
+  const { data: staffData, refetch: refetchStaff } = useQuery({
     queryKey: ['super-admin-staff-enhanced'],
     queryFn: async () => {
       try {
         const [staffRes, salonsRes] = await Promise.all([
-          adminService.getAllStaff(),
+          adminService.getAllStaff({ limit: 1000 }), // Fetch all staff with high limit
           Promise.resolve(salonsData || [])
-        ]);
-        
+        ]);        
         console.log('Staff Data:', staffRes);
         
         const staff = staffRes?.data?.staff || staffRes?.data || staffRes || [];
@@ -328,8 +361,8 @@ const SuperAdminDashboard: React.FC = () => {
         return enrichedStaff;
       } catch (error) {
         console.error('Error enriching staff data:', error);
-        // Fallback to original call
-        const result = await adminService.getAllStaff();
+        // Fallback to original call with high limit
+        const result = await adminService.getAllStaff({ limit: 1000 });
         console.log('Fallback Staff Data:', result);
         return result;
       }
@@ -337,7 +370,6 @@ const SuperAdminDashboard: React.FC = () => {
     // Make this depend on salons data being available
     enabled: salonsData !== undefined,
   });
-
   const { data: reportsData } = useQuery({
     queryKey: ['super-admin-reports'],
     queryFn: () => adminService.getReports(),
@@ -435,6 +467,11 @@ const SuperAdminDashboard: React.FC = () => {
     markAllNotificationsReadMutation.mutate();
   };
 
+  // Handler to view staff details
+  const handleViewStaff = (staff: any) => {
+    setSelectedStaff(staff);
+    setShowStaffDetailsModal(true);
+  };
   // Sidebar items configuration  
   const sidebarItems = [
     {
@@ -1067,9 +1104,6 @@ const SuperAdminDashboard: React.FC = () => {
   );
 
   const renderOwners = () => {
-    // Handle the infinite query data structure properly
-    const owners = users.filter((u: IUser) => u.role === 'owner');
-    
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -1094,50 +1128,44 @@ const SuperAdminDashboard: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {owners
-            .filter((owner: IUser) => 
-              !ownerSearchTerm || 
-              owner.name?.toLowerCase().includes(ownerSearchTerm.toLowerCase()) ||
-              owner.email?.toLowerCase().includes(ownerSearchTerm.toLowerCase())
-            )
-            .map((owner: IUser) => (
-              <div key={owner._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center">
-                    <User className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{owner.name}</h3>
-                    <p className="text-sm text-gray-500">{owner.email}</p>
-                  </div>
+          {owners.map((owner: IUser) => (
+            <div key={owner._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center mb-4">
+                <div className="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center">
+                  <User className="h-6 w-6 text-white" />
                 </div>
-                
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center justify-between">
-                    <span>Status:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      owner.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {owner.isVerified ? 'Verified' : 'Pending'}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Phone:</span>
-                    <span>{owner.phone}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Joined:</span>
-                    <span>{new Date(owner.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 flex space-x-2">
-                  <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm">
-                    View Details
-                  </button>
+                <div className="ml-4">
+                  <h3 className="text-lg font-semibold text-gray-900">{owner.name}</h3>
+                  <p className="text-sm text-gray-500">{owner.email}</p>
                 </div>
               </div>
-            ))}
+              
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between">
+                  <span>Status:</span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    owner.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {owner.isVerified ? 'Verified' : 'Pending'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Phone:</span>
+                  <span>{owner.phone}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Joined:</span>
+                  <span>{new Date(owner.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex space-x-2">
+                <button className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                  View Details
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -1171,17 +1199,24 @@ const SuperAdminDashboard: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
+                        {staff.profilePhoto ? (
+                          <img 
+                            className="h-10 w-10 rounded-full object-cover" 
+                            src={staff.profilePhoto} 
+                            alt={staff.name} 
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-green-500 flex items-center justify-center">
+                            <User className="h-5 w-5 text-white" />
+                          </div>
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{staff.name}</div>
                         <div className="text-sm text-gray-500">{staff.email}</div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </td>                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                       {staff.role}
                     </span>
@@ -1197,11 +1232,13 @@ const SuperAdminDashboard: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button className="text-blue-600 hover:text-blue-900">
+                    <button 
+                      onClick={() => handleViewStaff(staff)}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
                       <Eye className="h-4 w-4" />
                     </button>
-                  </td>
-                </tr>
+                  </td>                </tr>
               ))}
             </tbody>
           </table>
@@ -1317,40 +1354,47 @@ const SuperAdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <TrendingUp className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Growth Rate</p>
-              <p className="text-2xl font-bold text-green-600">+12.5%</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center">
             <DollarSign className="h-8 w-8 text-blue-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Revenue</p>
-              <p className="text-2xl font-bold text-blue-600">1.2M RWF</p>
+              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {(superAdminStats?.data?.totalRevenue || 0).toLocaleString()} RWF
+              </p>            </div>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <Calendar className="h-8 w-8 text-green-600" />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {superAdminStats?.data?.totalBookings || 0}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <Activity className="h-8 w-8 text-purple-600" />
+            <Building2 className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-2xl font-bold text-purple-600">8,432</p>
+              <p className="text-sm font-medium text-gray-600">Active Salons</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {superAdminStats?.data?.verifiedSalons || 0}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center">
-            <Target className="h-8 w-8 text-orange-600" />
+            <Users className="h-8 w-8 text-orange-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-              <p className="text-2xl font-bold text-orange-600">3.2%</p>
+              <p className="text-sm font-medium text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {superAdminStats?.data?.totalUsers || 0}
+              </p>
             </div>
           </div>
         </div>
@@ -1380,7 +1424,6 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
     </div>
   );
-
   const renderReports = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1391,84 +1434,124 @@ const SuperAdminDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Report Types */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <FileText className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">User Report</h3>
-              <p className="text-sm text-gray-500">Comprehensive user analytics</p>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Users</p>
+              <p className="text-2xl font-bold text-gray-900">{superAdminStats?.data?.totalUsers || 0}</p>
             </div>
+            <Users className="h-8 w-8 text-blue-500" />
           </div>
-          <button className="w-full bg-blue-50 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-100">
-            Generate
-          </button>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Salons</p>
+              <p className="text-2xl font-bold text-gray-900">{superAdminStats?.data?.totalSalons || 0}</p>
+            </div>
+            <Building2 className="h-8 w-8 text-purple-500" />
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Bookings</p>
+              <p className="text-2xl font-bold text-gray-900">{superAdminStats?.data?.totalBookings || 0}</p>
+            </div>
+            <Calendar className="h-8 w-8 text-green-500" />
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-gray-900">{(superAdminStats?.data?.totalRevenue || 0)?.toLocaleString()} RWF</p>
+            </div>
+            <DollarSign className="h-8 w-8 text-orange-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Reports */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* User Distribution */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Users className="h-5 w-5 mr-2 text-blue-500" />
+            User Distribution by Role
+          </h4>
+          <div className="space-y-3">
+            {superAdminStats?.data?.usersByRole && superAdminStats.data.usersByRole.length > 0 ? (
+              superAdminStats.data.usersByRole.map((item: any) => (
+                <div key={item._id || 'unknown'} className="flex justify-between items-center">
+                  <span className="text-gray-600 capitalize">{item._id || 'Unknown role'}</span>
+                  <span className="font-semibold text-gray-900">{item.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-2">No data available</p>
+            )}
+          </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <Building2 className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">Salon Report</h3>
-              <p className="text-sm text-gray-500">Salon performance metrics</p>
-            </div>
+        {/* Booking Statistics */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <FileText className="h-5 w-5 mr-2 text-green-500" />
+            Booking Statistics
+          </h4>
+          <div className="space-y-3">
+            {superAdminStats?.data?.bookingsByStatus && superAdminStats.data.bookingsByStatus.length > 0 ? (
+              superAdminStats.data.bookingsByStatus.map((item: any) => (
+                <div key={item._id || 'unknown'} className="flex justify-between items-center">
+                  <span className="text-gray-600 capitalize">{item._id || 'Unknown status'}</span>
+                  <span className="font-semibold text-gray-900">{item.count}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-2">No data available</p>
+            )}
           </div>
-          <button className="w-full bg-green-50 text-green-600 px-4 py-2 rounded-lg hover:bg-green-100">
-            Generate
-          </button>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <DollarSign className="h-8 w-8 text-purple-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">Revenue Report</h3>
-              <p className="text-sm text-gray-500">Financial performance analysis</p>
+        {/* Verified vs Pending Salons */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Building2 className="h-5 w-5 mr-2 text-purple-500" />
+            Salon Verification Status
+          </h4>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Verified Salons</span>
+              <span className="font-semibold text-gray-900">{superAdminStats?.data?.verifiedSalons || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Pending Verification</span>
+              <span className="font-semibold text-yellow-600">
+                {(superAdminStats?.data?.totalSalons || 0) - (superAdminStats?.data?.verifiedSalons || 0)}
+              </span>
             </div>
           </div>
-          <button className="w-full bg-purple-50 text-purple-600 px-4 py-2 rounded-lg hover:bg-purple-100">
-            Generate
-          </button>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <Calendar className="h-8 w-8 text-orange-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">Booking Report</h3>
-              <p className="text-sm text-gray-500">Booking trends and patterns</p>
+        {/* Admin Users */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Crown className="h-5 w-5 mr-2 text-orange-500" />
+            Admin Users
+          </h4>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Total Admins</span>
+              <span className="font-semibold text-gray-900">{superAdminStats?.data?.totalAdmins || 0}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">Recent Bookings (30 days)</span>
+              <span className="font-semibold text-gray-900">{superAdminStats?.data?.recentBookings || 0}</span>
             </div>
           </div>
-          <button className="w-full bg-orange-50 text-orange-600 px-4 py-2 rounded-lg hover:bg-orange-100">
-            Generate
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <Activity className="h-8 w-8 text-indigo-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">Activity Report</h3>
-              <p className="text-sm text-gray-500">System usage analytics</p>
-            </div>
-          </div>
-          <button className="w-full bg-indigo-50 text-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-100">
-            Generate
-          </button>
-        </div>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="flex items-center mb-4">
-            <AlertTriangle className="h-8 w-8 text-red-600" />
-            <div className="ml-4">
-              <h3 className="text-lg font-semibold">Issues Report</h3>
-              <p className="text-sm text-gray-500">System problems and alerts</p>
-            </div>
-          </div>
-          <button className="w-full bg-red-50 text-red-600 px-4 py-2 rounded-lg hover:bg-red-100">
-            Generate
-          </button>
         </div>
       </div>
 
@@ -1478,11 +1561,17 @@ const SuperAdminDashboard: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-900">Recent Reports</h3>
         </div>
         <div className="divide-y divide-gray-200">
-          {(reportsData?.data?.reports || []).map((report: any, index: number) => (
+          {(() => {
+            // Handle different response formats for reports data
+            const reports = reportsData?.data?.reports || reportsData?.data || reportsData || [];
+            return Array.isArray(reports) ? reports : [];
+          })().map((report: any, index: number) => (
             <div key={index} className="p-6 flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-medium text-gray-900">{report.name}</h4>
-                <p className="text-sm text-gray-500">Generated on {new Date(report.createdAt).toLocaleDateString()}</p>
+                <h4 className="text-sm font-medium text-gray-900">{report.name || `Report ${index + 1}`}</h4>
+                <p className="text-sm text-gray-500">
+                  Generated on {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : 'Unknown date'}
+                </p>
               </div>
               <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
                 <Download className="h-4 w-4 inline mr-1" />
@@ -1495,11 +1584,7 @@ const SuperAdminDashboard: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-
-  const renderActivities = () => {
+      </div>    </div>  );  const renderActivities = () => {
     // Mock activities data if none exists
     const mockActivities = [
       {
