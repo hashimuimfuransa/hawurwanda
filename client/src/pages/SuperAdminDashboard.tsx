@@ -19,7 +19,7 @@ import toast from 'react-hot-toast';
 import DashboardLayout from '../components/DashboardLayout';
 import CreateUserModal from '../components/admin/CreateUserModal';
 import SalonDetailsModal from '../components/admin/SalonDetailsModal';
-
+import StaffDetailsModal from '../components/admin/StaffDetailsModal';
 //==============================================
 // TYPE DEFINITIONS
 //==============================================
@@ -137,7 +137,9 @@ const SuperAdminDashboard: React.FC = () => {
   const [bookingSearchTerm, setBookingSearchTerm] = useState('');
   const [bookingStatusFilter, setBookingStatusFilter] = useState('');
   const [salonStatusFilter, setSalonStatusFilter] = useState('');
-  const [dateRange, setDateRange] = useState({
+  const [staffSearchTerm, setStaffSearchTerm] = useState('');
+  const [staffRoleFilter, setStaffRoleFilter] = useState('');
+  const [staffStatusFilter, setStaffStatusFilter] = useState('');  const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
   });
@@ -334,8 +336,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   // Enhanced query for staff with salon data - fetch all staff members
   const { data: staffData, refetch: refetchStaff } = useQuery({
-    queryKey: ['super-admin-staff-enhanced'],
-    queryFn: async () => {
+    queryKey: ['super-admin-staff-enhanced', staffSearchTerm, staffRoleFilter, staffStatusFilter],    queryFn: async () => {
       try {
         const [staffRes, salonsRes] = await Promise.all([
           adminService.getAllStaff({ limit: 1000 }), // Fetch all staff with high limit
@@ -471,8 +472,7 @@ const SuperAdminDashboard: React.FC = () => {
   const handleViewStaff = (staff: any) => {
     setSelectedStaff(staff);
     setShowStaffDetailsModal(true);
-  };
-  // Sidebar items configuration  
+  };  // Sidebar items configuration  
   const sidebarItems = [
     {
       id: 'overview',
@@ -1180,6 +1180,54 @@ const SuperAdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Search and Filters */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search staff..."
+              value={staffSearchTerm}
+              onChange={(e) => setStaffSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          
+          <select
+            value={staffRoleFilter}
+            onChange={(e) => setStaffRoleFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">All Roles</option>
+            <option value="staff">Staff</option>
+            <option value="barber">Barber</option>
+            <option value="manager">Manager</option>
+          </select>
+          
+          <select
+            value={staffStatusFilter}
+            onChange={(e) => setStaffStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          
+          <button
+            onClick={() => {
+              setStaffSearchTerm('');
+              setStaffRoleFilter('');
+              setStaffStatusFilter('');
+            }}
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
       {/* Staff Table */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
@@ -1194,7 +1242,27 @@ const SuperAdminDashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {(Array.isArray(staffData) ? staffData : staffData?.data?.staff || staffData?.data || []).map((staff: any) => (
+              {/* Filter staff data based on search term, role, and status */}
+              {(Array.isArray(staffData) ? staffData : staffData?.data?.staff || staffData?.data || [])
+                .filter((staff: any) => {
+                  // Apply search filter
+                  const matchesSearch = !staffSearchTerm || 
+                    staff.name?.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+                    staff.email?.toLowerCase().includes(staffSearchTerm.toLowerCase()) ||
+                    (staff.salon?.name && staff.salon.name.toLowerCase().includes(staffSearchTerm.toLowerCase()));
+                  
+                  // Apply role filter
+                  const matchesRole = !staffRoleFilter || staff.role === staffRoleFilter;
+                  
+                  // Apply status filter
+                  const isActive = staff.isActive !== false && staff.status !== 'inactive';
+                  const matchesStatus = !staffStatusFilter || 
+                    (staffStatusFilter === 'active' && isActive) || 
+                    (staffStatusFilter === 'inactive' && !isActive);
+                  
+                  return matchesSearch && matchesRole && matchesStatus;
+                })
+                .map((staff: any) => (
                 <tr key={staff._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -1216,7 +1284,8 @@ const SuperAdminDashboard: React.FC = () => {
                         <div className="text-sm text-gray-500">{staff.email}</div>
                       </div>
                     </div>
-                  </td>                  <td className="px-6 py-4 whitespace-nowrap">
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                       {staff.role}
                     </span>
@@ -1238,7 +1307,8 @@ const SuperAdminDashboard: React.FC = () => {
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                  </td>                </tr>
+                  </td>
+                </tr>
               ))}
             </tbody>
           </table>
@@ -1246,7 +1316,6 @@ const SuperAdminDashboard: React.FC = () => {
       </div>
     </div>
   );
-
   const renderBookings = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -2170,8 +2239,20 @@ const SuperAdminDashboard: React.FC = () => {
         />
       )}
 
-      {/* Notification Modal */}
-      {showNotificationModal && (
+      {/* Staff Details Modal */}
+      {showStaffDetailsModal && selectedStaff && (
+        <StaffDetailsModal
+          showModal={showStaffDetailsModal}
+          onClose={() => {
+            setShowStaffDetailsModal(false);
+            setSelectedStaff(null);
+          }}
+          staffDetails={selectedStaff}
+          staffDetailsLoading={false}
+        />
+      )}
+
+      {/* Notification Modal */}      {showNotificationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="p-4 border-b border-gray-200">
