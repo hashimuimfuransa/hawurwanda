@@ -28,7 +28,7 @@ interface RegisterForm {
   phone: string;
   password: string;
   confirmPassword: string;
-  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner';
+  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'trainer' | 'owner';
 }
 
 const Register: React.FC = () => {
@@ -102,7 +102,7 @@ const Register: React.FC = () => {
       toast.success(t('registrationSuccessful', language));
       if (data.role === 'owner') {
         navigate('/dashboard/owner');
-      } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(data.role)) {
+      } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(data.role)) {
         navigate('/dashboard/staff');
       } else if (data.role === 'client') {
         navigate('/salons');

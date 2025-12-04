@@ -146,7 +146,7 @@ const DashboardStaff: React.FC = () => {
     blockSlotsMutation.mutate({ slots: [slot], action: 'unblock' });
   };
 
-  if (!user || !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(user.role)) {
+  if (!user || !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(user.role)) {
     return (
       <div className="min-h-screen py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

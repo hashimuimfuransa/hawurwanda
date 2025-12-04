@@ -8,7 +8,7 @@ interface User {
   name: string;
   email: string;
   phone: string;
-  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner' | 'admin' | 'superadmin';
+  role: 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'trainer' | 'owner' | 'admin' | 'superadmin';
   salonId?: string;
   profilePhoto?: string;
   isVerified: boolean;

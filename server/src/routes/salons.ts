@@ -720,7 +720,7 @@ router.get('/:id/barbers', validateObjectIdParam('id'), async (req, res) => {
 
     const barbers = await User.find({ 
       salonId, 
-      role: 'barber' 
+      role: { $in: ['barber', 'trainer'] }
     }).select('-passwordHash');
 
     res.json({ barbers });
@@ -737,7 +737,7 @@ router.get('/:id/staff', authenticateToken, validateObjectIdParam('id'), async (
 
     const staff = await User.find({ 
       salonId, 
-      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'] }
+      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'] }
     }).select('-passwordHash')
       .sort({ createdAt: -1 });
 

@@ -24,7 +24,7 @@ import StaffDetailsModal from '../components/admin/StaffDetailsModal';
 // TYPE DEFINITIONS
 //==============================================
 
-type UserRole = 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'owner' | 'admin' | 'superadmin';
+type UserRole = 'client' | 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'trainer' | 'owner' | 'admin' | 'superadmin';
 
 interface ISalon {
   _id: string;
@@ -1209,6 +1209,7 @@ const SuperAdminDashboard: React.FC = () => {
             <option value="staff">Staff</option>
             <option value="barber">Barber</option>
             <option value="manager">Manager</option>
+            <option value="trainer">Trainer</option>
           </select>
           
           <select

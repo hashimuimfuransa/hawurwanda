@@ -13,7 +13,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   gender?: 'male' | 'female' | 'other';
   // Enhanced staff information
-  staffCategory?: 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'other';
+  staffCategory?: 'barber' | 'hairstylist' | 'nail_technician' | 'massage_therapist' | 'esthetician' | 'receptionist' | 'manager' | 'trainer' | 'other';
   specialties?: string[];
   experience?: string; // Years of experience
   educationLevel?: 'primary' | 'secondary' | 'certificate' | 'diploma' | 'degree' | 'masters' | 'phd';
@@ -79,7 +79,7 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ['client', 'barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner', 'admin', 'superadmin'],
+    enum: ['client', 'barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer', 'owner', 'admin', 'superadmin'],
     default: 'client',
   },
   salonId: {
@@ -103,7 +103,7 @@ const userSchema = new Schema<IUser>({
   // Enhanced staff information
   staffCategory: {
     type: String,
-    enum: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'other'],
+    enum: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer', 'other'],
     required: false,
   },
   specialties: [{

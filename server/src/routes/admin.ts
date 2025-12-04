@@ -45,7 +45,7 @@ const createStaffSchema = Joi.object({
   phone: Joi.string().pattern(/^(\+250|250|0)?[0-9]{9}$/).required(),
   password: Joi.string().min(6).required(),
   salonId: Joi.string().optional(),
-  staffCategory: Joi.string().valid('barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'other').optional(),
+  staffCategory: Joi.string().valid('barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer', 'other').optional(),
   gender: Joi.string().valid('male', 'female', 'other').optional(),
   nationalId: Joi.string().optional(),
   specialties: Joi.array().items(Joi.string()).optional(),
@@ -1610,7 +1610,7 @@ router.get('/staff', authenticateToken, requireAdmin, async (req: AuthRequest, r
   try {
     const { search, page = 1, limit = 20, sort = 'createdAt', order = 'desc' } = req.query;
     const query: any = {
-      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'] }
+      role: { $in: ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'] }
     };
 
     if (search) {
@@ -2006,7 +2006,7 @@ router.patch('/superadmin/users/:id', authenticateToken, requireSuperAdmin, asyn
     if (salonId !== undefined) updateData.salonId = salonId;
 
     // Validate role-specific requirements
-    if (role && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'owner'].includes(role) && !salonId && !existingUser?.salonId) {
+    if (role && ['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer', 'owner'].includes(role) && !salonId && !existingUser?.salonId) {
       return res.status(400).json({ message: 'Salon ID is required for this role' });
     }
 

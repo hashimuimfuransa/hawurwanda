@@ -61,42 +61,42 @@ function App() {
           
           {/* Staff Dashboard Routes */}
           <Route path="/dashboard/staff" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/bookings" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/customers" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/walkins" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/earnings" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/schedule" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/notifications" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />
           <Route path="/dashboard/staff/settings" element={
-            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager']}>
+            <AuthGuard requiredRoles={['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer']}>
               <DashboardStaff />
             </AuthGuard>
           } />

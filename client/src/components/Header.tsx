@@ -64,7 +64,7 @@ const Header: React.FC = () => {
                 >
                   Profile
                 </Link>
-                {['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(user.role) && (
+                {['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(user.role) && (
                   <Link
                     to="/dashboard/staff"
                     className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"

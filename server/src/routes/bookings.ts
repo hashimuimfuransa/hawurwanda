@@ -272,7 +272,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     // Role-based filtering
     if (req.user!.role === 'client') {
       query.clientId = req.user!._id;
-    } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
+    } else if (['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(req.user!.role)) {
       query.barberId = req.user!._id;
     } else if (req.user!.role === 'owner') {
       if (!req.user!.salonId) {
@@ -312,11 +312,11 @@ router.get('/', authenticateToken, async (req: AuthRequest, res) => {
     }
 
     // Additional filters (but don't override role-based filtering)
-    if (salonId && req.user!.role !== 'client' && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
+    if (salonId && req.user!.role !== 'client' && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(req.user!.role)) {
       query.salonId = salonId;
     }
     // Don't override barberId for staff members - they should only see their own bookings
-    if (barberId && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager'].includes(req.user!.role)) {
+    if (barberId && !['barber', 'hairstylist', 'nail_technician', 'massage_therapist', 'esthetician', 'receptionist', 'manager', 'trainer'].includes(req.user!.role)) {
       query.barberId = barberId;
     }
     if (date) {

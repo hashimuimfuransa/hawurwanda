@@ -2681,6 +2681,7 @@ const AdminPanel: React.FC = () => {
                         <option value="esthetician">Esthetician</option>
                         <option value="receptionist">Receptionist</option>
                         <option value="manager">Manager</option>
+                        <option value="trainer">Trainer</option>
                       </select>
                     </div>
                   </div>
