@@ -203,6 +203,12 @@ const SuperAdminDashboard: React.FC = () => {
     enabled: !!selectedSalonId && showSalonDetailsModal,
   });
 
+  // Query for individual staff details
+  const { data: staffDetails, isLoading: staffDetailsLoading } = useQuery({
+    queryKey: ['super-admin-staff-details', selectedStaff?._id],
+    queryFn: () => adminService.getStaffDetails(selectedStaff._id),
+    enabled: !!selectedStaff && showStaffDetailsModal,
+  });
   const {
     data: usersData,
     fetchNextPage: fetchNextUsersPage,

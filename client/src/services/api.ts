@@ -304,7 +304,9 @@ export const adminService = {
       },
     });
   },
-  
+
+  recordDigitalCardDownload: (staffId: string) =>
+    api.post(`/admin/staff/${staffId}/record-download`),  
   createStaffMember: (staffData: FormData) =>
     api.post('/admin/staff/create', staffData, {
       headers: { 'Content-Type': 'multipart/form-data' },

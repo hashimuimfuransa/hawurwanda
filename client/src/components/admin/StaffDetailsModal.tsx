@@ -487,6 +487,36 @@ const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Digital Card Downloads */}
+              {(staffDetails.digitalCardDownloads !== undefined || staffDetails.statistics?.digitalCardDownloads !== undefined) && (
+                <div className="bg-gradient-to-br from-violet-50 to-purple-50/50 rounded-2xl p-6 border border-violet-200">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2 text-violet-600" />
+                    Digital Card Statistics
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl p-4 border border-violet-200 text-center">
+                      <p className="text-2xl font-bold text-violet-600">
+                        {staffDetails.digitalCardDownloads || staffDetails.statistics?.digitalCardDownloads || 0}
+                      </p>
+                      <p className="text-sm text-slate-600">Downloads</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-violet-200 text-center">
+                      <p className="text-2xl font-bold text-violet-600">
+                        {staffDetails.digitalCardViews || staffDetails.statistics?.digitalCardViews || 0}
+                      </p>
+                      <p className="text-sm text-slate-600">Views</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 border border-violet-200 text-center">
+                      <p className="text-2xl font-bold text-violet-600">
+                        {staffDetails.qrCodeScans || staffDetails.statistics?.qrCodeScans || 0}
+                      </p>
+                      <p className="text-sm text-slate-600">QR Scans</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12">

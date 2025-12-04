@@ -201,6 +201,13 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           
           cardElement.style.background = originalBackground;
           
+          // Record the download in the backend
+          try {
+            await adminService.recordDigitalCardDownload(staff._id);
+          } catch (error) {
+            console.error('Failed to record download:', error);
+          }
+          
           const link = document.createElement('a');
           link.href = dataUrl;
           link.download = `hawu-member-card-${staff.name.replace(/\s+/g, '_')}-${staff._id.substring(0, 8)}.png`;
@@ -211,7 +218,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
       console.error('Front download error:', error);
     }
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden border border-gray-200">

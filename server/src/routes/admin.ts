@@ -1665,7 +1665,6 @@ router.get('/staff/:id', authenticateToken, requireAdmin, async (req: AuthReques
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 // Update staff member (admin only)
 router.patch('/staff/:id', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
   try {
@@ -1819,9 +1818,31 @@ router.patch('/staff/:id/services', authenticateToken, requireAdmin, async (req:
   }
 });
 
-// Create staff member (admin only)
-router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {
+// Record digital card download (admin only)
+router.post('/staff/:id/record-download', authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
   try {
+    const staffId = req.params.id;
+    
+    // Find the staff member and increment the download count
+    const staff = await User.findByIdAndUpdate(
+      staffId,
+      { $inc: { 'statistics.digitalCardDownloads': 1 } },
+      { new: true }
+    ).select('-passwordHash');
+    
+    if (!staff) {
+      return res.status(404).json({ message: 'Staff not found' });
+    }
+    
+    res.json({ message: 'Download recorded successfully', staff });
+  } catch (error) {
+    console.error('Record download error:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Create staff member (admin only)
+router.post('/staff/create', authenticateToken, requireAdmin, upload.single('profilePhoto'), async (req: AuthRequest, res) => {  try {
     const { name, email, phone, password, salonId, staffCategory, gender, nationalId, 
             experience, educationLevel, birthYearRange, bio, specialties, credentials } = req.body;
     
