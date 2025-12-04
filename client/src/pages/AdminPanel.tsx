@@ -2333,9 +2333,17 @@ const AdminPanel: React.FC = () => {
             <div className="p-6 space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="h-16 w-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">
-                    {selectedStaff.name?.charAt(0).toUpperCase()}
-                  </span>
+                  {selectedStaff.profilePhoto ? (
+                    <img
+                      src={selectedStaff.profilePhoto}
+                      alt={selectedStaff.name}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-xl">
+                      {selectedStaff.name?.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-gray-900">{selectedStaff.name}</h4>
