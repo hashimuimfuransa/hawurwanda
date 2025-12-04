@@ -179,15 +179,13 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           </button>
 
           <div className="text-center mb-4">
-            <div className="bg-gray-100 rounded-lg p-3 inline-block mb-2 shadow border border-gray-200">
-              <img
-                src={`${window.location.origin}/images/logo.png`}
-                alt="Logo"
-                className="h-12 w-auto mx-auto"
-                crossOrigin="anonymous"
-              />
-            </div>
-            <p className="text-gray-800 text-sm uppercase tracking-wide font-bold mt-1">HAWU MEMBER CARD</p>
+            <img
+              src={`${window.location.origin}/images/logo.png`}
+              alt="Logo"
+              className="h-28 w-auto mx-auto"
+              crossOrigin="anonymous"
+            />
+            <p className="text-gray-800 text-sm uppercase tracking-wide font-bold mt-2">HAWU MEMBER CARD</p>
           </div>
 
           {/* PHOTO */}
