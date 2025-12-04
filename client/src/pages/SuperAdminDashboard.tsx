@@ -188,6 +188,13 @@ const SuperAdminDashboard: React.FC = () => {
     queryFn: () => superAdminService.getStats(),
   });
 
+  // Salon details query
+  const { data: salonDetails, isLoading: salonDetailsLoading } = useQuery({
+    queryKey: ['salon-details', selectedSalonId],
+    queryFn: () => adminService.getSalonDetails(selectedSalonId!),
+    enabled: !!selectedSalonId && showSalonDetailsModal,
+  });
+
   const {
     data: usersData,
     fetchNextPage: fetchNextUsersPage,
@@ -204,7 +211,8 @@ const SuperAdminDashboard: React.FC = () => {
       role: selectedRole || undefined
     }),
     getNextPageParam: (lastPage, allPages) => {
-      const pagination = lastPage?.pagination || lastPage?.data?.pagination;
+      // Correctly access the pagination data from the response
+      const pagination = lastPage?.data?.pagination;
       const totalPages = pagination?.pages || 0;
       const currentPage = pagination?.current || 1;
       return currentPage < totalPages ? currentPage + 1 : undefined;
@@ -212,6 +220,12 @@ const SuperAdminDashboard: React.FC = () => {
     initialPageParam: 1,
   });
 
+  // Extract users data
+  const users = usersData?.pages?.flatMap(page => {
+    // Handle different response formats
+    if (page?.data?.users) return page.data.users;
+    return [];
+  }) || [];
   const { data: salonsData } = useQuery({
     queryKey: ['super-admin-salons'],
     queryFn: async () => {
@@ -353,7 +367,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const updateUserMutation = useMutation({
     mutationFn: ({ userId, updates }: { userId: string; updates: UpdateUserData }) => 
-      superAdminService.updateUser(userId, updates),
+      superAdminService.updateUserById(userId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin-users'] });
       toast.success('User updated successfully');
@@ -362,9 +376,8 @@ const SuperAdminDashboard: React.FC = () => {
       toast.error(error.response?.data?.message || 'Failed to update user');
     },
   });
-
   const deleteUserMutation = useMutation({
-    mutationFn: (userId: string) => superAdminService.deleteUser(userId),
+    mutationFn: (userId: string) => superAdminService.deleteUserById(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin-users'] });
       toast.success('User deleted successfully');
@@ -378,7 +391,7 @@ const SuperAdminDashboard: React.FC = () => {
 
   const verifySalonMutation = useMutation({
     mutationFn: ({ salonId, verified }: { salonId: string; verified: boolean }) => 
-      superAdminService.verifySalon(salonId, verified),
+      adminService.verifySalon(salonId, verified),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['super-admin-salons'] });
       toast.success('Salon verification updated successfully');
@@ -783,8 +796,7 @@ const SuperAdminDashboard: React.FC = () => {
             <option value="superadmin">Super Admin</option>
           </select>
           <div className="flex items-center text-sm text-gray-600">
-            Total Users: {usersData?.data?.users?.length || usersData?.length || 0}
-          </div>
+            Total Users: {users.length}          </div>
         </div>
       </div>
 
@@ -809,7 +821,7 @@ const SuperAdminDashboard: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                (usersData?.pages?.flatMap(page => page?.users || page?.data?.users || []) || [])
+                users
                   .filter((user: IUser) => {
                     const matchesSearch = !searchTerm || 
                       user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -903,7 +915,7 @@ const SuperAdminDashboard: React.FC = () => {
       )}
 
       {/* Loading indicator */}
-      {usersLoading && (usersData?.pages?.flatMap(page => page?.users || page?.data?.users || []) || []).length === 0 && (
+      {usersLoading && users.length === 0 && (
         <div className="flex justify-center mt-6">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
@@ -1049,7 +1061,8 @@ const SuperAdminDashboard: React.FC = () => {
   );
 
   const renderOwners = () => {
-    const owners = (usersData?.data?.users || usersData || []).filter((u: IUser) => u.role === 'owner');
+    // Handle the infinite query data structure properly
+    const owners = users.filter((u: IUser) => u.role === 'owner');
     
     return (
       <div className="space-y-6">
@@ -1593,7 +1606,7 @@ const SuperAdminDashboard: React.FC = () => {
               Loading notifications...
             </div>
           ) : (
-            (notificationsData?.notifications || notificationsData?.data?.notifications || notificationsData || []).map((notification: any) => (
+            (notificationsData?.data?.notifications || []).map((notification: any) => (
               <div key={notification._id} className={`p-6 ${!notification.read ? 'bg-blue-50' : ''}`}>
                 <div className="flex items-start space-x-4">
                   <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -1637,7 +1650,8 @@ const SuperAdminDashboard: React.FC = () => {
   );
 
   const renderAdminManagement = () => {
-    const admins = (usersData?.data?.users || usersData || []).filter((u: IUser) => u.role === 'admin' || u.role === 'superadmin');
+    // Handle the infinite query data structure properly
+    const admins = users.filter((u: IUser) => u.role === 'admin' || u.role === 'superadmin');
     
     return (
       <div className="space-y-6">
@@ -2054,12 +2068,14 @@ const SuperAdminDashboard: React.FC = () => {
       {/* Salon Details Modal */}
       {showSalonDetailsModal && selectedSalonId && (
         <SalonDetailsModal
-          isOpen={showSalonDetailsModal}
+          showModal={showSalonDetailsModal}
           onClose={() => {
             setShowSalonDetailsModal(false);
             setSelectedSalonId(null);
           }}
-          salonId={selectedSalonId}
+          salonDetails={salonDetails}
+          salonDetailsLoading={salonDetailsLoading}
+          fallbackSalonData={salonsData?.find((s: any) => s._id === selectedSalonId)}
         />
       )}
 
