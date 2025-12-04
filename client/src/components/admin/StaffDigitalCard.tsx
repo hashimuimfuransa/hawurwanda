@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, User, Mail, UserCheck, Camera, Download, Save, X as CloseIcon } from 'lucide-react';
+import { X, User, Mail, UserCheck, Camera, Download, Save, X as CloseIcon, Phone } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import * as htmlToImage from 'html-to-image';
 import { adminService } from '../../services/api'; // Added import for API service
@@ -17,7 +17,6 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
   const [tempPhoto, setTempPhoto] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false); // Added state for saving indicator
   const frontCardRef = useRef<HTMLDivElement>(null);
-  const backCardRef = useRef<HTMLDivElement>(null);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,206 +129,159 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
       await hideButtonsTemporarily(frontCardRef.current, async () => {
         await waitForImages(frontCardRef.current);
 
-        const dataUrl = await htmlToImage.toPng(frontCardRef.current, {
-          cacheBust: true,
-          quality: 1,
-          pixelRatio: 2,
-          backgroundColor: '#1e3a8a',
-        });
-
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `hawu-member-card-front-${staff.name.replace(/\s+/g, '_')}-${staff._id.substring(0, 8)}.png`;
-        link.click();
+        // Temporarily set background color on the card itself to ensure it's captured correctly
+        const cardElement = frontCardRef.current;
+        if (cardElement) {
+          // Store original background
+          const originalBackground = cardElement.style.background;
+          
+          // Set explicit white background for capture
+          cardElement.style.background = '#ffffff';
+          
+          const dataUrl = await htmlToImage.toPng(cardElement, {
+            cacheBust: true,
+            quality: 1,
+            pixelRatio: 2,
+            backgroundColor: '#ffffff',
+          });
+          
+          // Restore original background
+          cardElement.style.background = originalBackground;
+          
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = `hawu-member-card-${staff.name.replace(/\s+/g, '_')}-${staff._id.substring(0, 8)}.png`;
+          link.click();
+        }
       });
     } catch (error) {
       console.error('Front download error:', error);
     }
   };
 
-  // Download Back
-  const downloadBackCard = async () => {
-    if (!backCardRef.current) return;
-
-    try {
-      await hideButtonsTemporarily(backCardRef.current, async () => {
-        await waitForImages(backCardRef.current);
-
-        const dataUrl = await htmlToImage.toPng(backCardRef.current, {
-          cacheBust: true,
-          quality: 1,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-        });
-
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = `hawu-member-card-back-${staff.name.replace(/\s+/g, '_')}-${staff._id.substring(0, 8)}.png`;
-        link.click();
-      });
-    } catch (error) {
-      console.error('Back download error:', error);
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-gradient-to-r from-gray-900 via-blue-900 to-indigo-900 rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden border-2 border-white/10">
-        <div className="flex flex-col md:flex-row">
-          {/* FRONT CARD */}
-          <div ref={frontCardRef} className="w-full md:w-2/5 bg-gradient-to-br from-blue-900 to-indigo-800 p-8 flex flex-col items-center justify-center relative">
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors z-10 download-hide"
-            >
-              <X className="h-6 w-6" />
-            </button>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden border border-gray-200">
+        {/* SINGLE CARD */}
+        <div ref={frontCardRef} className="w-full bg-white p-5 flex flex-col items-center justify-center relative">
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition-colors z-10 download-hide"
+          >
+            <X className="h-4 w-4" />
+          </button>
 
-            <button
-              onClick={downloadFrontCard}
-              className="absolute top-4 left-4 text-white/70 hover:text-white transition-colors z-10 download-hide"
-            >
-              <Download className="h-5 w-5" />
-            </button>
+          <button
+            onClick={downloadFrontCard}
+            className="absolute top-3 left-3 text-gray-400 hover:text-gray-700 transition-colors z-10 download-hide"
+          >
+            <Download className="h-4 w-4" />
+          </button>
 
-            <div className="text-center mb-6">
-              <div className="bg-white rounded-2xl p-4 inline-block mb-2 shadow-lg">
-                <img
-                  src={`${window.location.origin}/images/logo.png`}
-                  alt="Logo"
-                  className="h-16 w-auto mx-auto"
-                  crossOrigin="anonymous"
-                />
-              </div>
-              <p className="text-white/90 text-sm uppercase tracking-wider font-medium mt-2">HAWU MEMBER CARD</p>
+          <div className="text-center mb-4">
+            <div className="bg-gray-100 rounded-lg p-3 inline-block mb-2 shadow border border-gray-200">
+              <img
+                src={`${window.location.origin}/images/logo.png`}
+                alt="Logo"
+                className="h-12 w-auto mx-auto"
+                crossOrigin="anonymous"
+              />
             </div>
-
-            {/* PHOTO */}
-            <div className="relative group mb-6">
-              <div className="relative">
-                {(tempPhoto || profilePhoto) ? (
-                  <img
-                    src={tempPhoto || profilePhoto}
-                    alt={staff.name}
-                    className="h-32 w-32 rounded-2xl object-cover border-4 border-white/30 shadow-2xl"
-                    crossOrigin="anonymous"
-                  />
-                ) : (
-                  <div className="h-32 w-32 rounded-2xl bg-white/10 flex items-center justify-center border-4 border-white/20">
-                    <User className="h-16 w-16 text-white/60" />
-                  </div>
-                )}
-
-                <label className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer download-hide">
-                  <Camera className="h-8 w-8 text-white" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                </label>
-              </div>
-
-              <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full p-2 shadow-lg border-2 border-white">
-                <UserCheck className="h-5 w-5 text-gray-900" />
-              </div>
-            </div>
-
-            {/* NAME */}
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">{staff.name}</h2>
-              <p className="text-blue-200 mt-1 capitalize">
-                {staff.staffCategory || staff.role || 'Staff Member'}
-              </p>
-            </div>
-
-            <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-xl p-3 w-full">
-              <div className="flex items-center justify-between">
-                <span className="text-blue-200 text-sm">Member ID</span>
-                <span className="text-white font-mono text-sm">{staff._id?.substring(0, 8).toUpperCase()}</span>
-              </div>
-            </div>
-            
-            {/* Save/Cancel buttons for photo changes */}
-            {tempPhoto && (
-              <div className="flex space-x-2 mt-4 download-hide">
-                <button
-                  onClick={savePhotoToBackend}
-                  disabled={isSaving}
-                  className="flex items-center px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                >
-                  <Save className="h-4 w-4 mr-1" />
-                  {isSaving ? 'Saving...' : 'Save'}
-                </button>
-                <button
-                  onClick={cancelPhoto}
-                  className="flex items-center px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <CloseIcon className="h-4 w-4 mr-1" />
-                  Cancel
-                </button>
-              </div>
-            )}
+            <p className="text-gray-800 text-sm uppercase tracking-wide font-bold mt-1">HAWU MEMBER CARD</p>
           </div>
 
-          {/* BACK CARD */}
-          <div ref={backCardRef} className="w-full md:w-3/5 bg-white p-8 flex flex-col">
-            <button
-              onClick={onClose}
-              className="self-end text-gray-500 hover:text-gray-700 transition-colors z-10 download-hide"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            <button
-              onClick={downloadBackCard}
-              className="self-start text-gray-500 hover:text-gray-700 transition-colors z-10 flex items-center mb-4 download-hide"
-            >
-              <Download className="h-5 w-5 mr-1" />
-              <span className="text-sm">Download</span>
-            </button>
-
-            <div className="flex-grow flex flex-col items-center justify-center text-center">
-              <div className="mb-8">
-                <div className="bg-white rounded-2xl p-4 inline-block shadow-lg mb-3">
-                  <img
-                    src={`${window.location.origin}/images/logo.png`}
-                    alt="Logo"
-                    className="h-16 w-auto mx-auto"
-                    crossOrigin="anonymous"
-                  />
+          {/* PHOTO */}
+          <div className="relative group mb-4">
+            <div className="relative">
+              {(tempPhoto || profilePhoto) ? (
+                <img
+                  src={tempPhoto || profilePhoto}
+                  alt={staff.name}
+                  className="h-24 w-24 rounded-lg object-cover object-center border-2 border-gray-200 shadow"
+                  crossOrigin="anonymous"
+                />
+              ) : (
+                <div className="h-24 w-24 rounded-lg bg-gray-50 flex items-center justify-center border-2 border-gray-200">
+                  <User className="h-12 w-12 text-gray-400" />
                 </div>
-                <p className="text-gray-600 text-sm uppercase tracking-wider">MEMBER CARD</p>
-              </div>
+              )}
 
-              <div className="mb-8">
-                <div className="bg-gray-900 p-4 rounded-xl inline-block">
-                  <QRCode
-                    value={`HAWU MEMBER PROFILE
+              <label className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer download-hide">
+                <Camera className="h-6 w-6 text-white" />
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+              </label>
+            </div>
+
+            <div className="absolute -bottom-1 -right-1 bg-amber-400 rounded-full p-1.5 shadow border border-white">
+              <UserCheck className="h-4 w-4 text-gray-900" />
+            </div>
+          </div>
+
+          {/* NAME */}
+          <div className="text-center mb-3">
+            <h2 className="text-xl font-bold text-gray-900 mb-0.5">{staff.name}</h2>
+            <p className="text-gray-600 text-sm font-medium capitalize">
+              {staff.staffCategory || staff.role || 'Staff Member'}
+            </p>
+          </div>
+
+          <div className="mt-2 bg-gray-50 rounded-md p-2 w-full border border-gray-200">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-600 text-xs font-medium">Member ID</span>
+              <span className="text-gray-900 font-bold text-sm font-mono">{staff._id?.substring(0, 8).toUpperCase()}</span>
+            </div>
+          </div>
+          
+          {/* QR CODE SECTION */}
+          <div className="mt-4 mb-4 flex justify-center w-full">
+            <div className="bg-gray-900 p-4 rounded-xl inline-flex flex-col items-center border border-gray-300 shadow-sm">
+              <div className="bg-white p-2 rounded-lg">
+                <QRCode
+                  value={`HAWU MEMBER PROFILE
 ID:${staff._id}
 Name:${staff.name}
 Role:${staff.staffCategory || staff.role || 'Staff'}
 Since:${formatDate(staff.createdAt)}`}
-                    size={120}
-                    bgColor="#111827"
-                    fgColor="#ffffff"
-                    level="H"
-                  />
-                </div>
-                <p className="text-gray-600 text-sm mt-2">Scan to view member profile</p>
+                  size={100}
+                  bgColor="#ffffff"
+                  fgColor="#111827"
+                  level="H"
+                />
               </div>
-
-              <div className="bg-gray-50 rounded-2xl p-6 w-full max-w-md">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Lost Card?</h3>
-                <p className="text-gray-600 mb-4">If this card is lost, please contact us at:</p>
-                <div className="flex items-center justify-center bg-white rounded-lg p-3 border">
-                  <Mail className="h-5 w-5 text-blue-600 mr-2" />
-                  <span className="font-medium text-blue-600">info@hawu.com</span>
-                </div>
-              </div>
-
-              <div className="mt-6 text-xs text-gray-500">
-                <p>ID: {staff._id}</p>
-                <p>Joined: {formatDate(staff.createdAt)}</p>
-              </div>
+              <p className="text-gray-300 text-xs mt-2 font-medium">Scan to view member profile</p>
             </div>
           </div>
+          
+          {/* LOST CARD INFORMATION */}
+          <div className="bg-gray-100 rounded-lg p-3 w-full border border-gray-200">
+            <h3 className="text-base font-bold text-gray-900 mb-1.5 text-center">If Lost, Please Contact</h3>
+            <div className="flex items-center justify-center bg-white rounded-md p-2 shadow-sm border border-gray-200">
+              <Phone className="h-4 w-4 text-gray-600 mr-1.5" />
+              <span className="font-bold text-gray-900 text-base">0793828834</span>
+            </div>
+            <p className="text-gray-600 text-xs mt-1.5 text-center">Professional Hairdressers Association</p>
+          </div>
+
+          {/* Save/Cancel buttons for photo changes */}
+          {tempPhoto && (
+            <div className="flex space-x-2 mt-4 download-hide">
+              <button
+                onClick={savePhotoToBackend}
+                disabled={isSaving}
+                className="flex items-center px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 text-xs font-medium"
+              >
+                <Save className="h-3 w-3 mr-1" />
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button
+                onClick={cancelPhoto}
+                className="flex items-center px-3 py-1.5 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-xs font-medium"
+              >
+                <CloseIcon className="h-3 w-3 mr-1" />
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
