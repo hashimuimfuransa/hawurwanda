@@ -188,18 +188,11 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
 
         const cardElement = frontCardRef.current;
         if (cardElement) {
-          const originalBackground = cardElement.style.background;
-          
-          cardElement.style.background = '#ffffff';
-          
           const dataUrl = await htmlToImage.toPng(cardElement, {
             cacheBust: true,
             quality: 1,
             pixelRatio: 2,
-            backgroundColor: '#ffffff',
           });
-          
-          cardElement.style.background = originalBackground;
           
           // Record the download in the backend
           try {
@@ -222,7 +215,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden border border-gray-200">
         {/* SINGLE CARD */}
-        <div ref={frontCardRef} className="w-full bg-white p-5 flex flex-col items-center justify-center relative">
+        <div ref={frontCardRef} className="w-full bg-gradient-to-r from-blue-400 via-yellow-300 to-green-400 p-4 flex flex-col items-center justify-center relative">
           <button
             onClick={onClose}
             className="absolute top-3 right-3 text-gray-400 hover:text-gray-700 transition-colors z-10 download-hide"
@@ -237,14 +230,14 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
             <Download className="h-4 w-4" />
           </button>
 
-          <div className="text-center mb-4">
+          <div className="text-center mb-3">
             <img
               src={`${window.location.origin}/images/logo.png`}
               alt="Logo"
-              className="h-28 w-auto mx-auto"
+              className="h-48 w-auto mx-auto"
               crossOrigin="anonymous"
             />
-            <p className="text-gray-800 text-sm uppercase tracking-wide font-bold mt-2">HAWU MEMBER CARD</p>
+            <p className="text-gray-900 text-sm uppercase tracking-wide font-bold mt-1 drop-shadow-md">HAWU MEMBER CARD</p>
           </div>
 
           {/* PHOTO */}
@@ -264,19 +257,19 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
                       src={cropImage}
                       alt="Crop"
                       onLoad={onImageLoad}
-                      className="max-h-64"
+                      className="max-h-40"
                     />
                   </ReactCrop>
-                  <div className="flex space-x-2 mt-4">
+                  <div className="flex space-x-2 mt-2">
                     <button
                       onClick={saveCroppedImage}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      className="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm"
                     >
                       Apply Crop
                     </button>
                     <button
                       onClick={cancelCrop}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                      className="px-3 py-1.5 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm"
                     >
                       Cancel
                     </button>
@@ -286,12 +279,12 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
                 <img
                   src={tempPhoto || profilePhoto}
                   alt={staff.name}
-                  className="h-32 w-32 rounded-xl object-cover object-center border-2 border-gray-200 shadow-md"
+                  className="h-20 w-20 rounded-xl object-cover object-center border-2 border-gray-200 shadow-md"
                   crossOrigin="anonymous"
                 />
               ) : (
-                <div className="h-32 w-32 rounded-xl bg-gray-50 flex items-center justify-center border-2 border-gray-200">
-                  <User className="h-16 w-16 text-gray-400" />
+                <div className="h-20 w-20 rounded-xl bg-gray-50 flex items-center justify-center border-2 border-gray-200">
+                  <User className="h-10 w-10 text-gray-400" />
                 </div>
               )}
 
@@ -309,48 +302,48 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           </div>
 
           {/* NAME */}
-          <div className="text-center mb-3">
-            <h2 className="text-xl font-bold text-gray-900 mb-0.5">{staff.name}</h2>
-            <p className="text-gray-600 text-sm font-medium capitalize">
+          <div className="text-center mb-1.5">
+            <h2 className="text-xl font-bold text-gray-900 mb-0.5 drop-shadow-md">{staff.name}</h2>
+            <p className="text-gray-800 text-xs font-medium capitalize drop-shadow-sm">
               {staff.staffCategory || staff.role || 'Staff Member'}
             </p>
           </div>
 
-          <div className="mt-2 bg-gray-50 rounded-md p-2 w-full border border-gray-200">
+          <div className="mt-1 bg-white/80 backdrop-blur-sm rounded-md p-1 w-full border border-white/50">
             <div className="flex items-center justify-between">
-              <span className="text-gray-600 text-xs font-medium">Member ID</span>
-              <span className="text-gray-900 font-bold text-sm font-mono">{staff._id?.substring(0, 8).toUpperCase()}</span>
+              <span className="text-gray-800 text-xs font-medium">Member ID</span>
+              <span className="text-gray-900 font-bold text-xs font-mono">{staff._id?.substring(0, 8).toUpperCase()}</span>
             </div>
           </div>
           
           {/* QR CODE SECTION */}
-          <div className="mt-4 mb-4 flex justify-center w-full">
-            <div className="bg-gray-900 p-4 rounded-xl inline-flex flex-col items-center border border-gray-300 shadow-sm">
-              <div className="bg-white p-2 rounded-lg">
+          <div className="mt-2.5 mb-2.5 flex justify-center w-full">
+            <div className="bg-gray-900 p-2.5 rounded-xl inline-flex flex-col items-center border border-gray-300 shadow-sm">
+              <div className="bg-white p-1 rounded-lg">
                 <QRCode
                   value={`HAWU MEMBER PROFILE
 ID:${staff._id}
 Name:${staff.name}
 Role:${staff.staffCategory || staff.role || 'Staff'}
 Since:${formatDate(staff.createdAt)}`}
-                  size={100}
+                  size={70}
                   bgColor="#ffffff"
                   fgColor="#111827"
                   level="H"
                 />
               </div>
-              <p className="text-gray-300 text-xs mt-2 font-medium">Scan to view member profile</p>
+              <p className="text-gray-300 text-xs mt-1 font-medium">Scan to view member profile</p>
             </div>
           </div>
           
           {/* LOST CARD INFORMATION */}
-          <div className="bg-gray-100 rounded-lg p-3 w-full border border-gray-200">
-            <h3 className="text-base font-bold text-gray-900 mb-1.5 text-center">If Lost, Please Contact</h3>
-            <div className="flex items-center justify-center bg-white rounded-md p-2 shadow-sm border border-gray-200">
-              <Phone className="h-4 w-4 text-gray-600 mr-1.5" />
-              <span className="font-bold text-gray-900 text-base">0793828834</span>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-1.5 w-full border border-white/50">
+            <h3 className="text-xs font-bold text-gray-900 mb-1 text-center">If Lost, Please Contact</h3>
+            <div className="flex items-center justify-center bg-white/90 rounded-md p-1 shadow-sm border border-white/50">
+              <Phone className="h-3 w-3 text-gray-700 mr-1" />
+              <span className="font-bold text-gray-900 text-xs">0793828834</span>
             </div>
-            <p className="text-gray-600 text-xs mt-1.5 text-center">Professional Hairdressers Association</p>
+            <p className="text-gray-700 text-[10px] mt-1 text-center">Professional Hairdressers Association</p>
           </div>
 
           {/* Save/Cancel buttons for photo changes */}
