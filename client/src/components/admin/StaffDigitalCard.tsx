@@ -304,6 +304,12 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           {/* NAME */}
           <div className="text-center mb-1.5">
             <h2 className="text-xl font-bold text-gray-900 mb-0.5 drop-shadow-md">{staff.name}</h2>
+            {/* Show role only for Secretary General */}
+            {(staff.staffCategory === 'secretary_general' || staff.role === 'secretary_general') && (
+              <p className="text-gray-800 text-xs font-medium capitalize drop-shadow-sm">
+                {staff.staffCategory === 'secretary_general' ? 'Secretary General' : staff.role.replace('_', ' ')}
+              </p>
+            )}
           </div>
 
           {/* QR CODE SECTION */}
