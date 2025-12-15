@@ -1994,6 +1994,7 @@ const AdminPanel: React.FC = () => {
                     <option value="esthetician">Estheticians</option>
                     <option value="receptionist">Receptionists</option>
                     <option value="manager">Managers</option>
+                    <option value="secretary_general">Secretary-General</option>
                     <option value="owner">Owners</option>
                   </select>
                 </div>
@@ -2682,6 +2683,7 @@ const AdminPanel: React.FC = () => {
                         <option value="receptionist">Receptionist</option>
                         <option value="manager">Manager</option>
                         <option value="trainer">Trainer</option>
+                        <option value="secretary_general">Secretary-General</option>
                       </select>
                     </div>
                   </div>

@@ -282,6 +282,7 @@ const CreateStaffModal: React.FC<CreateStaffModalProps> = ({
                       <option value="receptionist">Receptionist</option>
                       <option value="manager">Manager</option>
                       <option value="trainer">Trainer</option>
+                      <option value="secretary_general">Secretary-General</option>
                     </select>
                   </div>
                 </div>
