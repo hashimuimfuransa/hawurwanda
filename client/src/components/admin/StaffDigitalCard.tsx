@@ -234,7 +234,7 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
             <img
               src={`${window.location.origin}/images/logo.png`}
               alt="Logo"
-              className="h-48 w-auto mx-auto"
+              className="h-64 w-auto mx-auto"
               crossOrigin="anonymous"
             />
             <p className="text-gray-900 text-sm uppercase tracking-wide font-bold mt-1 drop-shadow-md">HAWU MEMBER CARD</p>
@@ -304,28 +304,21 @@ const StaffDigitalCard: React.FC<StaffDigitalCardProps> = ({ staff, onClose, onU
           {/* NAME */}
           <div className="text-center mb-1.5">
             <h2 className="text-xl font-bold text-gray-900 mb-0.5 drop-shadow-md">{staff.name}</h2>
-            <p className="text-gray-800 text-xs font-medium capitalize drop-shadow-sm">
-              {staff.staffCategory || staff.role || 'Staff Member'}
-            </p>
           </div>
 
-          <div className="mt-1 bg-white/80 backdrop-blur-sm rounded-md p-1 w-full border border-white/50">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-800 text-xs font-medium">Member ID</span>
-              <span className="text-gray-900 font-bold text-xs font-mono">{staff._id?.substring(0, 8).toUpperCase()}</span>
-            </div>
-          </div>
-          
           {/* QR CODE SECTION */}
           <div className="mt-2.5 mb-2.5 flex justify-center w-full">
             <div className="bg-gray-900 p-2.5 rounded-xl inline-flex flex-col items-center border border-gray-300 shadow-sm">
               <div className="bg-white p-1 rounded-lg">
                 <QRCode
                   value={`HAWU MEMBER PROFILE
-ID:${staff._id}
-Name:${staff.name}
-Role:${staff.staffCategory || staff.role || 'Staff'}
-Since:${formatDate(staff.createdAt)}`}
+ID: ${staff._id}
+Name: ${staff.name}
+Role: ${staff.staffCategory || staff.role || 'Staff'}
+Phone: ${staff.phone}
+${staff.nationalId ? `National ID: ${staff.nationalId}\n` : ''}${staff.email ? `Email: ${staff.email}\n` : ''}${staff.experience ? `Experience: ${staff.experience}\n` : ''}Member Since: ${formatDate(staff.createdAt)}`}
+
+
                   size={70}
                   bgColor="#ffffff"
                   fgColor="#111827"
@@ -336,12 +329,12 @@ Since:${formatDate(staff.createdAt)}`}
             </div>
           </div>
           
-          {/* LOST CARD INFORMATION */}
+          {/* CONTACT INFORMATION */}
           <div className="bg-white/80 backdrop-blur-sm rounded-lg p-1.5 w-full border border-white/50">
-            <h3 className="text-xs font-bold text-gray-900 mb-1 text-center">If Lost, Please Contact</h3>
+            <h3 className="text-xs font-bold text-gray-900 mb-1 text-center">Contact Information</h3>
             <div className="flex items-center justify-center bg-white/90 rounded-md p-1 shadow-sm border border-white/50">
               <Phone className="h-3 w-3 text-gray-700 mr-1" />
-              <span className="font-bold text-gray-900 text-xs">0793828834</span>
+              <span className="font-bold text-gray-900 text-xs">0{staff.phone}</span>
             </div>
             <p className="text-gray-700 text-[10px] mt-1 text-center">Professional Hairdressers Association</p>
           </div>
